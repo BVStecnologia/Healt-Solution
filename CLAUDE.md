@@ -21,26 +21,43 @@ Este arquivo documenta toda a arquitetura, funcionalidades e padrões do sistema
 ## Comandos Principais
 
 ```bash
-# Desenvolvimento
-make setup          # Configuração inicial (cria .env, SSL, diretórios)
-make dev            # Inicia modo desenvolvimento (sem nginx)
-make down           # Para todos os containers
-make logs           # Ver logs de todos os containers
+# ==================
+# DOCKER (tudo junto)
+# ==================
+docker compose up -d              # Subir tudo (Supabase + Evolution)
+docker compose down               # Parar tudo
+docker compose logs -f            # Ver logs de tudo
+docker compose logs -f evolution-api  # Logs específico
+docker compose ps                 # Status dos containers
 
-# Banco de Dados
-make migrate        # Rodar migrações
-make studio         # Prisma Studio GUI
-make shell-db       # Shell PostgreSQL (psql)
-docker exec supabase-db psql -U postgres -d postgres  # Acesso direto
+# ==================
+# MIGRAÇÕES
+# ==================
+./scripts/migrate.sh local        # Aplicar migrações (local)
+./scripts/migrate.sh vps          # Aplicar migrações (VPS)
 
-# Produção
-make prod           # Inicia com nginx/SSL
-make deploy         # Deploy para VPS
-make build          # Rebuild images
+# Verificar status
+docker exec -i supabase-db psql -U postgres -d postgres \
+  -c "SELECT * FROM schema_migrations ORDER BY version;"
 
-# Frontend (fora do Docker)
-cd frontend && npm install && npm start
-cd frontend && npm run build  # Build de produção
+# ==================
+# BANCO DE DADOS
+# ==================
+docker exec -it supabase-db psql -U postgres -d postgres  # Shell SQL
+
+# ==================
+# FRONTEND
+# ==================
+cd frontend && npm install && npm start   # Dev
+cd frontend && npm run build              # Build produção
+
+# ==================
+# DEPLOY VPS
+# ==================
+git push                          # Envia código
+ssh clinica-vps "cd /root/Clinica && git pull"
+ssh clinica-vps "cd /root/Clinica && ./scripts/migrate.sh vps"
+ssh clinica-vps "cd /root/Clinica && docker compose up -d"
 ```
 
 ---
@@ -56,6 +73,19 @@ cd frontend && npm run build  # Build de produção
 | Infraestrutura | Docker Compose (16 services), Nginx, Let's Encrypt SSL |
 | Calendário | react-big-calendar + date-fns |
 | Ícones | Lucide React |
+
+### Estrutura do Projeto
+```
+Clinica/
+├── docker-compose.yml      # Compose unificado (Supabase + Evolution)
+├── .env                    # Variáveis ativas (não commitar)
+├── .env.local              # Template dev
+├── .env.production         # Template produção
+├── frontend/               # React app
+├── supabase/               # Configs e migrations
+├── scripts/                # migrate.sh
+└── docs/                   # Documentação
+```
 
 ### Estrutura de Diretórios
 ```
@@ -76,10 +106,13 @@ frontend/src/
 │   ├── useAppointments.ts  # CRUD de agendamentos
 │   ├── useAvailability.ts  # Slots disponíveis
 │   ├── useEligibility.ts   # Verificação de elegibilidade
-│   └── useProviders.ts     # Lista de médicos
+│   ├── useProviders.ts     # Lista de médicos
+│   └── admin/
+│       └── useWhatsAppNotifications.ts  # Notificações WhatsApp
 ├── lib/
 │   ├── supabaseClient.ts   # Cliente Supabase + callRPC helper
-│   └── adminService.ts     # Serviços administrativos
+│   ├── adminService.ts     # Serviços administrativos
+│   └── whatsappService.ts  # Envio de mensagens WhatsApp
 ├── pages/
 │   ├── admin/              # Painel Admin (ver seção Rotas)
 │   ├── scheduling/         # Agendamento do paciente
@@ -93,9 +126,14 @@ frontend/src/
 
 supabase/
 ├── migrations/
-│   └── 001_scheduling_tables.sql  # Schema + RLS + Functions
+│   ├── 000_schema_migrations.sql    # Controle de versões
+│   ├── 001_scheduling_tables.sql    # Schema + RLS + Functions
+│   └── 002_whatsapp_notifications.sql # WhatsApp + templates
 ├── volumes/functions/      # Edge Functions
 └── docker-compose.yml      # 13 serviços Supabase
+
+scripts/
+└── migrate.sh              # Script de migrações (local/vps)
 ```
 
 ---
@@ -234,6 +272,59 @@ Todas as tabelas têm RLS habilitado:
 - **Pacientes:** Veem apenas seus próprios dados
 - **Providers:** Veem consultas onde são o médico
 - **Admins:** Acesso total via função `is_admin()`
+
+---
+
+## Controle de Migrações
+
+### Tabela `schema_migrations`
+Registra quais migrações foram aplicadas em cada ambiente.
+
+```sql
+CREATE TABLE schema_migrations (
+  version TEXT PRIMARY KEY,   -- "001", "002"
+  name TEXT,                  -- "scheduling_tables"
+  applied_at TIMESTAMPTZ
+);
+```
+
+### Migrações Existentes
+
+| Versão | Nome | Descrição |
+|--------|------|-----------|
+| 000 | schema_migrations | Tabela de controle |
+| 001 | scheduling_tables | Profiles, providers, appointments, RLS, RPCs |
+| 002 | whatsapp_notifications | Instâncias, templates, logs de mensagens |
+
+### Aplicar Migrações
+
+**Local:**
+```bash
+./scripts/migrate.sh local
+```
+
+**VPS:**
+```bash
+./scripts/migrate.sh vps
+```
+
+**Manual (SQL direto):**
+```bash
+docker exec -i supabase-db psql -U postgres -d postgres < supabase/migrations/002_whatsapp_notifications.sql
+```
+
+### Verificar Status
+```bash
+docker exec -i supabase-db psql -U postgres -d postgres -c "SELECT * FROM schema_migrations ORDER BY version;"
+```
+
+### Criar Nova Migração
+1. Criar arquivo `supabase/migrations/XXX_nome.sql`
+2. Adicionar no final: `INSERT INTO schema_migrations (version, name) VALUES ('XXX', 'nome');`
+3. Rodar `./scripts/migrate.sh`
+
+### Rollback
+Criar script manual `XXX_nome_down.sql` com os DROPs necessários.
 
 ---
 
@@ -422,9 +513,9 @@ EVOLUTION_API_KEY=sua-chave-evolution
 - [ ] Backup automático do banco
 
 ### Funcionalidades Futuras
-- [ ] Envio de lembretes por WhatsApp
-- [ ] Confirmação de consulta por WhatsApp
-- [ ] Histórico de mensagens
+- [ ] Envio de lembretes por WhatsApp (Edge Function + Cron)
+- [x] Confirmação de consulta por WhatsApp
+- [x] Histórico de mensagens (message_logs)
 - [ ] Upload de documentos/exames
 - [ ] Relatórios e analytics
 - [ ] Notificações push
@@ -455,6 +546,184 @@ Role: admin
 - 10 pacientes criados com diferentes tipos (new, general, trt, hormone, vip)
 - Emails: joao.pereira@email.com, ana.souza@email.com, etc.
 - Senha demo: `demo123456`
+
+---
+
+## Servidor de Produção (VPS)
+
+### Acesso SSH
+```bash
+# Conexão rápida (configurado em ~/.ssh/config)
+ssh clinica-vps
+
+# Conexão completa
+ssh -i ~/.ssh/clinica_vps root@217.216.81.92
+```
+
+### Dados do Servidor
+| Campo | Valor |
+|-------|-------|
+| **IP** | 217.216.81.92 |
+| **Região** | US-east (Orangeburg, SC) |
+| **OS** | Ubuntu 24.04.3 LTS |
+| **CPU** | 8 cores |
+| **RAM** | 24 GB |
+| **Disco** | 400 GB SSD |
+| **Provedor** | Contabo |
+
+### Portainer (Gerenciador Docker)
+| Campo | Valor |
+|-------|-------|
+| **URL** | http://217.216.81.92:9000 |
+| **Usuário** | admin |
+| **Senha** | 2026projectessence@ |
+
+### Comandos Úteis VPS
+```bash
+# Ver containers
+ssh clinica-vps "docker ps"
+
+# Ver logs
+ssh clinica-vps "docker logs <container>"
+
+# Reiniciar
+ssh clinica-vps "docker restart <container>"
+
+# Ver uso de recursos
+ssh clinica-vps "docker stats --no-stream"
+```
+
+---
+
+## Deploy para Produção
+
+### Estrutura das Stacks
+
+O projeto usa **3 stacks** Docker separadas:
+
+| Stack | Serviços | Porta |
+|-------|----------|-------|
+| **supabase** | db, kong, auth, rest, realtime, storage, imgproxy, meta, functions, analytics, vector, supavisor, studio | 8000, 5432, 3001, 4000 |
+| **evolution** | api, db (postgres), redis | 8082 |
+| **frontend** | nginx + react build | 80, 443 |
+
+### Passo a Passo do Deploy
+
+#### 1. Clonar Repositório no VPS
+```bash
+ssh clinica-vps
+cd /root
+git clone https://github.com/SEU_USUARIO/Clinica.git
+cd Clinica
+```
+
+#### 2. Configurar Variáveis de Ambiente
+
+**supabase/.env** - Alterar para produção:
+```env
+# Mudar URLs para o domínio/IP público
+SITE_URL=https://seudominio.com
+API_EXTERNAL_URL=https://seudominio.com
+SUPABASE_PUBLIC_URL=https://seudominio.com
+
+# Google OAuth - Atualizar redirect URI
+GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=https://seudominio.com/auth/v1/callback
+
+# IMPORTANTE: Gerar novas chaves para produção!
+# Usar: openssl rand -base64 32
+POSTGRES_PASSWORD=<nova_senha_segura>
+JWT_SECRET=<novo_jwt_secret_32_chars>
+```
+
+**evolution/.env** - Alterar para produção:
+```env
+EVOLUTION_API_KEY=<sua_chave_segura>
+POSTGRES_PASSWORD=<senha_evolution>
+```
+
+**frontend/.env** - Alterar para produção:
+```env
+REACT_APP_SUPABASE_URL=https://seudominio.com
+REACT_APP_SUPABASE_ANON_KEY=<mesma_anon_key_do_supabase>
+```
+
+#### 3. Build do Frontend para Produção
+```bash
+cd /root/Clinica/frontend
+npm install
+npm run build
+```
+
+#### 4. Subir Stacks via Portainer
+
+**Opção A - Via Portainer UI:**
+1. Acessar http://217.216.81.92:9000
+2. Ir em Stacks > Add Stack
+3. Colar conteúdo do docker-compose.yml
+4. Configurar variáveis de ambiente
+5. Deploy
+
+**Opção B - Via CLI:**
+```bash
+# Stack Supabase
+cd /root/Clinica/supabase
+docker compose up -d
+
+# Stack Evolution
+cd /root/Clinica/evolution
+docker compose up -d
+```
+
+#### 5. Configurar Nginx + SSL (Produção com Domínio)
+```bash
+# Instalar certbot
+apt install certbot python3-certbot-nginx -y
+
+# Gerar certificado SSL
+certbot --nginx -d seudominio.com
+
+# Configurar nginx
+cp /root/Clinica/nginx/nginx.conf /etc/nginx/nginx.conf
+nginx -t && systemctl reload nginx
+```
+
+### Deploy Rápido (Sem Domínio - Apenas IP)
+
+Para teste rápido usando apenas IP (sem SSL):
+
+```bash
+ssh clinica-vps "cd /root/Clinica && git pull"
+
+# Rebuild frontend
+ssh clinica-vps "cd /root/Clinica/frontend && npm install && npm run build"
+
+# Restart stacks
+ssh clinica-vps "cd /root/Clinica/supabase && docker compose down && docker compose up -d"
+ssh clinica-vps "cd /root/Clinica/evolution && docker compose down && docker compose up -d"
+```
+
+### Verificar Deploy
+```bash
+# Status dos containers
+ssh clinica-vps "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
+
+# Logs de erro
+ssh clinica-vps "docker logs supabase-kong --tail 50"
+ssh clinica-vps "docker logs evolution_api --tail 50"
+
+# Testar API
+curl http://217.216.81.92:8000/rest/v1/
+curl http://217.216.81.92:8082/api/health
+```
+
+### Rollback
+```bash
+# Voltar para versão anterior
+ssh clinica-vps "cd /root/Clinica && git checkout HEAD~1"
+
+# Rebuild e restart
+ssh clinica-vps "cd /root/Clinica/supabase && docker compose down && docker compose up -d"
+```
 
 ---
 

@@ -8,10 +8,13 @@ import {
   CheckCircle,
   XCircle,
   MessageCircle,
+  Send,
+  Loader2,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
+import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
 
 const Header = styled.div`
   margin-bottom: ${theme.spacing.xl};
@@ -183,18 +186,32 @@ const ActionButton = styled.button<{ $variant: 'approve' | 'reject' }>`
   ${props => props.$variant === 'approve' && `
     background: #10B98115;
     color: #10B981;
-    &:hover { background: #10B98125; }
+    &:hover:not(:disabled) { background: #10B98125; }
   `}
 
   ${props => props.$variant === 'reject' && `
     background: #EF444415;
     color: #EF4444;
-    &:hover { background: #EF444425; }
+    &:hover:not(:disabled) { background: #EF444425; }
   `}
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
   svg {
     width: 18px;
     height: 18px;
+  }
+
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 `;
 
@@ -220,14 +237,16 @@ interface Stats {
 
 interface PendingAppointment {
   id: string;
+  patient_id: string;
   patient_name: string;
+  patient_phone: string | null;
   provider_name: string;
   scheduled_at: string;
   type: string;
 }
 
-const EVOLUTION_API_URL = 'http://localhost:8082';
-const EVOLUTION_API_KEY = 'sua_chave_evolution_aqui';
+const EVOLUTION_API_URL = process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
+const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || '';
 
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats>({
@@ -239,6 +258,10 @@ const AdminDashboard: React.FC = () => {
   const [pendingAppointments, setPendingAppointments] = useState<PendingAppointment[]>([]);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // Hook de notificações WhatsApp
+  const { sendConfirmation, sendRejection, isConnected: whatsappReady } = useWhatsAppNotifications();
 
   // Verificar status do WhatsApp
   const checkWhatsAppStatus = async () => {
@@ -335,9 +358,10 @@ const AdminDashboard: React.FC = () => {
         .from('appointments')
         .select(`
           id,
+          patient_id,
           scheduled_at,
           type,
-          patient:profiles!appointments_patient_id_fkey(first_name, last_name),
+          patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone),
           provider:providers!appointments_provider_id_fkey(
             profile:profiles(first_name, last_name)
           )
@@ -350,7 +374,9 @@ const AdminDashboard: React.FC = () => {
 
       const formatted = (data || []).map((apt: any) => ({
         id: apt.id,
+        patient_id: apt.patient_id,
         patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
+        patient_phone: apt.patient?.phone || null,
         provider_name: apt.provider?.profile ? `Dr(a). ${apt.provider.profile.first_name}` : 'N/A',
         scheduled_at: apt.scheduled_at,
         type: apt.type,
@@ -362,31 +388,75 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleApprove = async (id: string) => {
+  const handleApprove = async (apt: PendingAppointment) => {
+    setProcessingId(apt.id);
     try {
-      await supabase
+      // Atualizar status no banco
+      const { error } = await supabase
         .from('appointments')
-        .update({ status: 'confirmed' })
-        .eq('id', id);
+        .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+        .eq('id', apt.id);
+
+      if (error) throw error;
+
+      // Enviar notificação WhatsApp se tiver telefone
+      if (apt.patient_phone && whatsappReady) {
+        const date = new Date(apt.scheduled_at);
+        await sendConfirmation({
+          patientName: apt.patient_name,
+          patientPhone: apt.patient_phone,
+          patientId: apt.patient_id,
+          providerName: apt.provider_name,
+          appointmentType: formatType(apt.type),
+          appointmentDate: date.toLocaleDateString('pt-BR'),
+          appointmentTime: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          appointmentId: apt.id,
+        });
+        console.log('[Dashboard] Notificação de confirmação enviada');
+      }
 
       loadStats();
       loadPendingAppointments();
     } catch (error) {
       console.error('Error approving appointment:', error);
+    } finally {
+      setProcessingId(null);
     }
   };
 
-  const handleReject = async (id: string) => {
+  const handleReject = async (apt: PendingAppointment) => {
+    setProcessingId(apt.id);
     try {
-      await supabase
+      // Atualizar status no banco
+      const { error } = await supabase
         .from('appointments')
-        .update({ status: 'cancelled' })
-        .eq('id', id);
+        .update({ status: 'cancelled', rejection_reason: 'Horário não disponível' })
+        .eq('id', apt.id);
+
+      if (error) throw error;
+
+      // Enviar notificação WhatsApp se tiver telefone
+      if (apt.patient_phone && whatsappReady) {
+        await sendRejection({
+          patientName: apt.patient_name,
+          patientPhone: apt.patient_phone,
+          patientId: apt.patient_id,
+          providerName: apt.provider_name,
+          appointmentType: formatType(apt.type),
+          appointmentDate: '',
+          appointmentTime: '',
+          appointmentId: apt.id,
+          reason: 'Horário não disponível',
+        });
+        console.log('[Dashboard] Notificação de rejeição enviada');
+      }
 
       loadStats();
       loadPendingAppointments();
     } catch (error) {
       console.error('Error rejecting appointment:', error);
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -492,10 +562,20 @@ const AdminDashboard: React.FC = () => {
                     </div>
                   </PendingInfo>
                   <PendingActions>
-                    <ActionButton $variant="approve" onClick={() => handleApprove(apt.id)} title="Aprovar">
-                      <CheckCircle />
+                    <ActionButton
+                      $variant="approve"
+                      onClick={() => handleApprove(apt)}
+                      title="Aprovar"
+                      disabled={processingId === apt.id}
+                    >
+                      {processingId === apt.id ? <Loader2 className="spin" /> : <CheckCircle />}
                     </ActionButton>
-                    <ActionButton $variant="reject" onClick={() => handleReject(apt.id)} title="Rejeitar">
+                    <ActionButton
+                      $variant="reject"
+                      onClick={() => handleReject(apt)}
+                      title="Rejeitar"
+                      disabled={processingId === apt.id}
+                    >
                       <XCircle />
                     </ActionButton>
                   </PendingActions>

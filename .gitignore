@@ -9,12 +9,11 @@ build/
 .next/
 out/
 
-# Environment
+# Environment (arquivo ativo com senhas reais)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+
+# Templates de ambiente (podem ser commitados)
+# .env.local e .env.production são templates com placeholders
 
 # Logs
 logs

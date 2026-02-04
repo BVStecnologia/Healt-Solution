@@ -506,3 +506,8 @@ COMMENT ON TYPE appointment_type IS 'Tipos de consulta disponíveis:
 - health_coaching: Health Coaching (30 min)
 - therapy: Terapia (50 min)
 - personal_training: Personal Training (60 min)';
+
+-- Registrar migração
+INSERT INTO schema_migrations (version, name)
+VALUES ('001', 'scheduling_tables')
+ON CONFLICT (version) DO NOTHING;
