@@ -183,7 +183,7 @@ const QRCodeImage = styled.img`
   height: 200px;
   border-radius: ${theme.borderRadius.md};
   margin-bottom: ${theme.spacing.md};
-  filter: sepia(100%) saturate(300%) brightness(70%) hue-rotate(330deg);
+  filter: grayscale(100%);
 `;
 
 const QRCodeText = styled.p`
@@ -305,6 +305,22 @@ const WhatsAppPage: React.FC = () => {
   useEffect(() => {
     loadInstances();
   }, []);
+
+  // Polling para atualizar status quando há instâncias desconectadas
+  useEffect(() => {
+    const hasDisconnected = instances.some(i => i.status !== 'connected');
+    if (!hasDisconnected || instances.length === 0) return;
+
+    const interval = setInterval(() => {
+      instances.forEach(inst => {
+        if (inst.status !== 'connected') {
+          refreshInstance(inst.instanceName);
+        }
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [instances]);
 
   const loadInstances = async () => {
     try {
