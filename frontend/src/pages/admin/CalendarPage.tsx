@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, addDays, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, Users } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
+
+// Animações
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const slideIn = keyframes`
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+`;
 
 const locales = {
   'pt-BR': ptBR,
@@ -25,13 +36,34 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: ${theme.spacing.xl};
+  margin-bottom: ${theme.spacing.lg};
+  animation: ${fadeIn} 0.4s ease-out;
 
   h1 {
     font-size: 28px;
     font-weight: 700;
     color: ${theme.colors.text};
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.md};
+
+    .calendar-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
+      border-radius: ${theme.borderRadius.md};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(146, 86, 62, 0.25);
+
+      svg {
+        width: 20px;
+        height: 20px;
+        color: white;
+      }
+    }
   }
 `;
 
@@ -45,26 +77,35 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  padding: ${theme.spacing.sm} ${theme.spacing.lg};
   border-radius: ${theme.borderRadius.lg};
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  ${props => props.$variant === 'primary' ? `
-    background: ${theme.colors.primary};
+  ${props => props.$variant === 'primary' ? css`
+    background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
     color: white;
     border: none;
+    box-shadow: 0 4px 12px rgba(146, 86, 62, 0.25);
+
     &:hover {
-      background: ${theme.colors.primaryHover};
+      box-shadow: 0 6px 20px rgba(146, 86, 62, 0.35);
+      transform: translateY(-2px);
     }
-  ` : `
+
+    &:active {
+      transform: translateY(0);
+    }
+  ` : css`
     background: ${theme.colors.surface};
     color: ${theme.colors.text};
     border: 1px solid ${theme.colors.border};
+
     &:hover {
       background: ${theme.colors.background};
+      border-color: ${theme.colors.primary}50;
     }
   `}
 
@@ -77,10 +118,11 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
 const CalendarWrapper = styled.div`
   background: ${theme.colors.surface};
   border-radius: ${theme.borderRadius.xl};
-  padding: ${theme.spacing.lg};
-  box-shadow: ${theme.shadows.sm};
+  padding: ${theme.spacing.xl};
+  box-shadow: ${theme.shadows.card};
   height: calc(100vh - 180px);
   min-height: 600px;
+  animation: ${slideIn} 0.5s ease-out;
 
   .rbc-calendar {
     height: 100%;
@@ -88,65 +130,115 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-header {
-    padding: ${theme.spacing.md};
-    font-weight: 600;
-    font-size: 13px;
-    color: ${theme.colors.textSecondary};
+    padding: ${theme.spacing.md} ${theme.spacing.sm};
+    font-weight: 700;
+    font-size: 11px;
+    color: ${theme.colors.textMuted};
     text-transform: uppercase;
-    border-bottom: 1px solid ${theme.colors.border};
+    letter-spacing: 1px;
+    border-bottom: 2px solid ${theme.colors.border};
+    background: ${theme.colors.background};
   }
 
   .rbc-month-view {
     border: 1px solid ${theme.colors.border};
     border-radius: ${theme.borderRadius.lg};
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .rbc-month-row {
+    border-bottom: 1px solid ${theme.colors.borderLight};
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 
   .rbc-day-bg {
     background: ${theme.colors.surface};
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: ${theme.colors.primarySoft}30;
+    }
   }
 
   .rbc-off-range-bg {
     background: ${theme.colors.background};
+
+    &:hover {
+      background: ${theme.colors.background};
+    }
   }
 
   .rbc-today {
-    background: ${theme.colors.primarySoft};
+    background: linear-gradient(135deg, ${theme.colors.primarySoft} 0%, ${theme.colors.primarySoft}80 100%) !important;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight});
+    }
   }
 
   .rbc-date-cell {
-    padding: ${theme.spacing.sm};
+    padding: ${theme.spacing.sm} ${theme.spacing.md};
     font-size: 14px;
+    font-weight: 500;
+    text-align: right;
 
-    &.rbc-now {
+    > button {
+      transition: all 0.2s ease;
+      padding: 4px 8px;
+      border-radius: ${theme.borderRadius.sm};
+
+      &:hover {
+        background: ${theme.colors.primary}15;
+        color: ${theme.colors.primary};
+      }
+    }
+
+    &.rbc-now > button {
+      background: ${theme.colors.primary};
+      color: white;
       font-weight: 700;
-      color: ${theme.colors.primary};
+      border-radius: ${theme.borderRadius.full};
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(146, 86, 62, 0.3);
     }
   }
 
   .rbc-event {
     background: ${theme.colors.primary};
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 12px;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
     border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
 
-    &.rbc-event-pending {
-      background: #F59E0B;
-    }
-
-    &.rbc-event-confirmed {
-      background: #10B981;
-    }
-
-    &.rbc-event-cancelled {
-      background: #EF4444;
-      text-decoration: line-through;
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
   }
 
   .rbc-toolbar {
-    margin-bottom: ${theme.spacing.lg};
+    margin-bottom: ${theme.spacing.xl};
+    padding-bottom: ${theme.spacing.lg};
+    border-bottom: 1px solid ${theme.colors.borderLight};
     flex-wrap: wrap;
     gap: ${theme.spacing.md};
   }
@@ -155,32 +247,54 @@ const CalendarWrapper = styled.div`
     color: ${theme.colors.text};
     border: 1px solid ${theme.colors.border};
     border-radius: ${theme.borderRadius.md};
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
+    padding: 10px 16px;
     background: ${theme.colors.surface};
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
       background: ${theme.colors.background};
+      border-color: ${theme.colors.primary}40;
     }
 
     &.rbc-active {
-      background: ${theme.colors.primary};
+      background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
       color: white;
-      border-color: ${theme.colors.primary};
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(146, 86, 62, 0.25);
     }
   }
 
-  .rbc-btn-group button + button {
-    margin-left: -1px;
+  .rbc-btn-group {
+    border-radius: ${theme.borderRadius.lg};
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+    button {
+      border-radius: 0;
+      margin: 0 !important;
+      border-right: none;
+
+      &:first-child {
+        border-radius: ${theme.borderRadius.lg} 0 0 ${theme.borderRadius.lg};
+      }
+
+      &:last-child {
+        border-radius: 0 ${theme.borderRadius.lg} ${theme.borderRadius.lg} 0;
+        border-right: 1px solid ${theme.colors.border};
+      }
+    }
   }
 
   .rbc-toolbar-label {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: ${theme.colors.text};
     text-transform: capitalize;
+    font-family: ${theme.typography.fontFamilyHeading};
+    letter-spacing: -0.5px;
   }
 
   .rbc-time-view {
@@ -190,7 +304,7 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-time-header {
-    border-bottom: 1px solid ${theme.colors.border};
+    border-bottom: 2px solid ${theme.colors.border};
   }
 
   .rbc-time-content {
@@ -203,12 +317,25 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-time-slot {
-    font-size: 12px;
+    font-size: 11px;
     color: ${theme.colors.textMuted};
+    font-weight: 500;
   }
 
   .rbc-current-time-indicator {
     background: ${theme.colors.error};
+    height: 2px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -4px;
+      top: -3px;
+      width: 8px;
+      height: 8px;
+      background: ${theme.colors.error};
+      border-radius: 50%;
+    }
   }
 
   .rbc-agenda-view {
@@ -221,12 +348,36 @@ const CalendarWrapper = styled.div`
     border: none;
 
     thead {
-      background: ${theme.colors.background};
+      background: linear-gradient(135deg, ${theme.colors.background} 0%, ${theme.colors.surface} 100%);
     }
 
-    th, td {
+    th {
       padding: ${theme.spacing.md};
-      border-bottom: 1px solid ${theme.colors.border};
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: ${theme.colors.textMuted};
+    }
+
+    td {
+      padding: ${theme.spacing.md};
+      border-bottom: 1px solid ${theme.colors.borderLight};
+    }
+
+    tr:hover td {
+      background: ${theme.colors.primarySoft}20;
+    }
+  }
+
+  .rbc-show-more {
+    color: ${theme.colors.primary};
+    font-weight: 600;
+    font-size: 11px;
+    background: transparent !important;
+
+    &:hover {
+      text-decoration: underline;
     }
   }
 `;
