@@ -118,7 +118,7 @@ const translations: Record<Language, Record<string, string>> = {
   },
 };
 
-const STORAGE_KEY = 'shapeup-language';
+const STORAGE_KEY = 'essence-language';
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {

@@ -19,10 +19,10 @@ const fadeInUp = keyframes`
 
 const pulse = keyframes`
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(49, 95, 242, 0.4);
+    box-shadow: 0 0 0 0 rgba(146, 86, 62, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 15px rgba(49, 95, 242, 0);
+    box-shadow: 0 0 0 15px rgba(146, 86, 62, 0);
   }
 `;
 
@@ -41,9 +41,9 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse at 20% 80%, rgba(49, 95, 242, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-    linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+    radial-gradient(ellipse at 20% 80%, rgba(146, 86, 62, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(175, 136, 113, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #2D2420 0%, #3D322B 50%, #4A3C33 100%);
   padding: ${theme.spacing.lg};
   position: relative;
   overflow: hidden;
@@ -96,7 +96,7 @@ const Logo = styled.div`
   .icon {
     width: 72px;
     height: 72px;
-    background: linear-gradient(145deg, ${theme.colors.primary} 0%, #4F46E5 100%);
+    background: linear-gradient(145deg, ${theme.colors.primary} 0%, #7A4833 100%);
     border-radius: 20px;
     display: flex;
     align-items: center;
@@ -104,7 +104,7 @@ const Logo = styled.div`
     position: relative;
     z-index: 1;
     box-shadow:
-      0 10px 30px -10px rgba(49, 95, 242, 0.5),
+      0 10px 30px -10px rgba(146, 86, 62, 0.5),
       inset 0 1px 0 rgba(255, 255, 255, 0.2);
 
     svg {
@@ -119,7 +119,7 @@ const Logo = styled.div`
       position: absolute;
       inset: -4px;
       border-radius: 24px;
-      background: linear-gradient(145deg, ${theme.colors.primary}, #4F46E5);
+      background: linear-gradient(145deg, ${theme.colors.primary}, #7A4833);
       opacity: 0.3;
       z-index: -1;
       animation: ${pulse} 2s ease-in-out infinite;
@@ -130,7 +130,7 @@ const Logo = styled.div`
     font-family: ${theme.typography.fontFamilyHeading};
     font-size: 28px;
     font-weight: 800;
-    color: #1a1a2e;
+    color: #3D322B;
     margin: 0 0 6px;
     letter-spacing: -0.5px;
   }
@@ -193,7 +193,7 @@ const Input = styled.input`
     outline: none;
     border-color: ${theme.colors.primary};
     background: #fff;
-    box-shadow: 0 0 0 4px rgba(49, 95, 242, 0.1);
+    box-shadow: 0 0 0 4px rgba(146, 86, 62, 0.1);
 
     & + ${InputIcon} {
       color: ${theme.colors.primary};
@@ -261,7 +261,7 @@ const ErrorMessage = styled.div`
 const SubmitButton = styled.button<{ $loading?: boolean }>`
   width: 100%;
   padding: 16px 24px;
-  background: linear-gradient(135deg, ${theme.colors.primary} 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, ${theme.colors.primary} 0%, #7A4833 100%);
   color: white;
   border: none;
   border-radius: 14px;
@@ -297,7 +297,7 @@ const SubmitButton = styled.button<{ $loading?: boolean }>`
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 12px 24px -8px rgba(49, 95, 242, 0.5);
+    box-shadow: 0 12px 24px -8px rgba(146, 86, 62, 0.5);
 
     &::before {
       opacity: 1;
@@ -522,7 +522,7 @@ const AdminLoginPage: React.FC = () => {
               <Shield />
             </div>
           </div>
-          <h1>ShapeUp Admin</h1>
+          <h1>Essence Admin</h1>
           <p>Painel Administrativo</p>
         </Logo>
 

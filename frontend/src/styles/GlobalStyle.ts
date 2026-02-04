@@ -2,11 +2,11 @@ import { createGlobalStyle } from 'styled-components';
 
 export const theme = {
   colors: {
-    // Cores principais - ShapeUp Identity
-    primary: '#315FF2',
-    primaryHover: '#2850D9',
-    primaryLight: '#567BF0',
-    primarySoft: '#EEF2FF',
+    // Cores principais - Essence Medical Clinic Identity
+    primary: '#92563E',
+    primaryHover: '#7A4833',
+    primaryLight: '#AF8871',
+    primarySoft: '#F4E7DE',
 
     // Secundárias
     secondary: '#8C8B8B',
@@ -19,22 +19,22 @@ export const theme = {
     warningLight: '#FEF3C7',
     error: '#EF4444',
     errorLight: '#FEE2E2',
-    info: '#3B82F6',
-    infoLight: '#DBEAFE',
+    info: '#AF8871',
+    infoLight: '#F4E7DE',
 
     // Neutros
-    background: '#FAFBFC',
+    background: '#FAF8F6',
     surface: '#FFFFFF',
-    surfaceHover: '#F8FAFC',
-    text: '#333333',
-    textSecondary: '#666666',  // Melhorado para WCAG AA (5.9:1)
-    textMuted: '#8C8B8B',      // Para elementos decorativos/não-essenciais
-    border: '#E5E7EB',
-    borderLight: '#F3F4F6',
+    surfaceHover: '#F5F0EB',
+    text: '#393939',
+    textSecondary: '#4C4F54',
+    textMuted: '#8C8B8B',
+    border: '#E5E0DB',
+    borderLight: '#F3F0ED',
 
     // Especiais
     overlay: 'rgba(0, 0, 0, 0.5)',
-    shadow: 'rgba(49, 95, 242, 0.08)',
+    shadow: 'rgba(146, 86, 62, 0.08)',
   },
 
   spacing: {
@@ -61,13 +61,13 @@ export const theme = {
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04)',
     lg: '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04)',
     xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-    primary: '0 4px 14px 0 rgba(49, 95, 242, 0.25)',
+    primary: '0 4px 14px 0 rgba(146, 86, 62, 0.25)',
     card: '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06)',
   },
 
   typography: {
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    fontFamilyHeading: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamily: "'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamilyHeading: "'Italiana', Georgia, 'Times New Roman', serif",
 
     sizes: {
       xs: '12px',
@@ -112,7 +112,7 @@ export const theme = {
 export type Theme = typeof theme;
 
 export const GlobalStyle = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Raleway:wght@400;500;600;700&display=swap');
 
   * {
     margin: 0;

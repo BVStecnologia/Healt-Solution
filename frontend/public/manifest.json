@@ -1,6 +1,6 @@
 {
-  "short_name": "ShapeUp",
-  "name": "ShapeUp Health Solutions",
+  "short_name": "Essence",
+  "name": "Essence Medical Clinic",
   "description": "Portal do Paciente - Gestão de Consultas",
   "icons": [
     {
@@ -18,6 +18,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#315FF2",
+  "theme_color": "#92563E",
   "background_color": "#FAFBFC"
 }

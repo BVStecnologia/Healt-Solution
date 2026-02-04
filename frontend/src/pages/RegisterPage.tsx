@@ -20,7 +20,7 @@ const fadeIn = keyframes`
 const Container = styled.div`
   min-height: 100vh;
   display: flex;
-  background: linear-gradient(135deg, ${theme.colors.background} 0%, #EEF2FF 100%);
+  background: linear-gradient(135deg, ${theme.colors.background} 0%, #F4E7DE 100%);
 `;
 
 const LeftPanel = styled.div`
@@ -364,8 +364,8 @@ const RegisterPage: React.FC = () => {
           </WelcomeText>
           <Card>
             <Logo>
-              <h1>ShapeUp</h1>
-              <p>Health Solutions</p>
+              <h1>Essence</h1>
+              <p>Medical Clinic</p>
             </Logo>
 
             {success ? (

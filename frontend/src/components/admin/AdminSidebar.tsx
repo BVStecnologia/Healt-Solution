@@ -16,17 +16,17 @@ import { useAuth } from '../../context/AuthContext';
 
 const subtleGlow = keyframes`
   0%, 100% {
-    box-shadow: 0 0 20px rgba(49, 95, 242, 0.3);
+    box-shadow: 0 0 20px rgba(146, 86, 62, 0.3);
   }
   50% {
-    box-shadow: 0 0 30px rgba(49, 95, 242, 0.5);
+    box-shadow: 0 0 30px rgba(146, 86, 62, 0.5);
   }
 `;
 
 const Sidebar = styled.aside`
   width: 270px;
   background:
-    linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+    linear-gradient(180deg, #2D2420 0%, #3D322B 50%, #4A3C33 100%);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -117,7 +117,7 @@ const Logo = styled.div`
 const LogoIcon = styled.div`
   width: 42px;
   height: 42px;
-  background: linear-gradient(145deg, ${theme.colors.primary} 0%, #4F46E5 100%);
+  background: linear-gradient(145deg, ${theme.colors.primary} 0%, #7A4833 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -176,7 +176,7 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   padding: 12px 16px;
   border-radius: 10px;
   color: ${props => (props.$active ? 'white' : 'rgba(255, 255, 255, 0.6)')};
-  background: ${props => (props.$active ? 'rgba(49, 95, 242, 0.15)' : 'transparent')};
+  background: ${props => (props.$active ? 'rgba(146, 86, 62, 0.15)' : 'transparent')};
   font-weight: ${props => (props.$active ? '600' : '500')};
   font-size: 14px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -192,13 +192,13 @@ const NavLink = styled(Link)<{ $active: boolean }>`
       transform: translateY(-50%);
       width: 3px;
       height: 24px;
-      background: linear-gradient(180deg, ${theme.colors.primary}, #4F46E5);
+      background: linear-gradient(180deg, ${theme.colors.primary}, #7A4833);
       border-radius: 0 3px 3px 0;
     }
   `}
 
   &:hover {
-    background: ${props => props.$active ? 'rgba(49, 95, 242, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
+    background: ${props => props.$active ? 'rgba(146, 86, 62, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
     color: white;
     transform: translateX(2px);
   }
@@ -251,7 +251,7 @@ const Avatar = styled.div`
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  background: linear-gradient(145deg, ${theme.colors.primary} 0%, #4F46E5 100%);
+  background: linear-gradient(145deg, ${theme.colors.primary} 0%, #7A4833 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -352,7 +352,7 @@ const AdminSidebar: React.FC = () => {
           <Shield />
         </LogoIcon>
         <div>
-          <h1>ShapeUp</h1>
+          <h1>Essence</h1>
         </div>
         <span className="badge">Admin</span>
       </Logo>
