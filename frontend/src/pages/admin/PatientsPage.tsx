@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Users, Plus, Search, Edit2, Trash2, Check, AlertCircle, Eye, Calendar, FileText } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -422,6 +422,7 @@ const PATIENT_TYPES: { value: PatientType; label: string }[] = [
 
 const PatientsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [patients, setPatients] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -516,8 +517,7 @@ const PatientsPage: React.FC = () => {
   };
 
   const handleViewPatient = (patient: Profile) => {
-    setViewingPatient(patient);
-    setShowDetailModal(true);
+    navigate(`/admin/patients/${patient.id}`);
   };
 
   const handleSave = async () => {

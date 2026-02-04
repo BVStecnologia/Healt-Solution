@@ -1066,7 +1066,7 @@ const CalendarPage: React.FC = () => {
   const handleViewPatient = () => {
     if (selectedEvent?.patientId) {
       closeModal();
-      navigate(`/admin/patients?view=${selectedEvent.patientId}`);
+      navigate(`/admin/patients/${selectedEvent.patientId}`);
     }
   };
 

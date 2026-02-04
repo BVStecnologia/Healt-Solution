@@ -21,6 +21,7 @@ const CalendarPage = lazy(() => import('./pages/admin/CalendarPage'));
 const WhatsAppPage = lazy(() => import('./pages/admin/WhatsAppPage'));
 const AdminAppointmentsPage = lazy(() => import('./pages/admin/AdminAppointmentsPage'));
 const PatientsPage = lazy(() => import('./pages/admin/PatientsPage'));
+const PatientProfilePage = lazy(() => import('./pages/admin/PatientProfilePage'));
 const ProvidersPage = lazy(() => import('./pages/admin/ProvidersPage'));
 const AdminsPage = lazy(() => import('./pages/admin/AdminsPage'));
 
@@ -96,6 +97,12 @@ const App: React.FC = () => {
         <Route path="/admin/patients" element={
           <AdminProtectedRoute>
             <PatientsPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/patients/:id" element={
+          <AdminProtectedRoute>
+            <PatientProfilePage />
           </AdminProtectedRoute>
         } />
 
