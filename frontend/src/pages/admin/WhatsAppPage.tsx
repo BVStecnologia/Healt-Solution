@@ -497,7 +497,7 @@ const WhatsAppPage: React.FC = () => {
                   </PhoneNumber>
                 ) : instance.qrCode ? (
                   <QRCodeContainer>
-                    <QRCodeImage src={`data:image/png;base64,${instance.qrCode}`} alt="QR Code" />
+                    <QRCodeImage src={instance.qrCode.startsWith('data:') ? instance.qrCode : `data:image/png;base64,${instance.qrCode}`} alt="QR Code" />
                     <QRCodeText>Escaneie o QR Code com seu WhatsApp</QRCodeText>
                   </QRCodeContainer>
                 ) : (
