@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, addDays, subDays } from 'date-fns';
+import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, addDays, subDays, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, Users, Calendar as CalendarIcon } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
@@ -70,7 +71,68 @@ const Header = styled.div`
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
+  gap: ${theme.spacing.lg};
+`;
+
+const TodayInfo = styled.button`
+  display: flex;
+  align-items: center;
   gap: ${theme.spacing.md};
+  padding: ${theme.spacing.sm} ${theme.spacing.lg};
+  background: ${theme.colors.surface};
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.borderRadius.lg};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${theme.colors.primarySoft};
+    border-color: ${theme.colors.primary}40;
+    transform: translateY(-1px);
+  }
+
+  .date-display {
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing.sm};
+
+    .day {
+      font-size: 28px;
+      font-weight: 700;
+      color: ${theme.colors.primary};
+      line-height: 1;
+      font-family: ${theme.typography.fontFamilyHeading};
+    }
+
+    .month-year {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+
+      .month {
+        font-size: 13px;
+        font-weight: 600;
+        color: ${theme.colors.text};
+        text-transform: capitalize;
+        line-height: 1.2;
+      }
+
+      .year {
+        font-size: 11px;
+        color: ${theme.colors.textMuted};
+        line-height: 1.2;
+      }
+    }
+  }
+
+  .event-count {
+    background: ${theme.colors.primary};
+    color: white;
+    padding: 4px 10px;
+    border-radius: ${theme.borderRadius.full};
+    font-size: 11px;
+    font-weight: 600;
+  }
 `;
 
 const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
@@ -431,9 +493,40 @@ const messages = {
 };
 
 const CalendarPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [view, setView] = useState<View>('month');
-  const [date, setDate] = useState(new Date());
+
+  // Ler view da URL ou usar 'month' como padrão
+  const viewFromUrl = searchParams.get('view') as View | null;
+  const validViews: View[] = ['month', 'week', 'day', 'agenda'];
+  const initialView: View = viewFromUrl && validViews.includes(viewFromUrl) ? viewFromUrl : 'month';
+
+  // Ler data da URL ou usar hoje como padrão
+  const dateFromUrl = searchParams.get('date');
+  const parsedDate = dateFromUrl ? parseISO(dateFromUrl) : new Date();
+  const initialDate = isValid(parsedDate) ? parsedDate : new Date();
+
+  const [view, setView] = useState<View>(initialView);
+  const [date, setDate] = useState(initialDate);
+
+  // Atualizar URL quando view ou date mudar
+  const updateUrl = useCallback((newView: View, newDate: Date) => {
+    const params = new URLSearchParams();
+    params.set('view', newView);
+    params.set('date', format(newDate, 'yyyy-MM-dd'));
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams]);
+
+  // Handlers que atualizam state e URL
+  const handleViewChange = useCallback((newView: View) => {
+    setView(newView);
+    updateUrl(newView, date);
+  }, [date, updateUrl]);
+
+  const handleNavigate = useCallback((newDate: Date) => {
+    setDate(newDate);
+    updateUrl(view, newDate);
+  }, [view, updateUrl]);
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -523,11 +616,43 @@ const CalendarPage: React.FC = () => {
     // TODO: Abrir modal com detalhes da consulta
   };
 
+  // Ir para hoje
+  const goToToday = useCallback(() => {
+    const today = new Date();
+    setDate(today);
+    updateUrl(view, today);
+  }, [view, updateUrl]);
+
+  // Contagem de eventos do dia atual
+  const todayEvents = useMemo(() => {
+    const today = new Date();
+    return events.filter(e =>
+      format(e.start, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
+    );
+  }, [events]);
+
   return (
     <AdminLayout>
       <Header>
-        <h1>Calendário</h1>
+        <h1>
+          <span className="calendar-icon">
+            <CalendarIcon />
+          </span>
+          Calendário
+        </h1>
         <HeaderActions>
+          <TodayInfo onClick={goToToday}>
+            <div className="date-display">
+              <span className="day">{format(new Date(), 'd')}</span>
+              <div className="month-year">
+                <span className="month">{format(new Date(), 'MMMM', { locale: ptBR })}</span>
+                <span className="year">{format(new Date(), 'yyyy')}</span>
+              </div>
+            </div>
+            {todayEvents.length > 0 && (
+              <span className="event-count">{todayEvents.length} consulta{todayEvents.length > 1 ? 's' : ''}</span>
+            )}
+          </TodayInfo>
           <Button $variant="primary">
             <Plus />
             Nova Consulta
@@ -542,9 +667,9 @@ const CalendarPage: React.FC = () => {
           startAccessor="start"
           endAccessor="end"
           view={view}
-          onView={setView}
+          onView={handleViewChange}
           date={date}
-          onNavigate={setDate}
+          onNavigate={handleNavigate}
           eventPropGetter={eventStyleGetter}
           onSelectEvent={handleSelectEvent}
           messages={messages}
