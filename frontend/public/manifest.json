@@ -1,0 +1,23 @@
+{
+  "short_name": "ShapeUp",
+  "name": "ShapeUp Health Solutions",
+  "description": "Portal do Paciente - Gestão de Consultas",
+  "icons": [
+    {
+      "src": "favicon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#315FF2",
+  "background_color": "#FAFBFC"
+}

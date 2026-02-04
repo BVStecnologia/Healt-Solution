@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Buscar perfil do usuário
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -44,11 +44,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setProfile(null);
+        return false;
+      }
       setProfile(data);
+      return true;
     } catch (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
+      return false;
     }
   }, []);
 
@@ -88,12 +94,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          // Fetch profile mas não bloqueia o loading
+          fetchProfile(session.user.id).finally(() => {
+            setLoading(false);
+          });
         } else {
           setProfile(null);
+          setLoading(false);
         }
-
-        setLoading(false);
       }
     );
 
