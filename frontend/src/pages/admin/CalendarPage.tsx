@@ -20,7 +20,7 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
@@ -881,6 +881,7 @@ interface CalendarEvent {
   start: Date;
   end: Date;
   status: string;
+  patientId: string;
   patientName: string;
   providerName: string;
   type: string;
@@ -903,6 +904,7 @@ const messages = {
 
 const CalendarPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -975,6 +977,7 @@ const CalendarPage: React.FC = () => {
           start: startDate,
           end: endDate,
           status: apt.status,
+          patientId: apt.patient_id,
           patientName,
           providerName,
           type: apt.type,
@@ -1058,6 +1061,13 @@ const CalendarPage: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
+  };
+
+  const handleViewPatient = () => {
+    if (selectedEvent?.patientId) {
+      closeModal();
+      navigate(`/admin/patients?view=${selectedEvent.patientId}`);
+    }
   };
 
   const handleConfirmAppointment = async () => {
@@ -1295,6 +1305,10 @@ const CalendarPage: React.FC = () => {
             </ModalBody>
 
             <ModalFooter>
+              <ModalButton $variant="primary" onClick={handleViewPatient}>
+                <User />
+                Ver Ficha
+              </ModalButton>
               {selectedEvent.status === 'pending' && (
                 <>
                   <ModalButton $variant="success" onClick={handleConfirmAppointment}>

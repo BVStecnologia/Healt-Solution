@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useSearchParams } from 'react-router-dom';
 import { Users, Plus, Search, Edit2, Trash2, Check, AlertCircle, Eye, Calendar, FileText } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -420,6 +421,7 @@ const PATIENT_TYPES: { value: PatientType; label: string }[] = [
 ];
 
 const PatientsPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [patients, setPatients] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -438,6 +440,21 @@ const PatientsPage: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Abrir ficha do paciente se vier da URL
+  useEffect(() => {
+    const viewPatientId = searchParams.get('view');
+    if (viewPatientId && patients.length > 0) {
+      const patient = patients.find(p => p.id === viewPatientId);
+      if (patient) {
+        setViewingPatient(patient);
+        setShowDetailModal(true);
+        // Limpar parâmetro da URL
+        searchParams.delete('view');
+        setSearchParams(searchParams);
+      }
+    }
+  }, [searchParams, patients, setSearchParams]);
 
   useEffect(() => {
     fetchPatients();
