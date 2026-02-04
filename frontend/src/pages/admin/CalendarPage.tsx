@@ -72,7 +72,6 @@ const HeaderActions = styled.div`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.lg};
-  padding-right: 60px; /* Espaço para o seletor de idioma */
 `;
 
 const TodayInfo = styled.button`
