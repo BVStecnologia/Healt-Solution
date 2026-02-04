@@ -2,16 +2,23 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 import LanguageSwitcher from './components/LanguageSwitcher';
 
-// Lazy loading das páginas
+// Lazy loading das páginas - Portal do Paciente
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AppointmentsPage = lazy(() => import('./pages/scheduling/AppointmentsPage'));
 const NewAppointmentPage = lazy(() => import('./pages/scheduling/NewAppointmentPage'));
 const AppointmentDetailPage = lazy(() => import('./pages/scheduling/AppointmentDetailPage'));
+
+// Lazy loading das páginas - Painel Admin
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const CalendarPage = lazy(() => import('./pages/admin/CalendarPage'));
+const WhatsAppPage = lazy(() => import('./pages/admin/WhatsAppPage'));
 
 const App: React.FC = () => {
   const { loading } = useAuth();
@@ -52,6 +59,28 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <AppointmentDetailPage />
           </ProtectedRoute>
+        } />
+
+        {/* Rotas Admin - Públicas */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+
+        {/* Rotas Admin - Protegidas */}
+        <Route path="/admin" element={
+          <AdminProtectedRoute>
+            <AdminDashboard />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/calendar" element={
+          <AdminProtectedRoute>
+            <CalendarPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/whatsapp" element={
+          <AdminProtectedRoute>
+            <WhatsAppPage />
+          </AdminProtectedRoute>
         } />
 
         {/* Fallback */}
