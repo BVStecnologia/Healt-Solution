@@ -183,6 +183,7 @@ const QRCodeImage = styled.img`
   height: 200px;
   border-radius: ${theme.borderRadius.md};
   margin-bottom: ${theme.spacing.md};
+  filter: sepia(100%) saturate(300%) brightness(70%) hue-rotate(330deg);
 `;
 
 const QRCodeText = styled.p`
