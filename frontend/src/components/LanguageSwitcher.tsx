@@ -6,8 +6,8 @@ import { ChevronDown } from 'lucide-react';
 
 const Container = styled.div`
   position: fixed;
-  top: ${theme.spacing.sm};
-  right: ${theme.spacing.lg};
+  top: ${theme.spacing.md};
+  right: ${theme.spacing.xxl};
   z-index: 999;
 `;
 

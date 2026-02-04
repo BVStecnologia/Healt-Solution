@@ -282,19 +282,36 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-event {
-    background: ${theme.colors.primary};
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 11px;
     font-weight: 600;
-    border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      z-index: 10;
     }
+
+    &:active {
+      transform: translateY(0) scale(1);
+    }
+
+    .rbc-event-content {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .rbc-event-label {
+    font-weight: 700;
+    font-size: 10px;
+    opacity: 0.9;
   }
 
   .rbc-toolbar {
@@ -414,21 +431,47 @@ const CalendarWrapper = styled.div`
     }
 
     th {
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing.md} ${theme.spacing.lg};
       font-weight: 700;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: ${theme.colors.textMuted};
+      border-bottom: 2px solid ${theme.colors.border};
     }
 
     td {
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing.md} ${theme.spacing.lg};
       border-bottom: 1px solid ${theme.colors.borderLight};
+      font-size: 13px;
+      font-weight: 500;
     }
 
-    tr:hover td {
-      background: ${theme.colors.primarySoft}20;
+    tbody tr {
+      transition: all 0.2s ease;
+      border-left: 4px solid transparent;
+
+      &:hover {
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      }
+    }
+
+    .rbc-agenda-date-cell {
+      font-weight: 600;
+      color: ${theme.colors.text};
+      white-space: nowrap;
+    }
+
+    .rbc-agenda-time-cell {
+      color: ${theme.colors.textMuted};
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .rbc-agenda-event-cell {
+      font-weight: 600;
+      color: ${theme.colors.text};
     }
   }
 
@@ -446,23 +489,60 @@ const CalendarWrapper = styled.div`
 
 const Legend = styled.div`
   display: flex;
-  gap: ${theme.spacing.lg};
-  margin-top: ${theme.spacing.md};
-  padding-top: ${theme.spacing.md};
-  border-top: 1px solid ${theme.colors.border};
+  gap: ${theme.spacing.xl};
+  margin-top: ${theme.spacing.lg};
+  padding: ${theme.spacing.md} ${theme.spacing.lg};
+  background: linear-gradient(135deg, ${theme.colors.background} 0%, ${theme.colors.surface} 100%);
+  border-radius: ${theme.borderRadius.lg};
+  border: 1px solid ${theme.colors.borderLight};
 `;
 
 const LegendItem = styled.div`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.sm};
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   color: ${theme.colors.textSecondary};
+  transition: all 0.2s ease;
 
-  .dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 3px;
+  &:hover {
+    color: ${theme.colors.text};
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: ${theme.borderRadius.md};
+    font-weight: 600;
+    font-size: 11px;
+    border-left: 3px solid;
+  }
+
+  .pending {
+    background: #FEF3C7;
+    border-color: #D97706;
+    color: #92400E;
+  }
+
+  .confirmed {
+    background: #D1FAE5;
+    border-color: #059669;
+    color: #065F46;
+  }
+
+  .completed {
+    background: #F3F4F6;
+    border-color: #6B7280;
+    color: #374151;
+  }
+
+  .cancelled {
+    background: #FEE2E2;
+    border-color: #DC2626;
+    color: #991B1B;
   }
 `;
 
@@ -581,32 +661,60 @@ const CalendarPage: React.FC = () => {
   }, [loadAppointments]);
 
   const eventStyleGetter = (event: CalendarEvent) => {
-    let backgroundColor = theme.colors.primary;
+    // Paleta luxuosa com alto contraste - tons que harmonizam com marrom/bege
+    const statusStyles: Record<string, { bg: string; border: string; text: string }> = {
+      pending: {
+        bg: '#FEF3C7',      // Âmbar claro
+        border: '#D97706',   // Âmbar escuro
+        text: '#92400E',     // Marrom âmbar (alto contraste)
+      },
+      confirmed: {
+        bg: '#D1FAE5',      // Verde menta claro
+        border: '#059669',   // Verde esmeralda
+        text: '#065F46',     // Verde escuro (alto contraste)
+      },
+      checked_in: {
+        bg: '#DBEAFE',      // Azul claro
+        border: '#2563EB',   // Azul royal
+        text: '#1E40AF',     // Azul escuro (alto contraste)
+      },
+      in_progress: {
+        bg: '#E0E7FF',      // Índigo claro
+        border: '#4F46E5',   // Índigo
+        text: '#3730A3',     // Índigo escuro (alto contraste)
+      },
+      completed: {
+        bg: '#F3F4F6',      // Cinza claro
+        border: '#6B7280',   // Cinza médio
+        text: '#374151',     // Cinza escuro (alto contraste)
+      },
+      cancelled: {
+        bg: '#FEE2E2',      // Vermelho claro
+        border: '#DC2626',   // Vermelho
+        text: '#991B1B',     // Vermelho escuro (alto contraste)
+      },
+      no_show: {
+        bg: '#FECACA',      // Vermelho rosado
+        border: '#B91C1C',   // Vermelho tijolo
+        text: '#7F1D1D',     // Vermelho muito escuro (alto contraste)
+      },
+    };
 
-    switch (event.status) {
-      case 'pending':
-        backgroundColor = '#F59E0B';
-        break;
-      case 'confirmed':
-        backgroundColor = '#10B981';
-        break;
-      case 'cancelled':
-      case 'no_show':
-        backgroundColor = '#EF4444';
-        break;
-      case 'completed':
-        backgroundColor = '#6B7280';
-        break;
-    }
+    const style = statusStyles[event.status] || statusStyles.pending;
 
     return {
       style: {
-        backgroundColor,
-        borderRadius: '4px',
-        opacity: event.status === 'cancelled' ? 0.6 : 1,
-        color: 'white',
-        border: 'none',
+        backgroundColor: style.bg,
+        borderLeft: `4px solid ${style.border}`,
+        borderRadius: '6px',
+        color: style.text,
+        fontWeight: 600,
+        fontSize: '12px',
+        padding: '4px 8px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        opacity: event.status === 'cancelled' || event.status === 'no_show' ? 0.85 : 1,
         display: 'block',
+        textDecoration: event.status === 'cancelled' ? 'line-through' : 'none',
       },
     };
   };
@@ -692,20 +800,16 @@ const CalendarPage: React.FC = () => {
 
         <Legend>
           <LegendItem>
-            <div className="dot" style={{ background: '#F59E0B' }} />
-            Pendente
+            <span className="status-badge pending">Pendente</span>
           </LegendItem>
           <LegendItem>
-            <div className="dot" style={{ background: '#10B981' }} />
-            Confirmada
+            <span className="status-badge confirmed">Confirmada</span>
           </LegendItem>
           <LegendItem>
-            <div className="dot" style={{ background: '#6B7280' }} />
-            Concluída
+            <span className="status-badge completed">Concluída</span>
           </LegendItem>
           <LegendItem>
-            <div className="dot" style={{ background: '#EF4444' }} />
-            Cancelada
+            <span className="status-badge cancelled">Cancelada</span>
           </LegendItem>
         </Legend>
       </CalendarWrapper>
