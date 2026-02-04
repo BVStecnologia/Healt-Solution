@@ -55,3 +55,8 @@ temp/
 
 # Debug
 .debug/
+
+# Supabase volumes (database data, storage, etc.)
+supabase/volumes/db/data/
+supabase/volumes/storage/
+supabase/volumes/functions/

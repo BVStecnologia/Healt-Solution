@@ -4,38 +4,39 @@
   "description": "Portal do Paciente - Sistema de Gestão de Clínica",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "dependencies": {
-    "next": "^14.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@tanstack/react-query": "^5.17.0",
-    "axios": "^1.6.7",
-    "zustand": "^4.5.0",
-    "react-hook-form": "^7.49.3",
-    "@hookform/resolvers": "^3.3.4",
-    "zod": "^3.22.4",
-    "@stripe/stripe-js": "^2.4.0",
-    "@stripe/react-stripe-js": "^2.4.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "ajv": "^8.17.1",
     "date-fns": "^3.3.1",
     "lucide-react": "^0.316.0",
-    "tailwindcss": "^3.4.1",
-    "tailwind-merge": "^2.2.1",
-    "clsx": "^2.1.0",
-    "class-variance-authority": "^0.7.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.2.0",
+    "react-scripts": "5.0.1",
+    "styled-components": "^6.1.15",
+    "typescript": "^5.3.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.16",
     "@types/react": "^18.2.52",
-    "@types/react-dom": "^18.2.18",
-    "autoprefixer": "^10.4.17",
-    "eslint": "^8.56.0",
-    "eslint-config-next": "^14.1.0",
-    "postcss": "^8.4.34",
-    "typescript": "^5.3.3"
+    "@types/react-dom": "^18.2.18"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
