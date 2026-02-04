@@ -208,10 +208,10 @@ const MobileTitle = styled.h1`
 `;
 
 const Content = styled.div`
-  padding: ${theme.spacing.lg};
+  padding: ${theme.spacing.xxl} ${theme.spacing.lg} ${theme.spacing.lg};
 
   @media (max-width: 768px) {
-    padding: ${theme.spacing.md};
+    padding: ${theme.spacing.xl} ${theme.spacing.md} ${theme.spacing.md};
   }
 `;
 

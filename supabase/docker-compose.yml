@@ -13,6 +13,8 @@ services:
     container_name: supabase-studio
     image: supabase/studio:2026.01.27-sha-6aa59ff
     restart: unless-stopped
+    ports:
+      - "3001:3000"
     healthcheck:
       test:
         [

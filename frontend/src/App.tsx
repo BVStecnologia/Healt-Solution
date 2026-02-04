@@ -3,9 +3,11 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
+import LanguageSwitcher from './components/LanguageSwitcher';
 
 // Lazy loading das páginas
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AppointmentsPage = lazy(() => import('./pages/scheduling/AppointmentsPage'));
 const NewAppointmentPage = lazy(() => import('./pages/scheduling/NewAppointmentPage'));
@@ -19,10 +21,13 @@ const App: React.FC = () => {
   }
 
   return (
-    <Suspense fallback={<LoadingSpinner fullScreen />}>
-      <Routes>
+    <>
+      <LanguageSwitcher />
+      <Suspense fallback={<LoadingSpinner fullScreen />}>
+        <Routes>
         {/* Rotas públicas */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
         {/* Rotas protegidas */}
         <Route path="/" element={
@@ -52,7 +57,8 @@ const App: React.FC = () => {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Suspense>
+      </Suspense>
+    </>
   );
 };
 

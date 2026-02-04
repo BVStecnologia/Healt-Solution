@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { LoadingProvider } from './context/LoadingContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { GlobalStyle } from './styles/GlobalStyle';
 import './index.css';
 
@@ -14,12 +15,14 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <LoadingProvider>
-        <AuthProvider>
-          <GlobalStyle />
-          <App />
-        </AuthProvider>
-      </LoadingProvider>
+      <LanguageProvider>
+        <LoadingProvider>
+          <AuthProvider>
+            <GlobalStyle />
+            <App />
+          </AuthProvider>
+        </LoadingProvider>
+      </LanguageProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
