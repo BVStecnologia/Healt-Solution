@@ -226,6 +226,9 @@ interface PendingAppointment {
   type: string;
 }
 
+const EVOLUTION_API_URL = 'http://localhost:8082';
+const EVOLUTION_API_KEY = 'sua_chave_evolution_aqui';
+
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats>({
     totalPatients: 0,
@@ -235,10 +238,56 @@ const AdminDashboard: React.FC = () => {
   });
   const [pendingAppointments, setPendingAppointments] = useState<PendingAppointment[]>([]);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
+  const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+
+  // Verificar status do WhatsApp
+  const checkWhatsAppStatus = async () => {
+    try {
+      const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
+        headers: {
+          'apikey': EVOLUTION_API_KEY,
+        },
+      });
+
+      if (response.ok) {
+        const instances = await response.json();
+        // Verificar se há alguma instância conectada
+        const connectedInstance = instances.find((inst: any) =>
+          inst.connectionStatus === 'open' || inst.state === 'open'
+        );
+
+        if (connectedInstance) {
+          setWhatsappConnected(true);
+          // Buscar detalhes da instância conectada
+          const detailResponse = await fetch(
+            `${EVOLUTION_API_URL}/instance/connectionState/${connectedInstance.name || connectedInstance.instanceName}`,
+            { headers: { 'apikey': EVOLUTION_API_KEY } }
+          );
+          if (detailResponse.ok) {
+            const detail = await detailResponse.json();
+            if (detail.instance?.user?.id) {
+              setWhatsappPhone(detail.instance.user.id);
+            }
+          }
+        } else {
+          setWhatsappConnected(false);
+          setWhatsappPhone(null);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao verificar WhatsApp:', error);
+      setWhatsappConnected(false);
+    }
+  };
 
   useEffect(() => {
     loadStats();
     loadPendingAppointments();
+    checkWhatsAppStatus();
+
+    // Polling para atualizar status do WhatsApp a cada 10 segundos
+    const interval = setInterval(checkWhatsAppStatus, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadStats = async () => {
@@ -363,6 +412,20 @@ const AdminDashboard: React.FC = () => {
     return types[type] || type;
   };
 
+  const formatPhone = (phone: string | null) => {
+    if (!phone) return '';
+    const cleaned = phone.replace('@s.whatsapp.net', '').replace('@c.us', '');
+    if (cleaned.startsWith('55') && cleaned.length >= 12) {
+      const ddd = cleaned.slice(2, 4);
+      const rest = cleaned.slice(4);
+      if (rest.length === 9) {
+        return `+55 (${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+      }
+      return `+55 (${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+    }
+    return `+${cleaned}`;
+  };
+
   return (
     <AdminLayout>
       <Header>
@@ -457,10 +520,17 @@ const AdminDashboard: React.FC = () => {
             <span>{whatsappConnected ? 'Conectado' : 'Desconectado'}</span>
           </WhatsAppStatus>
 
-          <EmptyState>
-            <MessageCircle />
-            <p>Configure uma instância em<br />Configurações → WhatsApp</p>
-          </EmptyState>
+          {whatsappConnected && whatsappPhone ? (
+            <EmptyState>
+              <MessageCircle />
+              <p>Número: {formatPhone(whatsappPhone)}</p>
+            </EmptyState>
+          ) : (
+            <EmptyState>
+              <MessageCircle />
+              <p>Configure uma instância em<br />Configurações → WhatsApp</p>
+            </EmptyState>
+          )}
         </Card>
       </Grid>
     </AdminLayout>
