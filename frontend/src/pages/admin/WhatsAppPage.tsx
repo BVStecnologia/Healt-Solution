@@ -207,7 +207,7 @@ const EmptyState = styled.div`
   border-radius: ${theme.borderRadius.xl};
   border: 2px dashed ${theme.colors.border};
 
-  svg {
+  > svg {
     width: 64px;
     height: 64px;
     color: ${theme.colors.textMuted};
@@ -224,6 +224,12 @@ const EmptyState = styled.div`
   p {
     color: ${theme.colors.textSecondary};
     margin: 0 0 ${theme.spacing.lg};
+  }
+
+  button svg {
+    width: 18px;
+    height: 18px;
+    color: white;
   }
 `;
 
@@ -311,11 +317,11 @@ const WhatsAppPage: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         const formattedInstances: Instance[] = (data || []).map((inst: any) => ({
-          id: inst.instance?.instanceName || inst.instanceName,
-          name: inst.instance?.instanceName || inst.instanceName,
-          instanceName: inst.instance?.instanceName || inst.instanceName,
-          phoneNumber: inst.instance?.owner || null,
-          status: inst.instance?.status === 'open' ? 'connected' : 'disconnected',
+          id: inst.id || inst.name,
+          name: inst.name || inst.instanceName,
+          instanceName: inst.name || inst.instanceName,
+          phoneNumber: inst.ownerJid || inst.number || null,
+          status: inst.connectionStatus === 'open' ? 'connected' : 'disconnected',
           qrCode: null,
         }));
         setInstances(formattedInstances);
@@ -341,6 +347,7 @@ const WhatsAppPage: React.FC = () => {
         body: JSON.stringify({
           instanceName: newInstanceName.toLowerCase().replace(/\s+/g, '_'),
           qrcode: true,
+          integration: 'WHATSAPP-BAILEYS',
         }),
       });
 
@@ -360,7 +367,7 @@ const WhatsAppPage: React.FC = () => {
 
   const getQRCode = async (instanceName: string) => {
     try {
-      const response = await fetch(`${EVOLUTION_API_URL}/instance/qrcode/${instanceName}`, {
+      const response = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
         headers: {
           'apikey': EVOLUTION_API_KEY,
         },
@@ -368,11 +375,13 @@ const WhatsAppPage: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setInstances(prev => prev.map(inst =>
-          inst.instanceName === instanceName
-            ? { ...inst, qrCode: data.qrcode?.base64 || data.base64, status: 'qr_code' }
-            : inst
-        ));
+        if (data.base64 || data.qrcode?.base64) {
+          setInstances(prev => prev.map(inst =>
+            inst.instanceName === instanceName
+              ? { ...inst, qrCode: data.base64 || data.qrcode?.base64, status: 'qr_code' }
+              : inst
+          ));
+        }
       }
     } catch (error) {
       console.error('Error getting QR code:', error);
@@ -389,14 +398,14 @@ const WhatsAppPage: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const isConnected = data.instance?.state === 'open';
+        const isConnected = data.instance?.state === 'open' || data.state === 'open';
 
         setInstances(prev => prev.map(inst =>
           inst.instanceName === instanceName
             ? {
                 ...inst,
                 status: isConnected ? 'connected' : 'disconnected',
-                phoneNumber: data.instance?.owner || inst.phoneNumber,
+                phoneNumber: data.instance?.owner || data.ownerJid || inst.phoneNumber,
               }
             : inst
         ));
