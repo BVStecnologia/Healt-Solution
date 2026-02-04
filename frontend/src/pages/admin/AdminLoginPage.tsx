@@ -1,19 +1,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
-import { Mail, Lock, Eye, EyeOff, Shield, ArrowRight, Chrome } from 'lucide-react';
+import styled, { keyframes, css } from 'styled-components';
+import { Mail, Lock, Eye, EyeOff, Shield, ArrowRight } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 
-const fadeIn = keyframes`
+const fadeInUp = keyframes`
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+`;
+
+const pulse = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(49, 95, 242, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(49, 95, 242, 0);
+  }
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 `;
 
@@ -22,59 +40,118 @@ const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(49, 95, 242, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
   padding: ${theme.spacing.lg};
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
 `;
 
 const Card = styled.div`
   width: 100%;
   max-width: 420px;
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.xxl};
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: ${theme.spacing.xxl};
-  animation: ${fadeIn} 0.5s ease-out;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: 48px 40px;
+  animation: ${fadeInUp} 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  backdrop-filter: blur(10px);
+
+  @media (max-width: 480px) {
+    padding: 32px 24px;
+    margin: 0 16px;
+  }
 `;
 
 const Logo = styled.div`
   text-align: center;
-  margin-bottom: ${theme.spacing.xl};
+  margin-bottom: 32px;
+  animation: ${fadeInUp} 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0.1s;
+  animation-fill-mode: both;
+
+  .icon-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
 
   .icon {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, ${theme.colors.primary} 0%, #2850D9 100%);
-    border-radius: 16px;
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(145deg, ${theme.colors.primary} 0%, #4F46E5 100%);
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto ${theme.spacing.md};
+    position: relative;
+    z-index: 1;
+    box-shadow:
+      0 10px 30px -10px rgba(49, 95, 242, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
 
     svg {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       color: white;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, ${theme.colors.primary}, #4F46E5);
+      opacity: 0.3;
+      z-index: -1;
+      animation: ${pulse} 2s ease-in-out infinite;
     }
   }
 
   h1 {
-    font-size: ${theme.typography.sizes.xxl};
-    font-weight: ${theme.typography.weights.bold};
-    color: ${theme.colors.text};
-    margin: 0 0 ${theme.spacing.xs};
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 28px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
   }
 
   p {
-    color: ${theme.colors.textSecondary};
+    color: #64748b;
     margin: 0;
-    font-size: ${theme.typography.sizes.sm};
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
   }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.md};
+  gap: 16px;
+  animation: ${fadeInUp} 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0.2s;
+  animation-fill-mode: both;
 `;
 
 const InputGroup = styled.div`
@@ -83,88 +160,153 @@ const InputGroup = styled.div`
 
 const InputIcon = styled.div`
   position: absolute;
-  left: ${theme.spacing.md};
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: ${theme.colors.textMuted};
+  color: #94a3b8;
+  transition: color 0.2s ease;
+  pointer-events: none;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 14px 14px 14px 46px;
-  border: 1.5px solid ${theme.colors.border};
-  border-radius: ${theme.borderRadius.lg};
-  font-size: ${theme.typography.sizes.md};
-  color: ${theme.colors.text};
-  background: ${theme.colors.surface};
-  transition: all 0.2s ease;
+  padding: 16px 16px 16px 52px;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 15px;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.25s ease;
+  font-weight: 500;
+
+  &:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+  }
 
   &:focus {
     outline: none;
     border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(49, 95, 242, 0.1);
+
+    & + ${InputIcon} {
+      color: ${theme.colors.primary};
+    }
   }
 
   &::placeholder {
-    color: ${theme.colors.textMuted};
+    color: #94a3b8;
+    font-weight: 400;
   }
 `;
 
 const PasswordToggle = styled.button`
   position: absolute;
-  right: ${theme.spacing.md};
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: ${theme.colors.textMuted};
+  color: #94a3b8;
   cursor: pointer;
   padding: 4px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   &:hover {
-    color: ${theme.colors.text};
+    color: #64748b;
+    background: #f1f5f9;
   }
 `;
 
 const ErrorMessage = styled.div`
-  background: ${theme.colors.errorLight};
-  border: 1px solid ${theme.colors.error}30;
-  color: ${theme.colors.error};
-  padding: ${theme.spacing.md};
-  border-radius: ${theme.borderRadius.md};
-  font-size: ${theme.typography.sizes.sm};
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &::before {
+    content: '!';
+    width: 20px;
+    height: 20px;
+    background: #dc2626;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
 `;
 
 const SubmitButton = styled.button<{ $loading?: boolean }>`
   width: 100%;
-  padding: 14px ${theme.spacing.lg};
-  background: linear-gradient(135deg, ${theme.colors.primary} 0%, #2850D9 100%);
+  padding: 16px 24px;
+  background: linear-gradient(135deg, ${theme.colors.primary} 0%, #4F46E5 100%);
   color: white;
   border: none;
-  border-radius: ${theme.borderRadius.lg};
-  font-size: ${theme.typography.sizes.md};
-  font-weight: ${theme.typography.weights.semibold};
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${theme.spacing.sm};
-  margin-top: ${theme.spacing.sm};
+  gap: 10px;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px -10px ${theme.colors.primary};
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(49, 95, 242, 0.5);
+
+    &::before {
+      opacity: 1;
+      animation: ${shimmer} 1.5s infinite;
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   &:disabled {
@@ -175,14 +317,19 @@ const SubmitButton = styled.button<{ $loading?: boolean }>`
   svg {
     width: 18px;
     height: 18px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover:not(:disabled) svg {
+    transform: translateX(4px);
   }
 `;
 
 const Spinner = styled.div`
-  width: 18px;
-  height: 18px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 
@@ -191,57 +338,60 @@ const Spinner = styled.div`
   }
 `;
 
-const BackLink = styled.a`
-  display: block;
-  text-align: center;
-  margin-top: ${theme.spacing.lg};
-  color: ${theme.colors.textSecondary};
-  font-size: ${theme.typography.sizes.sm};
-
-  &:hover {
-    color: ${theme.colors.primary};
-  }
-`;
-
 const Divider = styled.div`
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.md};
-  margin: ${theme.spacing.md} 0;
+  gap: 16px;
+  margin: 24px 0;
+  animation: ${fadeInUp} 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0.3s;
+  animation-fill-mode: both;
 
   &::before,
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: ${theme.colors.border};
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
   }
 
   span {
-    color: ${theme.colors.textMuted};
-    font-size: ${theme.typography.sizes.sm};
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 `;
 
 const GoogleButton = styled.button`
   width: 100%;
-  padding: 14px ${theme.spacing.lg};
+  padding: 16px 24px;
   background: white;
-  color: ${theme.colors.text};
-  border: 1.5px solid ${theme.colors.border};
-  border-radius: ${theme.borderRadius.lg};
-  font-size: ${theme.typography.sizes.md};
-  font-weight: ${theme.typography.weights.medium};
+  color: #1e293b;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: ${theme.spacing.sm};
+  gap: 12px;
+  animation: ${fadeInUp} 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0.35s;
+  animation-fill-mode: both;
 
   &:hover:not(:disabled) {
-    background: ${theme.colors.background};
-    border-color: ${theme.colors.textMuted};
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   &:disabled {
@@ -276,6 +426,23 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const BackLink = styled.a`
+  display: block;
+  text-align: center;
+  margin-top: 24px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  animation: ${fadeInUp} 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation-delay: 0.4s;
+  animation-fill-mode: both;
+
+  &:hover {
+    color: ${theme.colors.primary};
+  }
+`;
+
 const AdminLoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -301,7 +468,6 @@ const AdminLoginPage: React.FC = () => {
         return;
       }
 
-      // Verificar se é admin
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError('Erro ao verificar usuário');
@@ -341,8 +507,6 @@ const AdminLoginPage: React.FC = () => {
         setGoogleLoading(false);
         return;
       }
-      // O redirecionamento será feito pelo OAuth
-      // A verificação de admin será feita no AdminProtectedRoute
     } catch (err) {
       setError('Erro ao fazer login com Google');
       setGoogleLoading(false);
@@ -353,8 +517,10 @@ const AdminLoginPage: React.FC = () => {
     <Container>
       <Card>
         <Logo>
-          <div className="icon">
-            <Shield />
+          <div className="icon-wrapper">
+            <div className="icon">
+              <Shield />
+            </div>
           </div>
           <h1>ShapeUp Admin</h1>
           <p>Painel Administrativo</p>

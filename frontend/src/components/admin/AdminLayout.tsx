@@ -15,7 +15,7 @@ const Container = styled.div`
 
 const Main = styled.main`
   flex: 1;
-  margin-left: 260px;
+  margin-left: 270px;
   min-height: 100vh;
 
   @media (max-width: 768px) {
