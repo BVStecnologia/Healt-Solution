@@ -4,7 +4,22 @@ import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth, addDays, subDays, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, Users, Calendar as CalendarIcon } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  CalendarDays,
+  Clock,
+  Users,
+  Calendar as CalendarIcon,
+  X,
+  User,
+  Stethoscope,
+  CheckCircle,
+  XCircle,
+  FileText,
+  AlertCircle
+} from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -546,6 +561,320 @@ const LegendItem = styled.div`
   }
 `;
 
+// Modal Overlay com blur elegante
+const modalFadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const modalSlideIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 20, 15, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  animation: ${modalFadeIn} 0.25s ease-out;
+`;
+
+const ModalContainer = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 480px;
+  background: linear-gradient(145deg, #FFFBF7 0%, #FFF8F2 100%);
+  border-radius: 24px;
+  box-shadow:
+    0 25px 80px rgba(146, 86, 62, 0.25),
+    0 10px 30px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  z-index: 1001;
+  animation: ${modalSlideIn} 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+      ${theme.colors.primary} 0%,
+      ${theme.colors.primaryLight} 50%,
+      ${theme.colors.primary} 100%
+    );
+    background-size: 200% 100%;
+    animation: ${shimmer} 3s ease-in-out infinite;
+  }
+`;
+
+const ModalHeader = styled.div`
+  padding: 28px 28px 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+`;
+
+const ModalTitle = styled.div`
+  h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: ${theme.colors.primary};
+    margin: 0 0 8px;
+    font-family: ${theme.typography.fontFamilyHeading};
+  }
+
+  h3 {
+    font-size: 24px;
+    font-weight: 700;
+    color: ${theme.colors.text};
+    margin: 0;
+    font-family: ${theme.typography.fontFamilyHeading};
+    line-height: 1.2;
+  }
+`;
+
+const CloseButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: none;
+  background: ${theme.colors.background};
+  color: ${theme.colors.textMuted};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${theme.colors.primary}15;
+    color: ${theme.colors.primary};
+    transform: rotate(90deg);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 24px 28px;
+`;
+
+const StatusBadge = styled.div<{ $status: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 20px;
+
+  ${props => {
+    switch (props.$status) {
+      case 'pending':
+        return `
+          background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+          color: #92400E;
+          border: 1px solid #F59E0B40;
+        `;
+      case 'confirmed':
+        return `
+          background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+          color: #065F46;
+          border: 1px solid #10B98140;
+        `;
+      case 'completed':
+        return `
+          background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+          color: #374151;
+          border: 1px solid #6B728040;
+        `;
+      case 'cancelled':
+      case 'no_show':
+        return `
+          background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+          color: #991B1B;
+          border: 1px solid #EF444440;
+        `;
+      default:
+        return `
+          background: ${theme.colors.background};
+          color: ${theme.colors.text};
+        `;
+    }
+  }}
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
+const DetailCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid ${theme.colors.borderLight};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+`;
+
+const DetailRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid ${theme.colors.borderLight};
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  &:first-child {
+    padding-top: 0;
+  }
+`;
+
+const DetailIcon = styled.div<{ $color?: string }>`
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: ${props => props.$color || theme.colors.primary}12;
+  color: ${props => props.$color || theme.colors.primary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const DetailInfo = styled.div`
+  flex: 1;
+
+  .label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: ${theme.colors.textMuted};
+    margin-bottom: 2px;
+  }
+
+  .value {
+    font-size: 15px;
+    font-weight: 600;
+    color: ${theme.colors.text};
+  }
+`;
+
+const ModalFooter = styled.div`
+  padding: 0 28px 28px;
+  display: flex;
+  gap: 12px;
+`;
+
+const ModalButton = styled.button<{ $variant: 'primary' | 'success' | 'danger' | 'secondary' }>`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+
+  ${props => {
+    switch (props.$variant) {
+      case 'primary':
+        return `
+          background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
+          color: white;
+          box-shadow: 0 4px 14px rgba(146, 86, 62, 0.3);
+
+          &:hover {
+            box-shadow: 0 6px 20px rgba(146, 86, 62, 0.4);
+            transform: translateY(-2px);
+          }
+        `;
+      case 'success':
+        return `
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          color: white;
+          box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+
+          &:hover {
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+            transform: translateY(-2px);
+          }
+        `;
+      case 'danger':
+        return `
+          background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+          color: white;
+          box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+
+          &:hover {
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+            transform: translateY(-2px);
+          }
+        `;
+      case 'secondary':
+        return `
+          background: ${theme.colors.background};
+          color: ${theme.colors.text};
+          border: 1px solid ${theme.colors.border};
+
+          &:hover {
+            background: ${theme.colors.primarySoft};
+            border-color: ${theme.colors.primary}40;
+          }
+        `;
+    }
+  }}
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
 interface CalendarEvent {
   id: string;
   title: string;
@@ -575,6 +904,8 @@ const messages = {
 const CalendarPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Ler view da URL ou usar 'month' como padrão
   const viewFromUrl = searchParams.get('view') as View | null;
@@ -720,8 +1051,91 @@ const CalendarPage: React.FC = () => {
   };
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    console.log('Selected event:', event);
-    // TODO: Abrir modal com detalhes da consulta
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleConfirmAppointment = async () => {
+    if (!selectedEvent) return;
+    try {
+      await supabase
+        .from('appointments')
+        .update({ status: 'confirmed' })
+        .eq('id', selectedEvent.id);
+
+      // Atualizar evento local
+      setEvents(prev => prev.map(e =>
+        e.id === selectedEvent.id ? { ...e, status: 'confirmed' } : e
+      ));
+      setSelectedEvent(prev => prev ? { ...prev, status: 'confirmed' } : null);
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+    }
+  };
+
+  const handleCancelAppointment = async () => {
+    if (!selectedEvent) return;
+    try {
+      await supabase
+        .from('appointments')
+        .update({ status: 'cancelled' })
+        .eq('id', selectedEvent.id);
+
+      // Atualizar evento local
+      setEvents(prev => prev.map(e =>
+        e.id === selectedEvent.id ? { ...e, status: 'cancelled' } : e
+      ));
+      closeModal();
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+    }
+  };
+
+  const formatAppointmentType = (type: string) => {
+    const types: Record<string, string> = {
+      initial_consultation: 'Consulta Inicial',
+      follow_up: 'Retorno',
+      hormone_check: 'Avaliação Hormonal',
+      lab_review: 'Revisão de Exames',
+      nutrition: 'Nutrição',
+      health_coaching: 'Health Coaching',
+      therapy: 'Terapia',
+      personal_training: 'Personal Training',
+    };
+    return types[type] || type;
+  };
+
+  const formatStatus = (status: string) => {
+    const statuses: Record<string, string> = {
+      pending: 'Pendente',
+      confirmed: 'Confirmada',
+      checked_in: 'Check-in',
+      in_progress: 'Em Andamento',
+      completed: 'Concluída',
+      cancelled: 'Cancelada',
+      no_show: 'Não Compareceu',
+    };
+    return statuses[status] || status;
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <AlertCircle />;
+      case 'confirmed':
+      case 'completed':
+        return <CheckCircle />;
+      case 'cancelled':
+      case 'no_show':
+        return <XCircle />;
+      default:
+        return <Clock />;
+    }
   };
 
   // Ir para hoje
@@ -813,6 +1227,99 @@ const CalendarPage: React.FC = () => {
           </LegendItem>
         </Legend>
       </CalendarWrapper>
+
+      {/* Modal de Detalhes da Consulta */}
+      {isModalOpen && selectedEvent && (
+        <>
+          <ModalOverlay onClick={closeModal} />
+          <ModalContainer>
+            <ModalHeader>
+              <ModalTitle>
+                <h2>Detalhes da Consulta</h2>
+                <h3>{selectedEvent.patientName}</h3>
+              </ModalTitle>
+              <CloseButton onClick={closeModal}>
+                <X />
+              </CloseButton>
+            </ModalHeader>
+
+            <ModalBody>
+              <StatusBadge $status={selectedEvent.status}>
+                {getStatusIcon(selectedEvent.status)}
+                {formatStatus(selectedEvent.status)}
+              </StatusBadge>
+
+              <DetailCard>
+                <DetailRow>
+                  <DetailIcon $color="#8B5CF6">
+                    <User />
+                  </DetailIcon>
+                  <DetailInfo>
+                    <div className="label">Paciente</div>
+                    <div className="value">{selectedEvent.patientName}</div>
+                  </DetailInfo>
+                </DetailRow>
+
+                <DetailRow>
+                  <DetailIcon $color={theme.colors.primary}>
+                    <Stethoscope />
+                  </DetailIcon>
+                  <DetailInfo>
+                    <div className="label">Médico</div>
+                    <div className="value">{selectedEvent.providerName}</div>
+                  </DetailInfo>
+                </DetailRow>
+
+                <DetailRow>
+                  <DetailIcon $color="#059669">
+                    <CalendarIcon />
+                  </DetailIcon>
+                  <DetailInfo>
+                    <div className="label">Data e Horário</div>
+                    <div className="value">
+                      {format(selectedEvent.start, "EEEE, d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                    </div>
+                  </DetailInfo>
+                </DetailRow>
+
+                <DetailRow>
+                  <DetailIcon $color="#F59E0B">
+                    <FileText />
+                  </DetailIcon>
+                  <DetailInfo>
+                    <div className="label">Tipo de Consulta</div>
+                    <div className="value">{formatAppointmentType(selectedEvent.type)}</div>
+                  </DetailInfo>
+                </DetailRow>
+              </DetailCard>
+            </ModalBody>
+
+            <ModalFooter>
+              {selectedEvent.status === 'pending' && (
+                <>
+                  <ModalButton $variant="success" onClick={handleConfirmAppointment}>
+                    <CheckCircle />
+                    Confirmar
+                  </ModalButton>
+                  <ModalButton $variant="danger" onClick={handleCancelAppointment}>
+                    <XCircle />
+                    Cancelar
+                  </ModalButton>
+                </>
+              )}
+              {selectedEvent.status === 'confirmed' && (
+                <ModalButton $variant="danger" onClick={handleCancelAppointment}>
+                  <XCircle />
+                  Cancelar Consulta
+                </ModalButton>
+              )}
+              <ModalButton $variant="secondary" onClick={closeModal}>
+                Fechar
+              </ModalButton>
+            </ModalFooter>
+          </ModalContainer>
+        </>
+      )}
     </AdminLayout>
   );
 };
