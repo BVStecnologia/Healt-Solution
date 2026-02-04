@@ -19,6 +19,10 @@ const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const CalendarPage = lazy(() => import('./pages/admin/CalendarPage'));
 const WhatsAppPage = lazy(() => import('./pages/admin/WhatsAppPage'));
+const AdminAppointmentsPage = lazy(() => import('./pages/admin/AdminAppointmentsPage'));
+const PatientsPage = lazy(() => import('./pages/admin/PatientsPage'));
+const ProvidersPage = lazy(() => import('./pages/admin/ProvidersPage'));
+const AdminsPage = lazy(() => import('./pages/admin/AdminsPage'));
 
 const App: React.FC = () => {
   const { loading } = useAuth();
@@ -80,6 +84,30 @@ const App: React.FC = () => {
         <Route path="/admin/whatsapp" element={
           <AdminProtectedRoute>
             <WhatsAppPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/appointments" element={
+          <AdminProtectedRoute>
+            <AdminAppointmentsPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/patients" element={
+          <AdminProtectedRoute>
+            <PatientsPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/providers" element={
+          <AdminProtectedRoute>
+            <ProvidersPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/admins" element={
+          <AdminProtectedRoute>
+            <AdminsPage />
           </AdminProtectedRoute>
         } />
 
