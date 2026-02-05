@@ -59,3 +59,19 @@ temp/
 supabase/volumes/db/data/
 supabase/volumes/storage/
 supabase/volumes/functions/
+
+# Production environment files (contain real credentials)
+*.env.production
+.env.production
+
+# Claude Code
+.claude-images/
+.claude/settings.local.json
+
+# Screenshots
+.clipshot/
+*.png
+!frontend/public/*.png
+
+# Local folders
+Servidor/
