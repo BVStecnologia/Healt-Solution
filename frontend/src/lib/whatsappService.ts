@@ -35,7 +35,7 @@ import { supabase } from './supabaseClient';
 
 // Configuração da Evolution API
 const EVOLUTION_API_URL = process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
-const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || '';
+const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_evolution_aqui';
 
 // Debug mode - ativa logs detalhados
 const DEBUG = true;
