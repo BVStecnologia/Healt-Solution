@@ -1,176 +1,321 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Users, Plus, Search, Edit2, Trash2, Check, AlertCircle, Eye, Calendar, FileText } from 'lucide-react';
-import { theme } from '../../styles/GlobalStyle';
+import {
+  Users, UserPlus, Search, Edit2, Check, AlertCircle, Eye,
+  Crown, Activity, Phone, Mail, ChevronLeft, ChevronRight, X,
+  Sparkles
+} from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile, PatientType } from '../../types/database';
 
+// ============================================
+// ANIMATIONS
+// ============================================
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const shimmer = keyframes`
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+`;
+
+const pulse = keyframes`
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+`;
+
+const float = keyframes`
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+`;
+
+// ============================================
+// THEME CONSTANTS
+// ============================================
+const luxuryTheme = {
+  primary: '#92563E',
+  primaryLight: '#B8956E',
+  primaryDark: '#7A4832',
+  gold: '#D4AF37',
+  goldLight: '#E8C547',
+  cream: '#FDF8F3',
+  surface: '#FFFFFF',
+  border: '#E8DDD4',
+  text: '#3D2E24',
+  textSecondary: '#8B7355',
+  success: '#059669',
+  successLight: '#D1FAE5',
+  error: '#DC2626',
+  errorLight: '#FEE2E2',
+  trt: '#92563E',
+  hormone: '#C77D8E',
+  vip: '#D4AF37',
+  newPatient: '#059669',
+  general: '#8B7355',
+};
+
+// ============================================
+// STYLED COMPONENTS
+// ============================================
+const PageContainer = styled.div`
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
+`;
+
 const Header = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: ${theme.spacing.xl};
-  flex-wrap: wrap;
-  gap: ${theme.spacing.md};
+  margin-bottom: 32px;
+  animation: ${fadeInUp} 0.6s ease-out;
 
   h1 {
-    font-family: ${theme.typography.fontFamilyHeading};
-    font-size: 28px;
-    font-weight: 700;
-    color: ${theme.colors.text};
-    margin: 0 0 ${theme.spacing.xs};
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: ${luxuryTheme.text};
+    margin: 0 0 8px;
+    letter-spacing: -0.5px;
   }
 
   p {
-    color: ${theme.colors.textSecondary};
+    color: ${luxuryTheme.textSecondary};
     margin: 0;
+    font-size: 15px;
   }
 `;
 
-const Stats = styled.div`
+const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: ${theme.spacing.md};
-  margin-bottom: ${theme.spacing.xl};
-`;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
 
-const StatCard = styled.div`
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.lg};
-  padding: ${theme.spacing.lg};
-  box-shadow: ${theme.shadows.sm};
-
-  h3 {
-    font-size: 28px;
-    font-weight: 700;
-    color: ${theme.colors.text};
-    margin: 0 0 ${theme.spacing.xs};
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  p {
-    font-size: 13px;
-    color: ${theme.colors.textSecondary};
-    margin: 0;
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
   }
 `;
 
-const FiltersRow = styled.div`
-  display: flex;
-  gap: ${theme.spacing.md};
-  margin-bottom: ${theme.spacing.lg};
-  flex-wrap: wrap;
+const StatCard = styled.div<{ $delay: number; $accentColor: string }>`
+  background: ${luxuryTheme.surface};
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid ${luxuryTheme.border};
+  animation: ${fadeInUp} 0.6s ease-out;
+  animation-delay: ${props => props.$delay}ms;
+  animation-fill-mode: both;
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, ${props => props.$accentColor}, ${props => props.$accentColor}88);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, ${props => props.$accentColor}08 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px ${luxuryTheme.primary}15;
+    border-color: ${props => props.$accentColor}40;
+  }
 `;
 
-const SearchBar = styled.div`
+const StatIcon = styled.div<{ $color: string }>`
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, ${props => props.$color}15, ${props => props.$color}08);
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
-  background: ${theme.colors.surface};
-  border: 1px solid ${theme.colors.border};
-  border-radius: ${theme.borderRadius.lg};
-  flex: 1;
-  min-width: 250px;
+  justify-content: center;
+  margin-bottom: 16px;
+  color: ${props => props.$color};
+  transition: all 0.3s ease;
 
-  input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    color: ${theme.colors.text};
-    outline: none;
-
-    &::placeholder {
-      color: ${theme.colors.textSecondary};
-    }
+  ${StatCard}:hover & {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, ${props => props.$color}25, ${props => props.$color}15);
   }
+`;
+
+const StatValue = styled.div`
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+  line-height: 1;
+  margin-bottom: 6px;
+`;
+
+const StatLabel = styled.div`
+  font-size: 13px;
+  color: ${luxuryTheme.textSecondary};
+  font-weight: 500;
+`;
+
+const FiltersSection = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  animation: ${fadeInUp} 0.6s ease-out;
+  animation-delay: 200ms;
+  animation-fill-mode: both;
+`;
+
+const SearchContainer = styled.div`
+  flex: 1;
+  min-width: 280px;
+  position: relative;
 
   svg {
-    color: ${theme.colors.textSecondary};
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: ${luxuryTheme.textSecondary};
+    transition: color 0.3s ease;
+  }
+
+  &:focus-within svg {
+    color: ${luxuryTheme.primary};
+  }
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 12px;
+  font-size: 14px;
+  color: ${luxuryTheme.text};
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: ${luxuryTheme.textSecondary};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${luxuryTheme.primary};
+    box-shadow: 0 0 0 3px ${luxuryTheme.primary}15;
   }
 `;
 
 const FilterSelect = styled.select`
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
-  background: ${theme.colors.surface};
-  border: 1px solid ${theme.colors.border};
-  border-radius: ${theme.borderRadius.lg};
+  padding: 14px 40px 14px 16px;
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 12px;
   font-size: 14px;
-  color: ${theme.colors.text};
+  color: ${luxuryTheme.text};
   cursor: pointer;
-  min-width: 150px;
+  min-width: 180px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238B7355' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: all 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: ${theme.colors.primary};
-  }
-`;
-
-const Table = styled.div`
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.xl};
-  box-shadow: ${theme.shadows.sm};
-  overflow: hidden;
-`;
-
-const TableHeader = styled.div`
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 100px 150px;
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  background: ${theme.colors.background};
-  border-bottom: 1px solid ${theme.colors.border};
-  font-weight: 600;
-  color: ${theme.colors.textSecondary};
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-
-  @media (max-width: 900px) {
-    display: none;
-  }
-`;
-
-const TableRow = styled.div`
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 100px 150px;
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  border-bottom: 1px solid ${theme.colors.border};
-  align-items: center;
-  transition: background 0.2s ease;
-
-  &:last-child {
-    border-bottom: none;
+    border-color: ${luxuryTheme.primary};
+    box-shadow: 0 0 0 3px ${luxuryTheme.primary}15;
   }
 
   &:hover {
-    background: ${theme.colors.background};
+    border-color: ${luxuryTheme.primaryLight};
+  }
+`;
+
+const PatientsGrid = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: ${fadeInUp} 0.6s ease-out;
+  animation-delay: 300ms;
+  animation-fill-mode: both;
+`;
+
+const PatientCard = styled.div<{ $index: number }>`
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+  animation: ${fadeInUp} 0.5s ease-out;
+  animation-delay: ${props => 350 + props.$index * 50}ms;
+  animation-fill-mode: both;
+
+  &:hover {
+    border-color: ${luxuryTheme.primaryLight};
+    box-shadow: 0 8px 24px ${luxuryTheme.primary}10;
+    transform: translateX(4px);
+    background: linear-gradient(135deg, ${luxuryTheme.surface} 0%, ${luxuryTheme.cream} 100%);
   }
 
   @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-    gap: ${theme.spacing.sm};
+    grid-template-columns: auto 1fr;
+    gap: 16px;
   }
 `;
 
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${theme.spacing.md};
-`;
-
-const Avatar = styled.div<{ type?: PatientType | null }>`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+const PatientAvatar = styled.div<{ $type: PatientType | null }>`
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   background: ${props => {
-    switch (props.type) {
-      case 'vip': return 'linear-gradient(135deg, #f59e0b, #d97706)';
-      case 'trt': return 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
-      case 'hormone': return 'linear-gradient(135deg, #ec4899, #db2777)';
-      case 'new': return 'linear-gradient(135deg, #10b981, #059669)';
-      default: return `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`;
+    switch (props.$type) {
+      case 'vip': return `linear-gradient(135deg, ${luxuryTheme.vip}, ${luxuryTheme.goldLight})`;
+      case 'trt': return `linear-gradient(135deg, ${luxuryTheme.trt}, ${luxuryTheme.primaryLight})`;
+      case 'hormone': return `linear-gradient(135deg, ${luxuryTheme.hormone}, #E8A0B0)`;
+      case 'new': return `linear-gradient(135deg, ${luxuryTheme.newPatient}, #10B981)`;
+      default: return `linear-gradient(135deg, ${luxuryTheme.general}, ${luxuryTheme.textSecondary})`;
     }
   }};
   display: flex;
@@ -178,240 +323,461 @@ const Avatar = styled.div<{ type?: PatientType | null }>`
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 14px;
-`;
-
-const UserName = styled.div`
-  font-weight: 600;
-  color: ${theme.colors.text};
-`;
-
-const UserEmail = styled.div`
-  color: ${theme.colors.textSecondary};
-  font-size: 14px;
-`;
-
-const Badge = styled.span<{ type?: PatientType | null }>`
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  background: ${props => {
-    switch (props.type) {
-      case 'vip': return '#fef3c7';
-      case 'trt': return '#ede9fe';
-      case 'hormone': return '#fce7f3';
-      case 'new': return '#d1fae5';
-      default: return `${theme.colors.primary}15`;
+  font-size: 18px;
+  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px ${props => {
+    switch (props.$type) {
+      case 'vip': return `${luxuryTheme.vip}40`;
+      case 'trt': return `${luxuryTheme.trt}40`;
+      case 'hormone': return `${luxuryTheme.hormone}40`;
+      case 'new': return `${luxuryTheme.newPatient}40`;
+      default: return `${luxuryTheme.general}40`;
     }
   }};
-  color: ${props => {
-    switch (props.type) {
-      case 'vip': return '#d97706';
-      case 'trt': return '#7c3aed';
-      case 'hormone': return '#db2777';
-      case 'new': return '#059669';
-      default: return theme.colors.primary;
-    }
-  }};
-`;
+  transition: all 0.3s ease;
 
-const Actions = styled.div`
-  display: flex;
-  gap: ${theme.spacing.sm};
-`;
-
-const ActionButton = styled.button<{ variant?: 'danger' | 'info' }>`
-  padding: ${theme.spacing.xs} ${theme.spacing.sm};
-  background: ${props => {
-    if (props.variant === 'danger') return `${theme.colors.error}15`;
-    if (props.variant === 'info') return `${theme.colors.info}15`;
-    return `${theme.colors.primary}15`;
-  }};
-  color: ${props => {
-    if (props.variant === 'danger') return theme.colors.error;
-    if (props.variant === 'info') return theme.colors.info;
-    return theme.colors.primary;
-  }};
-  border: none;
-  border-radius: ${theme.borderRadius.md};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  &:hover {
-    background: ${props => {
-      if (props.variant === 'danger') return `${theme.colors.error}25`;
-      if (props.variant === 'info') return `${theme.colors.info}25`;
-      return `${theme.colors.primary}25`;
-    }};
+  ${PatientCard}:hover & {
+    transform: scale(1.05);
   }
 `;
 
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+const PatientInfo = styled.div`
+  min-width: 0;
+`;
+
+const PatientName = styled.div`
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const PatientEmail = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: ${luxuryTheme.textSecondary};
+  font-size: 13px;
+
+  svg {
+    flex-shrink: 0;
+  }
+`;
+
+const PatientPhone = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: ${luxuryTheme.textSecondary};
+  font-size: 14px;
+  min-width: 150px;
+
+  svg {
+    color: ${luxuryTheme.primaryLight};
+  }
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+`;
+
+const PatientBadge = styled.span<{ $type: PatientType | null }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: ${props => {
+    switch (props.$type) {
+      case 'vip': return `${luxuryTheme.vip}18`;
+      case 'trt': return `${luxuryTheme.trt}15`;
+      case 'hormone': return `${luxuryTheme.hormone}18`;
+      case 'new': return `${luxuryTheme.newPatient}15`;
+      default: return `${luxuryTheme.general}15`;
+    }
+  }};
+  color: ${props => {
+    switch (props.$type) {
+      case 'vip': return luxuryTheme.vip;
+      case 'trt': return luxuryTheme.trt;
+      case 'hormone': return luxuryTheme.hormone;
+      case 'new': return luxuryTheme.newPatient;
+      default: return luxuryTheme.general;
+    }
+  }};
+  border: 1px solid ${props => {
+    switch (props.$type) {
+      case 'vip': return `${luxuryTheme.vip}30`;
+      case 'trt': return `${luxuryTheme.trt}25`;
+      case 'hormone': return `${luxuryTheme.hormone}30`;
+      case 'new': return `${luxuryTheme.newPatient}25`;
+      default: return `${luxuryTheme.general}25`;
+    }
+  }};
+  transition: all 0.3s ease;
+
+  ${PatientCard}:hover & {
+    transform: scale(1.05);
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  @media (max-width: 900px) {
+    grid-column: 2;
+    justify-self: start;
+  }
+`;
+
+const PatientActions = styled.div`
+  display: flex;
+  gap: 8px;
+
+  @media (max-width: 900px) {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+`;
+
+const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: ${theme.spacing.md};
-`;
-
-const ModalContent = styled.div`
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.xl};
-  padding: ${theme.spacing.xl};
-  width: 100%;
-  max-width: 500px;
-  box-shadow: ${theme.shadows.lg};
-  max-height: 90vh;
-  overflow-y: auto;
-
-  h2 {
-    font-family: ${theme.typography.fontFamilyHeading};
-    font-size: 20px;
-    font-weight: 700;
-    color: ${theme.colors.text};
-    margin: 0 0 ${theme.spacing.lg};
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing.sm};
-  }
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: ${theme.spacing.md};
-
-  label {
-    display: block;
-    font-weight: 500;
-    color: ${theme.colors.text};
-    margin-bottom: ${theme.spacing.xs};
-  }
-
-  input, select {
-    width: 100%;
-    padding: ${theme.spacing.sm} ${theme.spacing.md};
-    border: 1px solid ${theme.colors.border};
-    border-radius: ${theme.borderRadius.md};
-    font-size: 14px;
-    color: ${theme.colors.text};
-    transition: border-color 0.2s ease;
-    box-sizing: border-box;
-
-    &:focus {
-      outline: none;
-      border-color: ${theme.colors.primary};
-    }
-  }
-
-  select {
-    background: ${theme.colors.surface};
-    cursor: pointer;
-  }
-`;
-
-const ModalActions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${theme.spacing.sm};
-  margin-top: ${theme.spacing.lg};
-`;
-
-const Button = styled.button<{ variant?: 'secondary' }>`
-  padding: ${theme.spacing.sm} ${theme.spacing.lg};
-  background: ${props => props.variant === 'secondary' ? 'transparent' : theme.colors.primary};
-  color: ${props => props.variant === 'secondary' ? theme.colors.text : 'white'};
-  border: 1px solid ${props => props.variant === 'secondary' ? theme.colors.border : 'transparent'};
-  border-radius: ${theme.borderRadius.md};
-  font-weight: 600;
+  gap: 6px;
+  padding: 10px 16px;
+  background: ${props => props.$variant === 'primary'
+    ? `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`
+    : luxuryTheme.surface};
+  color: ${props => props.$variant === 'primary' ? 'white' : luxuryTheme.primary};
+  border: 1px solid ${props => props.$variant === 'primary' ? 'transparent' : luxuryTheme.border};
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 
   &:hover {
-    background: ${props => props.variant === 'secondary' ? theme.colors.background : theme.colors.primaryHover};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px ${luxuryTheme.primary}25;
+    ${props => props.$variant !== 'primary' && css`
+      background: ${luxuryTheme.cream};
+      border-color: ${luxuryTheme.primaryLight};
+    `}
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const Pagination = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 32px;
+  animation: ${fadeInUp} 0.6s ease-out;
+  animation-delay: 500ms;
+  animation-fill-mode: both;
+`;
+
+const PageButton = styled.button<{ $active?: boolean }>`
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid ${props => props.$active ? luxuryTheme.gold : luxuryTheme.border};
+  background: ${props => props.$active
+    ? `linear-gradient(135deg, ${luxuryTheme.gold}, ${luxuryTheme.goldLight})`
+    : luxuryTheme.surface};
+  color: ${props => props.$active ? 'white' : luxuryTheme.text};
+  font-weight: ${props => props.$active ? '600' : '500'};
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    border-color: ${luxuryTheme.gold};
+    background: ${props => props.$active
+      ? `linear-gradient(135deg, ${luxuryTheme.gold}, ${luxuryTheme.goldLight})`
+      : luxuryTheme.cream};
+    transform: translateY(-2px);
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 `;
 
 const EmptyState = styled.div`
-  padding: 60px 40px;
   text-align: center;
-  color: ${theme.colors.textSecondary};
+  padding: 80px 40px;
+  background: ${luxuryTheme.surface};
+  border: 1px dashed ${luxuryTheme.border};
+  border-radius: 16px;
+  animation: ${fadeInUp} 0.6s ease-out;
 
   svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: ${theme.spacing.md};
-    opacity: 0.5;
+    width: 64px;
+    height: 64px;
+    color: ${luxuryTheme.primaryLight};
+    margin-bottom: 20px;
+    animation: ${float} 3s ease-in-out infinite;
+  }
+
+  h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    color: ${luxuryTheme.text};
+    margin: 0 0 8px;
   }
 
   p {
+    color: ${luxuryTheme.textSecondary};
     margin: 0;
   }
 `;
 
-const Alert = styled.div<{ variant?: 'error' | 'success' }>`
+const LoadingSkeleton = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const SkeletonCard = styled.div<{ $delay: number }>`
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 56px 1fr 150px 100px 100px;
+  align-items: center;
+  gap: 20px;
+  animation: ${pulse} 1.5s ease-in-out infinite;
+  animation-delay: ${props => props.$delay}ms;
+`;
+
+const SkeletonElement = styled.div<{ $width?: string; $height?: string; $round?: boolean }>`
+  width: ${props => props.$width || '100%'};
+  height: ${props => props.$height || '16px'};
+  background: linear-gradient(90deg, ${luxuryTheme.cream} 25%, ${luxuryTheme.border} 50%, ${luxuryTheme.cream} 75%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 1.5s infinite;
+  border-radius: ${props => props.$round ? '14px' : '6px'};
+`;
+
+// Modal Styles
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 46, 36, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.md};
-  background: ${props => props.variant === 'error' ? `${theme.colors.error}15` : `${theme.colors.success}15`};
-  color: ${props => props.variant === 'error' ? theme.colors.error : theme.colors.success};
-  border-radius: ${theme.borderRadius.md};
-  margin-bottom: ${theme.spacing.lg};
-  font-size: 14px;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: ${fadeInUp} 0.3s ease-out;
 `;
 
-const DetailSection = styled.div`
-  margin-bottom: ${theme.spacing.lg};
-  padding-bottom: ${theme.spacing.lg};
-  border-bottom: 1px solid ${theme.colors.border};
-
-  &:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  h3 {
-    font-size: 14px;
-    font-weight: 600;
-    color: ${theme.colors.textSecondary};
-    margin: 0 0 ${theme.spacing.md};
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+const ModalContent = styled.div`
+  background: ${luxuryTheme.surface};
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  animation: ${fadeInUp} 0.4s ease-out;
 `;
 
-const DetailRow = styled.div`
+const ModalHeader = styled.div`
+  background: linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight});
+  padding: 24px 28px;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: ${theme.spacing.xs} 0;
 
-  span:first-child {
-    color: ${theme.colors.textSecondary};
-  }
-
-  span:last-child {
-    font-weight: 500;
-    color: ${theme.colors.text};
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 `;
 
+const CloseButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: rotate(90deg);
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 28px;
+  max-height: calc(90vh - 180px);
+  overflow-y: auto;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    font-weight: 500;
+    color: ${luxuryTheme.text};
+    margin-bottom: 8px;
+    font-size: 14px;
+
+    span {
+      color: ${luxuryTheme.error};
+    }
+  }
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  padding: 14px 16px;
+  background: ${luxuryTheme.cream};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 10px;
+  font-size: 14px;
+  color: ${luxuryTheme.text};
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: ${luxuryTheme.textSecondary};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${luxuryTheme.primary};
+    background: ${luxuryTheme.surface};
+    box-shadow: 0 0 0 3px ${luxuryTheme.primary}15;
+  }
+
+  &:disabled {
+    background: ${luxuryTheme.border};
+    cursor: not-allowed;
+  }
+`;
+
+const FormSelect = styled.select`
+  width: 100%;
+  padding: 14px 16px;
+  background: ${luxuryTheme.cream};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 10px;
+  font-size: 14px;
+  color: ${luxuryTheme.text};
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${luxuryTheme.primary};
+    background: ${luxuryTheme.surface};
+    box-shadow: 0 0 0 3px ${luxuryTheme.primary}15;
+  }
+`;
+
+const ModalFooter = styled.div`
+  padding: 20px 28px;
+  border-top: 1px solid ${luxuryTheme.border};
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: ${luxuryTheme.cream};
+`;
+
+const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  ${props => props.$variant === 'primary' ? css`
+    background: linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight});
+    color: white;
+    border: none;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px ${luxuryTheme.primary}40;
+    }
+  ` : css`
+    background: transparent;
+    color: ${luxuryTheme.text};
+    border: 1px solid ${luxuryTheme.border};
+
+    &:hover {
+      background: ${luxuryTheme.surface};
+      border-color: ${luxuryTheme.primaryLight};
+    }
+  `}
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const Alert = styled.div<{ $variant: 'error' | 'success' }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  background: ${props => props.$variant === 'error' ? luxuryTheme.errorLight : luxuryTheme.successLight};
+  color: ${props => props.$variant === 'error' ? luxuryTheme.error : luxuryTheme.success};
+  border: 1px solid ${props => props.$variant === 'error' ? `${luxuryTheme.error}30` : `${luxuryTheme.success}30`};
+`;
+
+// ============================================
+// CONSTANTS
+// ============================================
 const PATIENT_TYPES: { value: PatientType; label: string }[] = [
   { value: 'new', label: 'Novo Paciente' },
   { value: 'general', label: 'Geral' },
@@ -420,6 +786,11 @@ const PATIENT_TYPES: { value: PatientType; label: string }[] = [
   { value: 'vip', label: 'VIP' }
 ];
 
+const ITEMS_PER_PAGE = 8;
+
+// ============================================
+// COMPONENT
+// ============================================
 const PatientsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -428,9 +799,8 @@ const PatientsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Profile | null>(null);
-  const [viewingPatient, setViewingPatient] = useState<Profile | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
@@ -442,14 +812,12 @@ const PatientsPage: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Abrir modal de edição se vier da URL
   useEffect(() => {
     const editPatientId = searchParams.get('edit');
     if (editPatientId && patients.length > 0) {
       const patient = patients.find(p => p.id === editPatientId);
       if (patient) {
         handleOpenModal(patient);
-        // Limpar parâmetro da URL
         searchParams.delete('edit');
         setSearchParams(searchParams);
       }
@@ -513,6 +881,7 @@ const PatientsPage: React.FC = () => {
       patient_type: 'new'
     });
     setError('');
+    setSuccess('');
   };
 
   const handleViewPatient = (patient: Profile) => {
@@ -550,7 +919,6 @@ const PatientsPage: React.FC = () => {
           return;
         }
 
-        // Check if user already exists
         const { data: existingUser } = await supabase
           .from('profiles')
           .select('id')
@@ -579,15 +947,6 @@ const PatientsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (patient: Profile) => {
-    if (!window.confirm(`Tem certeza que deseja desativar ${patient.first_name} ${patient.last_name}?`)) {
-      return;
-    }
-
-    // For now, we'll just show an alert - typically you'd implement soft delete
-    alert('Funcionalidade de desativação em desenvolvimento.');
-  };
-
   const filteredPatients = patients.filter(patient => {
     const matchesSearch =
       patient.first_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -599,6 +958,17 @@ const PatientsPage: React.FC = () => {
     return matchesSearch && matchesType;
   });
 
+  // Pagination
+  const totalPages = Math.ceil(filteredPatients.length / ITEMS_PER_PAGE);
+  const paginatedPatients = filteredPatients.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, typeFilter]);
+
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
@@ -608,12 +978,15 @@ const PatientsPage: React.FC = () => {
     return found ? found.label : 'Geral';
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('pt-BR');
+  const getBadgeIcon = (type: PatientType | null) => {
+    switch (type) {
+      case 'vip': return <Crown size={12} />;
+      case 'trt': return <Activity size={12} />;
+      case 'new': return <Sparkles size={12} />;
+      default: return null;
+    }
   };
 
-  // Calculate stats
   const stats = {
     total: patients.length,
     new: patients.filter(p => p.patient_type === 'new').length,
@@ -623,249 +996,253 @@ const PatientsPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Header>
-        <div>
+      <PageContainer>
+        <Header>
           <h1>Pacientes</h1>
-          <p>Gerencie os pacientes cadastrados no sistema</p>
-        </div>
-      </Header>
+          <p>Gerencie os pacientes cadastrados na clínica</p>
+        </Header>
 
-      <Stats>
-        <StatCard>
-          <h3>{stats.total}</h3>
-          <p>Total de Pacientes</p>
-        </StatCard>
-        <StatCard>
-          <h3>{stats.new}</h3>
-          <p>Novos Pacientes</p>
-        </StatCard>
-        <StatCard>
-          <h3>{stats.trt}</h3>
-          <p>Pacientes TRT</p>
-        </StatCard>
-        <StatCard>
-          <h3>{stats.vip}</h3>
-          <p>Pacientes VIP</p>
-        </StatCard>
-      </Stats>
+        <StatsGrid>
+          <StatCard $delay={0} $accentColor={luxuryTheme.primary}>
+            <StatIcon $color={luxuryTheme.primary}>
+              <Users size={24} />
+            </StatIcon>
+            <StatValue>{stats.total}</StatValue>
+            <StatLabel>Total de Pacientes</StatLabel>
+          </StatCard>
 
-      <FiltersRow>
-        <SearchBar>
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Buscar por nome ou email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </SearchBar>
-        <FilterSelect
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-        >
-          <option value="all">Todos os tipos</option>
-          {PATIENT_TYPES.map(type => (
-            <option key={type.value} value={type.value}>{type.label}</option>
-          ))}
-        </FilterSelect>
-      </FiltersRow>
+          <StatCard $delay={50} $accentColor={luxuryTheme.newPatient}>
+            <StatIcon $color={luxuryTheme.newPatient}>
+              <UserPlus size={24} />
+            </StatIcon>
+            <StatValue>{stats.new}</StatValue>
+            <StatLabel>Novos Pacientes</StatLabel>
+          </StatCard>
 
-      <Table>
-        <TableHeader>
-          <div>Nome</div>
-          <div>Email</div>
-          <div>Telefone</div>
-          <div>Tipo</div>
-          <div>Ações</div>
-        </TableHeader>
+          <StatCard $delay={100} $accentColor={luxuryTheme.trt}>
+            <StatIcon $color={luxuryTheme.trt}>
+              <Activity size={24} />
+            </StatIcon>
+            <StatValue>{stats.trt}</StatValue>
+            <StatLabel>Pacientes TRT</StatLabel>
+          </StatCard>
+
+          <StatCard $delay={150} $accentColor={luxuryTheme.vip}>
+            <StatIcon $color={luxuryTheme.vip}>
+              <Crown size={24} />
+            </StatIcon>
+            <StatValue>{stats.vip}</StatValue>
+            <StatLabel>Pacientes VIP</StatLabel>
+          </StatCard>
+        </StatsGrid>
+
+        <FiltersSection>
+          <SearchContainer>
+            <Search size={18} />
+            <SearchInput
+              type="text"
+              placeholder="Buscar por nome ou email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </SearchContainer>
+          <FilterSelect
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="all">Todos os tipos</option>
+            {PATIENT_TYPES.map(type => (
+              <option key={type.value} value={type.value}>{type.label}</option>
+            ))}
+          </FilterSelect>
+        </FiltersSection>
 
         {loading ? (
-          <EmptyState>
-            <p>Carregando...</p>
-          </EmptyState>
-        ) : filteredPatients.length === 0 ? (
+          <LoadingSkeleton>
+            {[0, 1, 2, 3, 4].map(i => (
+              <SkeletonCard key={i} $delay={i * 100}>
+                <SkeletonElement $width="56px" $height="56px" $round />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <SkeletonElement $width="180px" $height="20px" />
+                  <SkeletonElement $width="220px" $height="14px" />
+                </div>
+                <SkeletonElement $width="130px" $height="16px" />
+                <SkeletonElement $width="80px" $height="32px" />
+                <SkeletonElement $width="90px" $height="36px" />
+              </SkeletonCard>
+            ))}
+          </LoadingSkeleton>
+        ) : paginatedPatients.length === 0 ? (
           <EmptyState>
             <Users />
-            <p>Nenhum paciente encontrado</p>
+            <h3>Nenhum paciente encontrado</h3>
+            <p>Tente ajustar os filtros de busca</p>
           </EmptyState>
         ) : (
-          filteredPatients.map(patient => (
-            <TableRow key={patient.id}>
-              <UserInfo>
-                <Avatar type={patient.patient_type}>
-                  {getInitials(patient.first_name, patient.last_name)}
-                </Avatar>
-                <div>
-                  <UserName>{patient.first_name} {patient.last_name}</UserName>
-                </div>
-              </UserInfo>
-              <UserEmail>{patient.email}</UserEmail>
-              <div>{patient.phone || '-'}</div>
-              <div>
-                <Badge type={patient.patient_type}>
-                  {getPatientTypeLabel(patient.patient_type)}
-                </Badge>
-              </div>
-              <Actions>
-                <ActionButton variant="info" onClick={() => handleViewPatient(patient)}>
-                  <Eye size={14} />
-                </ActionButton>
-                <ActionButton onClick={() => handleOpenModal(patient)}>
-                  <Edit2 size={14} />
-                </ActionButton>
-              </Actions>
-            </TableRow>
-          ))
-        )}
-      </Table>
+          <>
+            <PatientsGrid>
+              {paginatedPatients.map((patient, index) => (
+                <PatientCard key={patient.id} $index={index}>
+                  <PatientAvatar $type={patient.patient_type}>
+                    {getInitials(patient.first_name, patient.last_name)}
+                  </PatientAvatar>
 
-      {showModal && (
-        <Modal onClick={handleCloseModal}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <h2>
-              <Users size={20} />
-              {editingPatient ? 'Editar Paciente' : 'Novo Paciente'}
-            </h2>
+                  <PatientInfo>
+                    <PatientName>{patient.first_name} {patient.last_name}</PatientName>
+                    <PatientEmail>
+                      <Mail size={12} />
+                      {patient.email}
+                    </PatientEmail>
+                  </PatientInfo>
 
-            {error && (
-              <Alert variant="error">
-                <AlertCircle size={16} />
-                {error}
-              </Alert>
-            )}
+                  <PatientPhone>
+                    <Phone size={14} />
+                    {patient.phone || '—'}
+                  </PatientPhone>
 
-            {success && (
-              <Alert variant="success">
-                <Check size={16} />
-                {success}
-              </Alert>
-            )}
+                  <PatientBadge $type={patient.patient_type}>
+                    {getBadgeIcon(patient.patient_type)}
+                    {getPatientTypeLabel(patient.patient_type)}
+                  </PatientBadge>
 
-            <FormGroup>
-              <label>Email {!editingPatient && '*'}</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!!editingPatient}
-                placeholder="email@exemplo.com"
-              />
-            </FormGroup>
+                  <PatientActions>
+                    <ActionButton onClick={() => handleViewPatient(patient)}>
+                      <Eye size={16} />
+                      Ver
+                    </ActionButton>
+                    <ActionButton $variant="primary" onClick={() => handleOpenModal(patient)}>
+                      <Edit2 size={16} />
+                      Editar
+                    </ActionButton>
+                  </PatientActions>
+                </PatientCard>
+              ))}
+            </PatientsGrid>
 
-            <FormGroup>
-              <label>Nome *</label>
-              <input
-                type="text"
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                placeholder="Nome"
-              />
-            </FormGroup>
+            {totalPages > 1 && (
+              <Pagination>
+                <PageButton
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft size={18} />
+                </PageButton>
 
-            <FormGroup>
-              <label>Sobrenome *</label>
-              <input
-                type="text"
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                placeholder="Sobrenome"
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <label>Telefone</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="(11) 99999-9999"
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <label>Tipo de Paciente</label>
-              <select
-                value={formData.patient_type}
-                onChange={(e) => setFormData({ ...formData, patient_type: e.target.value as PatientType })}
-              >
-                {PATIENT_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <PageButton
+                    key={page}
+                    $active={page === currentPage}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </PageButton>
                 ))}
-              </select>
-            </FormGroup>
 
-            <ModalActions>
-              <Button variant="secondary" onClick={handleCloseModal}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? 'Salvando...' : 'Salvar'}
-              </Button>
-            </ModalActions>
-          </ModalContent>
-        </Modal>
-      )}
+                <PageButton
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight size={18} />
+                </PageButton>
+              </Pagination>
+            )}
+          </>
+        )}
 
-      {showDetailModal && viewingPatient && (
-        <Modal onClick={() => setShowDetailModal(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <h2>
-              <Users size={20} />
-              Detalhes do Paciente
-            </h2>
+        {showModal && (
+          <ModalOverlay onClick={handleCloseModal}>
+            <ModalContent onClick={(e) => e.stopPropagation()}>
+              <ModalHeader>
+                <h2>
+                  <Users size={22} />
+                  {editingPatient ? 'Editar Paciente' : 'Novo Paciente'}
+                </h2>
+                <CloseButton onClick={handleCloseModal}>
+                  <X size={18} />
+                </CloseButton>
+              </ModalHeader>
 
-            <DetailSection>
-              <h3>Informações Pessoais</h3>
-              <DetailRow>
-                <span>Nome</span>
-                <span>{viewingPatient.first_name} {viewingPatient.last_name}</span>
-              </DetailRow>
-              <DetailRow>
-                <span>Email</span>
-                <span>{viewingPatient.email}</span>
-              </DetailRow>
-              <DetailRow>
-                <span>Telefone</span>
-                <span>{viewingPatient.phone || '-'}</span>
-              </DetailRow>
-              <DetailRow>
-                <span>Tipo</span>
-                <Badge type={viewingPatient.patient_type}>
-                  {getPatientTypeLabel(viewingPatient.patient_type)}
-                </Badge>
-              </DetailRow>
-            </DetailSection>
+              <ModalBody>
+                {error && (
+                  <Alert $variant="error">
+                    <AlertCircle size={18} />
+                    {error}
+                  </Alert>
+                )}
 
-            <DetailSection>
-              <h3>Histórico</h3>
-              <DetailRow>
-                <span>Cadastrado em</span>
-                <span>{formatDate(viewingPatient.created_at)}</span>
-              </DetailRow>
-              <DetailRow>
-                <span>Última visita</span>
-                <span>{formatDate(viewingPatient.last_visit_at)}</span>
-              </DetailRow>
-              <DetailRow>
-                <span>Exames (labs)</span>
-                <span>{formatDate(viewingPatient.labs_completed_at)}</span>
-              </DetailRow>
-            </DetailSection>
+                {success && (
+                  <Alert $variant="success">
+                    <Check size={18} />
+                    {success}
+                  </Alert>
+                )}
 
-            <ModalActions>
-              <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
-                Fechar
-              </Button>
-              <Button onClick={() => {
-                setShowDetailModal(false);
-                handleOpenModal(viewingPatient);
-              }}>
-                Editar
-              </Button>
-            </ModalActions>
-          </ModalContent>
-        </Modal>
-      )}
+                <FormGroup>
+                  <label>Email {!editingPatient && <span>*</span>}</label>
+                  <FormInput
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    disabled={!!editingPatient}
+                    placeholder="email@exemplo.com"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <label>Nome <span>*</span></label>
+                  <FormInput
+                    type="text"
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                    placeholder="Nome"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <label>Sobrenome <span>*</span></label>
+                  <FormInput
+                    type="text"
+                    value={formData.last_name}
+                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                    placeholder="Sobrenome"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <label>Telefone</label>
+                  <FormInput
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="(11) 99999-9999"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <label>Tipo de Paciente</label>
+                  <FormSelect
+                    value={formData.patient_type}
+                    onChange={(e) => setFormData({ ...formData, patient_type: e.target.value as PatientType })}
+                  >
+                    {PATIENT_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+              </ModalBody>
+
+              <ModalFooter>
+                <Button $variant="secondary" onClick={handleCloseModal}>
+                  Cancelar
+                </Button>
+                <Button $variant="primary" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </ModalFooter>
+            </ModalContent>
+          </ModalOverlay>
+        )}
+      </PageContainer>
     </AdminLayout>
   );
 };
