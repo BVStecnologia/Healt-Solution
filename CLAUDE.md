@@ -759,4 +759,40 @@ VALUES ('uuid-do-usuario', 'email@exemplo.com', 'admin', 'Nome', 'Sobrenome');
 
 ---
 
+## Organização de Settings (Claude Code)
+
+As permissões estão organizadas em **3 camadas** que se acumulam:
+
+```
+~/.claude/settings.json              (GLOBAL - todos os projetos)
+  + Clinica/.claude/settings.local.json    (PROJETO - só Clinica)
+    + Clinica/frontend/.claude/settings.local.json  (SUBPROJETO - só frontend)
+```
+
+### Global (`~/.claude/settings.json`)
+- Ferramentas genéricas: git, npm, docker, ssh, curl, etc.
+- Playwright MCP (todas as tools)
+- Context7 + Sequential Thinking MCP
+- WebSearch + domínios genéricos (github, npmjs, docker docs)
+- Plugins: frontend-design, code-review, feature-dev
+- Denied: .env, credentials, rm -rf, sudo, chmod 777
+
+### Projeto (`Clinica/.claude/settings.local.json`)
+- Supabase MCP (10 tools: execute_sql, apply_migration, deploy_edge_function, etc.)
+- Plugin: supabase
+- Domínios: essencemedicalclinic.com, evolution-api, supabase, portainer
+- Scripts: migrate.sh
+
+### Frontend (`Clinica/frontend/.claude/settings.local.json`)
+- npm start/build com diferentes portas
+
+### IMPORTANTE
+- `settings.local.json` = local da máquina, **NÃO commitar** (já está no .gitignore)
+- `settings.json` = compartilhado, pode commitar
+- **NÃO** colocar tokens, API keys ou senhas em regras de permissão
+- Novas permissões específicas da Clinica vão no `Clinica/.claude/settings.local.json`
+- Permissões genéricas (usadas em qualquer projeto) vão no global
+
+---
+
 *Última atualização: Fevereiro 2026*
