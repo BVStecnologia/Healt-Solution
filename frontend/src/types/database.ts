@@ -31,6 +31,8 @@ export type AppointmentStatus =
   | 'no_show';
 
 // Entidades
+export type PreferredLanguage = 'pt' | 'en';
+
 export interface Profile {
   id: string;
   email: string;
@@ -40,6 +42,7 @@ export interface Profile {
   phone: string | null;
   avatar_url: string | null;
   patient_type: PatientType | null;
+  preferred_language: PreferredLanguage;
   last_visit_at: string | null;
   labs_completed_at: string | null;
   created_at: string;
@@ -101,6 +104,7 @@ export type Database = {
           phone?: string | null;
           avatar_url?: string | null;
           patient_type?: PatientType | null;
+          preferred_language?: PreferredLanguage;
           last_visit_at?: string | null;
           labs_completed_at?: string | null;
           created_at?: string;
@@ -115,6 +119,7 @@ export type Database = {
           phone?: string | null;
           avatar_url?: string | null;
           patient_type?: PatientType | null;
+          preferred_language?: PreferredLanguage;
           last_visit_at?: string | null;
           labs_completed_at?: string | null;
           updated_at?: string;

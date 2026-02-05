@@ -313,7 +313,7 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const { signUp } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -334,7 +334,9 @@ const RegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error: signUpError } = await signUp(email, password, firstName, lastName);
+      // Passa o idioma atual da interface como preferência do paciente
+      const preferredLang = language as 'pt' | 'en';
+      const { error: signUpError } = await signUp(email, password, firstName, lastName, preferredLang);
 
       if (signUpError) {
         setError(t('register.error'));

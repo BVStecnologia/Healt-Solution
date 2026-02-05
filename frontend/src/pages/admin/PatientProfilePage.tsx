@@ -1087,6 +1087,7 @@ const PatientProfilePage: React.FC = () => {
     last_name: '',
     phone: '',
     patient_type: 'general' as PatientType,
+    preferred_language: 'pt' as 'pt' | 'en',
   });
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -1186,6 +1187,7 @@ const PatientProfilePage: React.FC = () => {
         last_name: patient.last_name,
         phone: patient.phone || '',
         patient_type: patient.patient_type || 'general',
+        preferred_language: patient.preferred_language || 'pt',
       });
       setSaveSuccess(false);
       setIsEditModalOpen(true);
@@ -1209,6 +1211,7 @@ const PatientProfilePage: React.FC = () => {
           last_name: editForm.last_name,
           phone: editForm.phone || null,
           patient_type: editForm.patient_type,
+          preferred_language: editForm.preferred_language,
           updated_at: new Date().toISOString(),
         })
         .eq('id', patient.id);
@@ -1222,8 +1225,9 @@ const PatientProfilePage: React.FC = () => {
         last_name: editForm.last_name,
         phone: editForm.phone || null,
         patient_type: editForm.patient_type,
+        preferred_language: editForm.preferred_language,
         updated_at: new Date().toISOString(),
-      } : null);
+      } as Profile : null);
 
       setSaveSuccess(true);
       setTimeout(() => {
@@ -1335,6 +1339,10 @@ const PatientProfilePage: React.FC = () => {
               <InfoItem>
                 <InfoLabel>Tipo de Paciente</InfoLabel>
                 <InfoValue>{getPatientTypeLabel(patient.patient_type)}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Idioma Preferido</InfoLabel>
+                <InfoValue>{patient.preferred_language === 'en' ? 'English' : 'Portugues'}</InfoValue>
               </InfoItem>
             </InfoGrid>
           </Card>
@@ -1521,6 +1529,17 @@ const PatientProfilePage: React.FC = () => {
                     {PATIENT_TYPES.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
+                  </FormSelect>
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Idioma Preferido</FormLabel>
+                  <FormSelect
+                    value={editForm.preferred_language}
+                    onChange={e => setEditForm(prev => ({ ...prev, preferred_language: e.target.value as 'pt' | 'en' }))}
+                  >
+                    <option value="pt">Portugues</option>
+                    <option value="en">English</option>
                   </FormSelect>
                 </FormGroup>
               </FormGrid>

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
-import { Profile, PatientType } from '../../types/database';
+import { Profile, PatientType, PreferredLanguage } from '../../types/database';
 
 // ============================================
 // ANIMATIONS
@@ -84,6 +84,9 @@ const PageContainer = styled.div`
 `;
 
 const Header = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 32px;
   animation: ${fadeInUp} 0.6s ease-out;
 
@@ -100,6 +103,36 @@ const Header = styled.div`
     color: ${luxuryTheme.textSecondary};
     margin: 0;
     font-size: 15px;
+  }
+`;
+
+const NewPatientButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight});
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px ${luxuryTheme.primary}30;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px ${luxuryTheme.primary}40;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -806,7 +839,9 @@ const PatientsPage: React.FC = () => {
     first_name: '',
     last_name: '',
     phone: '',
-    patient_type: 'new' as PatientType
+    password: '',
+    patient_type: 'new' as PatientType,
+    preferred_language: 'pt' as PreferredLanguage
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -853,7 +888,9 @@ const PatientsPage: React.FC = () => {
         first_name: patient.first_name,
         last_name: patient.last_name,
         phone: patient.phone || '',
-        patient_type: patient.patient_type || 'general'
+        password: '',
+        patient_type: patient.patient_type || 'general',
+        preferred_language: patient.preferred_language || 'pt'
       });
     } else {
       setEditingPatient(null);
@@ -862,7 +899,9 @@ const PatientsPage: React.FC = () => {
         first_name: '',
         last_name: '',
         phone: '',
-        patient_type: 'new'
+        password: '',
+        patient_type: 'new',
+        preferred_language: 'pt'
       });
     }
     setError('');
@@ -878,7 +917,9 @@ const PatientsPage: React.FC = () => {
       first_name: '',
       last_name: '',
       phone: '',
-      patient_type: 'new'
+      password: '',
+      patient_type: 'new',
+      preferred_language: 'pt'
     });
     setError('');
     setSuccess('');
@@ -906,6 +947,7 @@ const PatientsPage: React.FC = () => {
             last_name: formData.last_name,
             phone: formData.phone || null,
             patient_type: formData.patient_type,
+            preferred_language: formData.preferred_language,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingPatient.id);
@@ -913,12 +955,26 @@ const PatientsPage: React.FC = () => {
         if (error) throw error;
         setSuccess('Paciente atualizado com sucesso!');
       } else {
+        // Validações para novo paciente
         if (!formData.email) {
-          setError('Email é obrigatório para novos pacientes');
+          setError('Email é obrigatório');
           setSaving(false);
           return;
         }
 
+        if (!formData.password || formData.password.length < 6) {
+          setError('Senha é obrigatória (mínimo 6 caracteres)');
+          setSaving(false);
+          return;
+        }
+
+        if (!formData.preferred_language) {
+          setError('Idioma preferido é obrigatório');
+          setSaving(false);
+          return;
+        }
+
+        // Verificar se email já existe
         const { data: existingUser } = await supabase
           .from('profiles')
           .select('id')
@@ -931,9 +987,67 @@ const PatientsPage: React.FC = () => {
           return;
         }
 
-        setError('O paciente precisa se registrar no sistema primeiro.');
-        setSaving(false);
-        return;
+        // Salvar sessão atual do admin antes de criar novo usuário
+        const { data: currentSession } = await supabase.auth.getSession();
+        const adminSession = currentSession?.session;
+
+        // Criar usuário via Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              preferred_language: formData.preferred_language,
+            },
+          },
+        });
+
+        if (authError) {
+          // Restaurar sessão do admin se houve erro
+          if (adminSession) {
+            await supabase.auth.setSession(adminSession);
+          }
+          setError(authError.message);
+          setSaving(false);
+          return;
+        }
+
+        if (authData.user) {
+          // Criar perfil do paciente
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authData.user.id,
+              email: formData.email,
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              phone: formData.phone || null,
+              role: 'patient',
+              patient_type: formData.patient_type,
+              preferred_language: formData.preferred_language,
+            });
+
+          // Restaurar sessão do admin após criar o paciente
+          if (adminSession) {
+            await supabase.auth.setSession(adminSession);
+          }
+
+          if (profileError) {
+            console.error('Erro ao criar perfil:', profileError);
+            setError('Usuário criado, mas erro ao criar perfil. Contate o suporte.');
+            setSaving(false);
+            return;
+          }
+
+          setSuccess('Paciente cadastrado com sucesso! Um email de confirmação foi enviado.');
+        } else {
+          // Restaurar sessão do admin se não criou usuário
+          if (adminSession) {
+            await supabase.auth.setSession(adminSession);
+          }
+        }
       }
 
       await fetchPatients();
@@ -998,8 +1112,14 @@ const PatientsPage: React.FC = () => {
     <AdminLayout>
       <PageContainer>
         <Header>
-          <h1>Pacientes</h1>
-          <p>Gerencie os pacientes cadastrados na clínica</p>
+          <div>
+            <h1>Pacientes</h1>
+            <p>Gerencie os pacientes cadastrados na clínica</p>
+          </div>
+          <NewPatientButton onClick={() => handleOpenModal()}>
+            <UserPlus size={18} />
+            Novo Paciente
+          </NewPatientButton>
         </Header>
 
         <StatsGrid>
@@ -1188,6 +1308,18 @@ const PatientsPage: React.FC = () => {
                   />
                 </FormGroup>
 
+                {!editingPatient && (
+                  <FormGroup>
+                    <label>Senha <span>*</span></label>
+                    <FormInput
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Mínimo 6 caracteres"
+                    />
+                  </FormGroup>
+                )}
+
                 <FormGroup>
                   <label>Nome <span>*</span></label>
                   <FormInput
@@ -1229,13 +1361,34 @@ const PatientsPage: React.FC = () => {
                     ))}
                   </FormSelect>
                 </FormGroup>
+
+                <FormGroup>
+                  <label>Idioma Preferido <span>*</span></label>
+                  <FormSelect
+                    value={formData.preferred_language}
+                    onChange={(e) => setFormData({ ...formData, preferred_language: e.target.value as PreferredLanguage })}
+                  >
+                    <option value="pt">Portugues</option>
+                    <option value="en">English</option>
+                  </FormSelect>
+                </FormGroup>
               </ModalBody>
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={handleCloseModal}>
                   Cancelar
                 </Button>
-                <Button $variant="primary" onClick={handleSave} disabled={saving}>
+                <Button
+                  $variant="primary"
+                  onClick={handleSave}
+                  disabled={
+                    saving ||
+                    !formData.first_name.trim() ||
+                    !formData.last_name.trim() ||
+                    !formData.preferred_language ||
+                    (!editingPatient && (!formData.email.trim() || formData.password.length < 6))
+                  }
+                >
                   {saving ? 'Salvando...' : 'Salvar'}
                 </Button>
               </ModalFooter>

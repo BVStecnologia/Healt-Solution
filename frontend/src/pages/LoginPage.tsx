@@ -351,7 +351,7 @@ const LoginPage: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const { signIn, signInWithGoogle } = useAuth();
-  const { t } = useLanguage();
+  const { t, syncFromDatabase } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -368,6 +368,13 @@ const LoginPage: React.FC = () => {
       if (signInError) {
         setError(t('login.error'));
         return;
+      }
+
+      // Sincronizar idioma do perfil do usuário após login
+      // O userId será obtido pelo LanguageContext via supabase.auth.getUser()
+      const { data: { user: loggedUser } } = await import('../lib/supabaseClient').then(m => m.supabase.auth.getUser());
+      if (loggedUser) {
+        await syncFromDatabase(loggedUser.id);
       }
 
       navigate(from, { replace: true });

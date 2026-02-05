@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { useLanguage, Language } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { theme } from '../styles/GlobalStyle';
 import { ChevronDown } from 'lucide-react';
 
@@ -118,11 +119,14 @@ const USAFlag = () => (
 
 const LanguageSwitcher: React.FC = () => {
   const { language, setLanguage } = useLanguage();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleLanguageChange = (lang: Language) => {
-    setLanguage(lang);
+    // Se o usuário estiver logado, sincroniza com o banco de dados
+    const shouldSync = !!user;
+    setLanguage(lang, shouldSync);
     setOpen(false);
   };
 

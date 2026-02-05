@@ -1,8 +1,8 @@
 /**
  * WhatsApp Service - Evolution API
  *
- * Serviço simples para envio de mensagens WhatsApp via Evolution API.
- * Inclui logs detalhados para facilitar debug.
+ * Serviço para envio de mensagens WhatsApp via Evolution API.
+ * Suporta múltiplos idiomas (PT/EN) baseado na preferência do paciente.
  *
  * COMO USAR:
  *
@@ -15,20 +15,25 @@
  *   return;
  * }
  *
- * // Enviar mensagem simples
- * const result = await whatsappService.sendText(
- *   instance.name,
- *   '5511999999999',
- *   'Olá! Sua consulta foi confirmada.'
- * );
- *
- * // Ou usar template
+ * // Enviar mensagem usando template (com idioma)
  * const result = await whatsappService.sendFromTemplate(
  *   instance.name,
  *   '5511999999999',
  *   'appointment_confirmed',
- *   { nome: 'Maria', medico: 'Dr. João', data: '10/02', hora: '14:00', tipo: 'Consulta Inicial' }
+ *   { nome: 'Maria', medico: 'Dr. João', data: '10/02', hora: '14:00', tipo: 'Consulta Inicial' },
+ *   'pt'  // ou 'en' para inglês
  * );
+ *
+ * // Ou usar função de conveniência
+ * const result = await whatsappService.notifyAppointmentConfirmed({
+ *   patientName: 'Maria',
+ *   patientPhone: '5511999999999',
+ *   providerName: 'Dr. João',
+ *   appointmentType: 'Consulta Inicial',
+ *   appointmentDate: '10/02/2026',
+ *   appointmentTime: '14:00',
+ *   language: 'en',  // Idioma do paciente
+ * });
  */
 
 import { supabase } from './supabaseClient';
@@ -39,6 +44,10 @@ const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_
 
 // Debug mode - ativa logs detalhados
 const DEBUG = true;
+
+// Idiomas suportados
+export type SupportedLanguage = 'pt' | 'en';
+const DEFAULT_LANGUAGE: SupportedLanguage = 'pt';
 
 // NÚMEROS DE TESTE - Em desenvolvimento, só envia WhatsApp para esses números
 // Para desabilitar essa restrição, defina REACT_APP_WHATSAPP_ALLOW_ALL=true
@@ -89,6 +98,7 @@ export interface SendMessageResult {
 export interface MessageTemplate {
   id: string;
   name: string;
+  language: string;
   content: string;
   variables: string[];
 }
@@ -190,6 +200,7 @@ async function sendText(
     appointmentId?: string;
     patientId?: string;
     templateName?: string;
+    language?: SupportedLanguage;
   }
 ): Promise<SendMessageResult> {
   const formattedPhone = formatPhoneNumber(phoneNumber);
@@ -206,6 +217,7 @@ async function sendText(
   log('Enviando mensagem:', {
     instance: instanceName,
     phone: formattedPhone,
+    language: options?.language || DEFAULT_LANGUAGE,
     message: message.substring(0, 50) + '...',
   });
 
@@ -237,6 +249,7 @@ async function sendText(
         appointmentId: options?.appointmentId,
         patientId: options?.patientId,
         templateName: options?.templateName,
+        language: options?.language || DEFAULT_LANGUAGE,
       });
 
       return {
@@ -257,6 +270,7 @@ async function sendText(
       appointmentId: options?.appointmentId,
       patientId: options?.patientId,
       templateName: options?.templateName,
+      language: options?.language || DEFAULT_LANGUAGE,
       metadata: data,
     });
 
@@ -279,6 +293,7 @@ async function sendText(
       appointmentId: options?.appointmentId,
       patientId: options?.patientId,
       templateName: options?.templateName,
+      language: options?.language || DEFAULT_LANGUAGE,
     });
 
     return {
@@ -289,25 +304,37 @@ async function sendText(
 }
 
 /**
- * Busca template de mensagem pelo nome
+ * Busca template de mensagem pelo nome e idioma
+ * Se não encontrar no idioma solicitado, faz fallback para português
  */
-async function getTemplate(templateName: string): Promise<MessageTemplate | null> {
-  log('Buscando template:', templateName);
+async function getTemplate(
+  templateName: string,
+  language: SupportedLanguage = DEFAULT_LANGUAGE
+): Promise<MessageTemplate | null> {
+  log(`Buscando template: ${templateName} (${language})`);
 
   try {
+    // Primeiro tenta buscar no idioma solicitado
     const { data, error } = await supabase
       .from('message_templates')
       .select('*')
       .eq('name', templateName)
+      .eq('language', language)
       .eq('is_active', true)
       .single();
 
     if (error || !data) {
+      // Se não encontrou e o idioma não é PT, tenta fallback para PT
+      if (language !== 'pt') {
+        log(`Template não encontrado em ${language}, tentando fallback para PT...`);
+        return getTemplate(templateName, 'pt');
+      }
+
       logError('Template não encontrado', error);
       return null;
     }
 
-    log('Template encontrado:', data);
+    log('Template encontrado:', { name: data.name, language: data.language });
     return data as MessageTemplate;
   } catch (error) {
     logError('Erro ao buscar template', error);
@@ -334,24 +361,31 @@ function applyTemplateVariables(
 
 /**
  * Envia mensagem usando template
+ * @param instanceName - Nome da instância WhatsApp
+ * @param phoneNumber - Número do destinatário
+ * @param templateName - Nome do template (ex: 'appointment_confirmed')
+ * @param variables - Variáveis para substituir no template
+ * @param language - Idioma do template ('pt' ou 'en')
+ * @param options - Opções adicionais (appointmentId, patientId)
  */
 async function sendFromTemplate(
   instanceName: string,
   phoneNumber: string,
   templateName: string,
   variables: Record<string, string>,
+  language: SupportedLanguage = DEFAULT_LANGUAGE,
   options?: {
     appointmentId?: string;
     patientId?: string;
   }
 ): Promise<SendMessageResult> {
-  log('Enviando mensagem com template:', { templateName, variables });
+  log('Enviando mensagem com template:', { templateName, language, variables });
 
-  const template = await getTemplate(templateName);
+  const template = await getTemplate(templateName, language);
   if (!template) {
     return {
       success: false,
-      error: `Template "${templateName}" não encontrado`,
+      error: `Template "${templateName}" não encontrado para idioma "${language}"`,
     };
   }
 
@@ -360,6 +394,7 @@ async function sendFromTemplate(
   return sendText(instanceName, phoneNumber, message, {
     ...options,
     templateName,
+    language,
   });
 }
 
@@ -378,6 +413,7 @@ interface LogMessageParams {
   evolutionMessageId?: string;
   error?: string;
   metadata?: any;
+  language?: SupportedLanguage;
 }
 
 /**
@@ -397,6 +433,7 @@ async function logMessageToDatabase(params: LogMessageParams): Promise<string | 
       p_metadata: params.error
         ? { error: params.error, ...params.metadata }
         : params.metadata || null,
+      p_language: params.language || DEFAULT_LANGUAGE,
     });
 
     if (error) {
@@ -412,6 +449,31 @@ async function logMessageToDatabase(params: LogMessageParams): Promise<string | 
   }
 }
 
+/**
+ * Busca idioma preferido do paciente no banco
+ */
+async function getPatientLanguage(patientId: string): Promise<SupportedLanguage> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('preferred_language')
+      .eq('id', patientId)
+      .single();
+
+    if (error || !data?.preferred_language) {
+      log(`Idioma não encontrado para paciente ${patientId}, usando padrão: ${DEFAULT_LANGUAGE}`);
+      return DEFAULT_LANGUAGE;
+    }
+
+    const lang = data.preferred_language as SupportedLanguage;
+    log(`Idioma do paciente ${patientId}: ${lang}`);
+    return lang;
+  } catch (error) {
+    logError('Erro ao buscar idioma do paciente', error);
+    return DEFAULT_LANGUAGE;
+  }
+}
+
 // =============================================
 // FUNÇÕES DE CONVENIÊNCIA PARA AGENDAMENTOS
 // =============================================
@@ -422,9 +484,10 @@ export interface AppointmentNotificationData {
   patientId?: string;
   providerName: string;
   appointmentType: string;
-  appointmentDate: string;  // formato: "10/02/2026"
-  appointmentTime: string;  // formato: "14:00"
+  appointmentDate: string;  // formato: "10/02/2026" ou "02/10/2026" dependendo do idioma
+  appointmentTime: string;  // formato: "14:00" ou "2:00 PM"
   appointmentId?: string;
+  language?: SupportedLanguage;  // Idioma preferido do paciente
 }
 
 /**
@@ -433,7 +496,13 @@ export interface AppointmentNotificationData {
 async function notifyAppointmentConfirmed(
   data: AppointmentNotificationData
 ): Promise<SendMessageResult> {
-  log('Notificando confirmação de consulta:', data);
+  // Se não foi passado idioma mas temos patientId, busca do banco
+  let language = data.language || DEFAULT_LANGUAGE;
+  if (!data.language && data.patientId) {
+    language = await getPatientLanguage(data.patientId);
+  }
+
+  log(`Notificando confirmação de consulta (${language}):`, data);
 
   const instance = await getConnectedInstance();
   if (!instance) {
@@ -452,6 +521,7 @@ async function notifyAppointmentConfirmed(
       data: data.appointmentDate,
       hora: data.appointmentTime,
     },
+    language,
     {
       appointmentId: data.appointmentId,
       patientId: data.patientId,
@@ -465,7 +535,13 @@ async function notifyAppointmentConfirmed(
 async function notifyAppointmentRejected(
   data: AppointmentNotificationData & { reason: string }
 ): Promise<SendMessageResult> {
-  log('Notificando rejeição de consulta:', data);
+  // Se não foi passado idioma mas temos patientId, busca do banco
+  let language = data.language || DEFAULT_LANGUAGE;
+  if (!data.language && data.patientId) {
+    language = await getPatientLanguage(data.patientId);
+  }
+
+  log(`Notificando rejeição de consulta (${language}):`, data);
 
   const instance = await getConnectedInstance();
   if (!instance) {
@@ -481,6 +557,7 @@ async function notifyAppointmentRejected(
       nome: data.patientName,
       motivo: data.reason,
     },
+    language,
     {
       appointmentId: data.appointmentId,
       patientId: data.patientId,
@@ -494,7 +571,13 @@ async function notifyAppointmentRejected(
 async function notifyAppointmentCancelled(
   data: AppointmentNotificationData & { reason: string }
 ): Promise<SendMessageResult> {
-  log('Notificando cancelamento de consulta:', data);
+  // Se não foi passado idioma mas temos patientId, busca do banco
+  let language = data.language || DEFAULT_LANGUAGE;
+  if (!data.language && data.patientId) {
+    language = await getPatientLanguage(data.patientId);
+  }
+
+  log(`Notificando cancelamento de consulta (${language}):`, data);
 
   const instance = await getConnectedInstance();
   if (!instance) {
@@ -513,6 +596,7 @@ async function notifyAppointmentCancelled(
       hora: data.appointmentTime,
       motivo: data.reason,
     },
+    language,
     {
       appointmentId: data.appointmentId,
       patientId: data.patientId,
@@ -527,7 +611,13 @@ async function sendReminder(
   data: AppointmentNotificationData,
   type: '24h' | '1h'
 ): Promise<SendMessageResult> {
-  log(`Enviando lembrete ${type}:`, data);
+  // Se não foi passado idioma mas temos patientId, busca do banco
+  let language = data.language || DEFAULT_LANGUAGE;
+  if (!data.language && data.patientId) {
+    language = await getPatientLanguage(data.patientId);
+  }
+
+  log(`Enviando lembrete ${type} (${language}):`, data);
 
   const instance = await getConnectedInstance();
   if (!instance) {
@@ -554,6 +644,7 @@ async function sendReminder(
     data.patientPhone,
     templateName,
     variables,
+    language,
     {
       appointmentId: data.appointmentId,
       patientId: data.patientId,
@@ -581,6 +672,7 @@ export const whatsappService = {
 
   // Utilitários
   logMessageToDatabase,
+  getPatientLanguage,
 };
 
 export default whatsappService;

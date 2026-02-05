@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 export type Language = 'pt' | 'en';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (lang: Language) => void;
+  setLanguage: (lang: Language, syncToDatabase?: boolean) => void;
+  syncFromDatabase: (userId: string) => Promise<void>;
   t: (key: string) => string;
 }
 
@@ -63,6 +65,11 @@ const translations: Record<Language, Record<string, string>> = {
     'common.back': 'Voltar',
     'common.next': 'Próximo',
     'common.previous': 'Anterior',
+
+    // Language
+    'language.pt': 'Português',
+    'language.en': 'English',
+    'language.preference': 'Idioma preferido',
   },
   en: {
     // Login
@@ -115,6 +122,11 @@ const translations: Record<Language, Record<string, string>> = {
     'common.back': 'Back',
     'common.next': 'Next',
     'common.previous': 'Previous',
+
+    // Language
+    'language.pt': 'Português',
+    'language.en': 'English',
+    'language.preference': 'Preferred language',
   },
 };
 
@@ -136,8 +148,60 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     document.documentElement.lang = language;
   }, [language]);
 
-  const setLanguage = useCallback((lang: Language) => {
+  /**
+   * Define o idioma da interface
+   * @param lang - Idioma ('pt' ou 'en')
+   * @param syncToDatabase - Se true, salva no banco de dados (default: false)
+   */
+  const setLanguage = useCallback(async (lang: Language, syncToDatabase: boolean = false) => {
     setLanguageState(lang);
+
+    // Sincronizar com banco de dados se solicitado
+    if (syncToDatabase) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ preferred_language: lang })
+            .eq('id', user.id);
+
+          if (error) {
+            console.error('[Language] Erro ao salvar idioma no banco:', error);
+          } else {
+            console.log(`[Language] Idioma ${lang} salvo no banco`);
+          }
+        }
+      } catch (error) {
+        console.error('[Language] Erro ao sincronizar idioma:', error);
+      }
+    }
+  }, []);
+
+  /**
+   * Sincroniza o idioma da interface com o banco de dados
+   * Chamado após o login para aplicar a preferência do usuário
+   */
+  const syncFromDatabase = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('preferred_language')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.log('[Language] Perfil não encontrado, mantendo idioma atual');
+        return;
+      }
+
+      if (data?.preferred_language && (data.preferred_language === 'pt' || data.preferred_language === 'en')) {
+        console.log(`[Language] Sincronizando idioma do banco: ${data.preferred_language}`);
+        setLanguageState(data.preferred_language);
+      }
+    } catch (error) {
+      console.error('[Language] Erro ao sincronizar do banco:', error);
+    }
   }, []);
 
   const t = useCallback((key: string): string => {
@@ -145,7 +209,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, syncFromDatabase, t }}>
       {children}
     </LanguageContext.Provider>
   );

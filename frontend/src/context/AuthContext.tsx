@@ -10,7 +10,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, firstName: string, lastName: string, preferredLanguage?: 'pt' | 'en') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -35,7 +35,58 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Buscar perfil do usuário
+  // Detectar idioma preferido do navegador
+  const detectBrowserLanguage = (): 'pt' | 'en' => {
+    const browserLang = navigator.language.toLowerCase();
+    return browserLang.startsWith('pt') ? 'pt' : 'en';
+  };
+
+  // Criar perfil para usuário que fez login via Google (primeira vez)
+  const createProfileForOAuthUser = useCallback(async (user: User): Promise<Profile | null> => {
+    try {
+      const metadata = user.user_metadata || {};
+      const email = user.email || '';
+
+      // Extrair nome do Google ou usar email como fallback
+      const fullName = metadata.full_name || metadata.name || email.split('@')[0];
+      const nameParts = fullName.split(' ');
+      const firstName = nameParts[0] || 'Usuário';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Detectar idioma do navegador
+      const preferredLanguage = detectBrowserLanguage();
+
+      const newProfile = {
+        id: user.id,
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        role: 'patient' as const,
+        patient_type: 'new' as const,
+        avatar_url: metadata.avatar_url || metadata.picture || null,
+        preferred_language: preferredLanguage,
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(newProfile)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile for OAuth user:', error);
+        return null;
+      }
+
+      console.log(`[Auth] Perfil criado para usuário Google com idioma: ${preferredLanguage}`);
+      return data as Profile;
+    } catch (error) {
+      console.error('Error creating profile for OAuth user:', error);
+      return null;
+    }
+  }, []);
+
+  // Buscar perfil do usuário (ou criar se não existir para OAuth)
   const fetchProfile = useCallback(async (userId: string, user?: User): Promise<boolean> => {
     try {
       const { data, error } = await supabase
@@ -45,6 +96,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .single();
 
       if (error) {
+        // Se não encontrou o perfil e temos dados do usuário (provavelmente OAuth)
+        if (error.code === 'PGRST116' && user) {
+          console.log('[Auth] Perfil não encontrado, criando para usuário OAuth...');
+          const newProfile = await createProfileForOAuthUser(user);
+          if (newProfile) {
+            setProfile(newProfile);
+            return true;
+          }
+        }
         console.error('Error fetching profile:', error);
         setProfile(null);
         return false;
@@ -69,7 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setProfile(null);
       return false;
     }
-  }, []);
+  }, [createProfileForOAuthUser]);
 
   // Refresh do perfil
   const refreshProfile = useCallback(async () => {
@@ -160,7 +220,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     email: string,
     password: string,
     firstName: string,
-    lastName: string
+    lastName: string,
+    preferredLanguage: 'pt' | 'en' = 'pt'
   ) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -170,6 +231,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           data: {
             first_name: firstName,
             last_name: lastName,
+            preferred_language: preferredLanguage,
           },
         },
       });
@@ -187,6 +249,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             last_name: lastName,
             role: 'patient',
             patient_type: 'new',
+            preferred_language: preferredLanguage,
           });
 
         if (profileError) {
