@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Buscar perfil do usuário
-  const fetchProfile = useCallback(async (userId: string): Promise<boolean> => {
+  const fetchProfile = useCallback(async (userId: string, user?: User): Promise<boolean> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -49,6 +49,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setProfile(null);
         return false;
       }
+
+      // Atualizar avatar_url do Google OAuth se disponível e diferente
+      if (user?.user_metadata?.avatar_url && data.avatar_url !== user.user_metadata.avatar_url) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: user.user_metadata.avatar_url })
+          .eq('id', userId);
+
+        if (!updateError) {
+          data.avatar_url = user.user_metadata.avatar_url;
+        }
+      }
+
       setProfile(data);
       return true;
     } catch (error) {
@@ -61,7 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Refresh do perfil
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, user);
     }
   }, [user, fetchProfile]);
 
@@ -74,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (session) {
           setSession(session);
           setUser(session.user);
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id, session.user);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -95,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (session?.user) {
           // Fetch profile mas não bloqueia o loading
-          fetchProfile(session.user.id).finally(() => {
+          fetchProfile(session.user.id, session.user).finally(() => {
             setLoading(false);
           });
         } else {

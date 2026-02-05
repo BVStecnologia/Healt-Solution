@@ -58,27 +58,29 @@ const Header = styled.div`
   animation: ${fadeIn} 0.4s ease-out;
 
   h1 {
-    font-size: 28px;
-    font-weight: 700;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
     color: ${theme.colors.text};
     margin: 0;
     display: flex;
     align-items: center;
     gap: ${theme.spacing.md};
+    letter-spacing: 1px;
 
     .calendar-icon {
-      width: 36px;
-      height: 36px;
+      width: 42px;
+      height: 42px;
       background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
-      border-radius: ${theme.borderRadius.md};
+      border-radius: ${theme.borderRadius.lg};
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(146, 86, 62, 0.25);
+      box-shadow: 0 4px 14px rgba(146, 86, 62, 0.3);
 
       svg {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         color: white;
       }
     }
@@ -210,13 +212,18 @@ const CalendarWrapper = styled.div`
 
   .rbc-header {
     padding: ${theme.spacing.md} ${theme.spacing.sm};
-    font-weight: 700;
-    font-size: 11px;
-    color: ${theme.colors.textMuted};
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-weight: 400;
+    font-size: 13px;
+    color: ${theme.colors.text};
+    text-transform: lowercase;
+    letter-spacing: 0.5px;
     border-bottom: 2px solid ${theme.colors.border};
-    background: ${theme.colors.background};
+    background: linear-gradient(180deg, ${theme.colors.surface} 0%, ${theme.colors.background} 100%);
+
+    &:first-letter {
+      text-transform: uppercase;
+    }
   }
 
   .rbc-month-view {
@@ -252,7 +259,7 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-today {
-    background: linear-gradient(135deg, ${theme.colors.primarySoft} 0%, ${theme.colors.primarySoft}80 100%) !important;
+    background: linear-gradient(180deg, ${theme.colors.primarySoft}60 0%, ${theme.colors.primarySoft}30 100%) !important;
     position: relative;
 
     &::before {
@@ -262,7 +269,7 @@ const CalendarWrapper = styled.div`
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight});
+      background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight}, ${theme.colors.primary});
     }
   }
 
@@ -270,47 +277,54 @@ const CalendarWrapper = styled.div`
     padding: ${theme.spacing.sm} ${theme.spacing.md};
     font-size: 14px;
     font-weight: 500;
+    font-family: ${theme.typography.fontFamily};
     text-align: right;
 
     > button {
       transition: all 0.2s ease;
       padding: 4px 8px;
       border-radius: ${theme.borderRadius.sm};
+      font-family: ${theme.typography.fontFamilyHeading};
+      font-size: 15px;
+      font-weight: 400;
 
       &:hover {
-        background: ${theme.colors.primary}15;
+        background: ${theme.colors.primarySoft};
         color: ${theme.colors.primary};
       }
     }
 
     &.rbc-now > button {
-      background: ${theme.colors.primary};
+      background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
       color: white;
-      font-weight: 700;
+      font-weight: 400;
       border-radius: ${theme.borderRadius.full};
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(146, 86, 62, 0.3);
+      box-shadow: 0 3px 10px rgba(146, 86, 62, 0.35);
     }
   }
 
   .rbc-event {
-    border-radius: 6px;
-    padding: 4px 8px;
+    border-radius: 8px;
+    padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: ${theme.typography.fontFamily};
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     overflow: hidden;
     text-overflow: ellipsis;
+    border: none !important;
+    margin: 1px 2px;
 
     &:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
       z-index: 10;
     }
 
@@ -322,7 +336,12 @@ const CalendarWrapper = styled.div`
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      line-height: 1.4;
     }
+  }
+
+  .rbc-row-segment {
+    padding: 0 2px 2px 2px;
   }
 
   .rbc-event-label {
@@ -343,23 +362,27 @@ const CalendarWrapper = styled.div`
     color: ${theme.colors.text};
     border: 1px solid ${theme.colors.border};
     border-radius: ${theme.borderRadius.md};
-    padding: 10px 16px;
+    padding: 10px 18px;
     background: ${theme.colors.surface};
+    font-family: ${theme.typography.fontFamily};
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
 
     &:hover {
-      background: ${theme.colors.background};
-      border-color: ${theme.colors.primary}40;
+      background: ${theme.colors.primarySoft};
+      border-color: ${theme.colors.primary}50;
+      transform: translateY(-1px);
     }
 
-    &.rbc-active {
-      background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 2px 8px rgba(146, 86, 62, 0.25);
+    &.rbc-active,
+    &.rbc-active:focus,
+    &.rbc-active:hover {
+      background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%) !important;
+      color: white !important;
+      border-color: transparent !important;
+      box-shadow: 0 3px 12px rgba(146, 86, 62, 0.3) !important;
     }
   }
 
@@ -385,12 +408,12 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-toolbar-label {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 26px;
+    font-weight: 400;
     color: ${theme.colors.text};
     text-transform: capitalize;
     font-family: ${theme.typography.fontFamilyHeading};
-    letter-spacing: -0.5px;
+    letter-spacing: 1px;
   }
 
   .rbc-time-view {
@@ -401,6 +424,44 @@ const CalendarWrapper = styled.div`
 
   .rbc-time-header {
     border-bottom: 2px solid ${theme.colors.border};
+    background: linear-gradient(180deg, ${theme.colors.surface} 0%, ${theme.colors.background} 100%);
+  }
+
+  .rbc-time-header-cell {
+    font-family: ${theme.typography.fontFamilyHeading};
+  }
+
+  /* Fix para números dos dias na view de semana/dia - FORÇA TOTAL */
+  .rbc-time-view .rbc-time-header-content .rbc-header {
+    background: ${theme.colors.surface} !important;
+    border-bottom: 1px solid ${theme.colors.border} !important;
+    padding: 8px 4px !important;
+  }
+
+  .rbc-time-view .rbc-header button,
+  .rbc-time-view .rbc-header a,
+  .rbc-time-view .rbc-header .rbc-button-link,
+  .rbc-time-header-content button,
+  .rbc-time-header button,
+  .rbc-button-link {
+    font-family: ${theme.typography.fontFamilyHeading} !important;
+    font-size: 24px !important;
+    font-weight: 400 !important;
+    color: ${theme.colors.text} !important;
+    text-decoration: none !important;
+  }
+
+  /* Linha do cabeçalho com nome dos dias (dom, seg, etc) */
+  .rbc-time-header-content > .rbc-row.rbc-row-resource {
+    border-bottom: 1px solid ${theme.colors.border};
+  }
+
+  .rbc-allday-cell {
+    display: none;
+  }
+
+  .rbc-time-header-cell {
+    min-height: 60px;
   }
 
   .rbc-time-content {
@@ -435,61 +496,119 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-agenda-view {
-    border: 1px solid ${theme.colors.border};
-    border-radius: ${theme.borderRadius.lg};
+    border: none;
+    border-radius: ${theme.borderRadius.xl};
     overflow: hidden;
+    background: transparent;
   }
 
   .rbc-agenda-table {
     border: none;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
 
     thead {
-      background: linear-gradient(135deg, ${theme.colors.background} 0%, ${theme.colors.surface} 100%);
+      background: transparent;
     }
 
     th {
-      padding: ${theme.spacing.md} ${theme.spacing.lg};
-      font-weight: 700;
+      padding: ${theme.spacing.sm} ${theme.spacing.lg};
+      font-family: ${theme.typography.fontFamily};
+      font-weight: 600;
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       color: ${theme.colors.textMuted};
-      border-bottom: 2px solid ${theme.colors.border};
+      border: none;
+      text-align: left;
     }
 
     td {
       padding: ${theme.spacing.md} ${theme.spacing.lg};
-      border-bottom: 1px solid ${theme.colors.borderLight};
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
+      vertical-align: middle;
+      border: none;
+      background: ${theme.colors.surface};
+      border-top: 1px solid ${theme.colors.borderLight};
+      border-bottom: 1px solid ${theme.colors.borderLight};
+
+      &:first-child {
+        border-left: 3px solid ${theme.colors.border};
+        border-top-left-radius: ${theme.borderRadius.md};
+        border-bottom-left-radius: ${theme.borderRadius.md};
+      }
+
+      &:last-child {
+        border-right: 1px solid ${theme.colors.borderLight};
+        border-top-right-radius: ${theme.borderRadius.md};
+        border-bottom-right-radius: ${theme.borderRadius.md};
+      }
     }
 
     tbody tr {
       transition: all 0.2s ease;
-      border-left: 4px solid transparent;
+      cursor: pointer;
 
       &:hover {
-        transform: translateX(4px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        td {
+          background: ${theme.colors.primarySoft}30;
+        }
+        td:first-child {
+          border-left-color: ${theme.colors.primary};
+        }
       }
     }
 
+    /* Cores da borda esquerda por status */
+    tbody tr[class*="pending"] td:first-child,
+    tbody tr:has(.rbc-agenda-event-cell [data-status="pending"]) td:first-child {
+      border-left-color: #D97706;
+    }
+
     .rbc-agenda-date-cell {
-      font-weight: 600;
+      font-family: ${theme.typography.fontFamily};
+      font-weight: 500;
+      font-size: 13px;
       color: ${theme.colors.text};
       white-space: nowrap;
+      min-width: 100px;
+
+      &::first-letter {
+        text-transform: uppercase;
+      }
     }
 
     .rbc-agenda-time-cell {
-      color: ${theme.colors.textMuted};
-      font-family: monospace;
-      font-size: 12px;
+      color: ${theme.colors.textSecondary};
+      font-family: ${theme.typography.fontFamily};
+      font-size: 13px;
+      font-weight: 500;
+      min-width: 90px;
     }
 
     .rbc-agenda-event-cell {
-      font-weight: 600;
+      font-weight: 500;
       color: ${theme.colors.text};
+      font-size: 14px;
+
+      > span, > div {
+        display: flex;
+        align-items: center;
+      }
     }
+  }
+
+  .rbc-agenda-empty {
+    padding: ${theme.spacing.xxxl};
+    text-align: center;
+    color: ${theme.colors.textMuted};
+    font-size: 15px;
+    font-style: italic;
+    background: ${theme.colors.surface};
+    border-radius: ${theme.borderRadius.xl};
+    box-shadow: ${theme.shadows.sm};
   }
 
   .rbc-show-more {
@@ -506,12 +625,14 @@ const CalendarWrapper = styled.div`
 
 const Legend = styled.div`
   display: flex;
-  gap: ${theme.spacing.xl};
+  gap: ${theme.spacing.lg};
   margin-top: ${theme.spacing.lg};
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  background: linear-gradient(135deg, ${theme.colors.background} 0%, ${theme.colors.surface} 100%);
+  padding: ${theme.spacing.md} ${theme.spacing.xl};
+  background: ${theme.colors.surface};
   border-radius: ${theme.borderRadius.lg};
   border: 1px solid ${theme.colors.borderLight};
+  justify-content: center;
+  flex-wrap: wrap;
 `;
 
 const LegendItem = styled.div`
@@ -1119,6 +1240,94 @@ const ErrorMessage = styled.div`
   }
 `;
 
+// Componente customizado para evento da agenda - Versão Limpa
+const AgendaEventContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 2px 0;
+`;
+
+const AgendaPatientName = styled.span`
+  font-weight: 600;
+  color: ${theme.colors.text};
+  font-size: 14px;
+  min-width: 140px;
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const AgendaSeparator = styled.span`
+  color: ${theme.colors.borderLight};
+  font-weight: 300;
+`;
+
+const AgendaType = styled.span`
+  font-size: 13px;
+  color: ${theme.colors.textSecondary};
+  min-width: 80px;
+`;
+
+const AgendaProvider = styled.span`
+  font-size: 13px;
+  color: ${theme.colors.textMuted};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+  }
+`;
+
+const AgendaStatusBadge = styled.span<{ $status: string }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: ${theme.borderRadius.full};
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-left: auto;
+
+  ${props => {
+    switch (props.$status) {
+      case 'pending':
+        return `
+          background: #FEF3C7;
+          color: #92400E;
+        `;
+      case 'confirmed':
+        return `
+          background: #D1FAE5;
+          color: #065F46;
+        `;
+      case 'completed':
+        return `
+          background: #F3F4F6;
+          color: #4B5563;
+        `;
+      case 'cancelled':
+      case 'no_show':
+        return `
+          background: #FEE2E2;
+          color: #991B1B;
+        `;
+      default:
+        return `
+          background: ${theme.colors.background};
+          color: ${theme.colors.text};
+        `;
+    }
+  }}
+`;
+
 interface CalendarEvent {
   id: string;
   title: string;
@@ -1172,6 +1381,54 @@ const messages = {
   event: 'Evento',
   noEventsInRange: 'Nenhuma consulta neste período.',
   showMore: (total: number) => `+ ${total} mais`,
+};
+
+// Helper para formatar tipo de consulta
+const formatTypeShort = (type: string): string => {
+  const types: Record<string, string> = {
+    initial_consultation: 'Inicial',
+    follow_up: 'Retorno',
+    hormone_check: 'Hormonal',
+    lab_review: 'Exames',
+    nutrition: 'Nutrição',
+    health_coaching: 'Coaching',
+    therapy: 'Terapia',
+    personal_training: 'Personal',
+  };
+  return types[type] || type;
+};
+
+// Helper para formatar status
+const formatStatusShort = (status: string): string => {
+  const statuses: Record<string, string> = {
+    pending: 'Pendente',
+    confirmed: 'Confirmada',
+    checked_in: 'Check-in',
+    in_progress: 'Em Curso',
+    completed: 'Concluída',
+    cancelled: 'Cancelada',
+    no_show: 'Faltou',
+  };
+  return statuses[status] || status;
+};
+
+// Componente customizado para renderizar evento na Agenda - Versão Limpa
+const CustomAgendaEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
+  return (
+    <AgendaEventContent>
+      <AgendaPatientName>{event.patientName}</AgendaPatientName>
+      <AgendaSeparator>·</AgendaSeparator>
+      <AgendaType>{formatTypeShort(event.type)}</AgendaType>
+      <AgendaSeparator>·</AgendaSeparator>
+      <AgendaProvider>
+        <Stethoscope />
+        {event.providerName}
+      </AgendaProvider>
+      <AgendaStatusBadge $status={event.status}>
+        {formatStatusShort(event.status)}
+      </AgendaStatusBadge>
+    </AgendaEventContent>
+  );
 };
 
 const CalendarPage: React.FC = () => {
@@ -1239,6 +1496,7 @@ const CalendarPage: React.FC = () => {
         .from('appointments')
         .select(`
           id,
+          patient_id,
           scheduled_at,
           duration,
           type,
@@ -1262,7 +1520,7 @@ const CalendarPage: React.FC = () => {
 
         return {
           id: apt.id,
-          title: `${patientName} - ${providerName}`,
+          title: patientName,
           start: startDate,
           end: endDate,
           status: apt.status,
@@ -1358,43 +1616,58 @@ const CalendarPage: React.FC = () => {
     }
   }, [pendingPatientId, patients]);
 
-  const eventStyleGetter = (event: CalendarEvent) => {
-    // Paleta luxuosa com alto contraste - tons que harmonizam com marrom/bege
+  const eventStyleGetter = useCallback((event: CalendarEvent) => {
+    // Na view Agenda, usar estilo minimal
+    if (view === 'agenda') {
+      return {
+        style: {
+          backgroundColor: 'transparent',
+          border: 'none',
+          color: theme.colors.text,
+          fontWeight: 500,
+          fontSize: '14px',
+          padding: 0,
+          boxShadow: 'none',
+        },
+      };
+    }
+
+    // Paleta para outras views (mês, semana, dia)
     const statusStyles: Record<string, { bg: string; border: string; text: string }> = {
       pending: {
-        bg: '#FEF3C7',      // Âmbar claro
-        border: '#D97706',   // Âmbar escuro
-        text: '#92400E',     // Marrom âmbar (alto contraste)
+        bg: '#FEF3C7',
+        border: '#D97706',
+        text: '#92400E',
       },
       confirmed: {
-        bg: '#D1FAE5',      // Verde menta claro
-        border: '#059669',   // Verde esmeralda
-        text: '#065F46',     // Verde escuro (alto contraste)
+        bg: '#D1FAE5',
+        border: '#059669',
+        text: '#065F46',
       },
       checked_in: {
-        bg: '#DBEAFE',      // Azul claro
-        border: '#2563EB',   // Azul royal
-        text: '#1E40AF',     // Azul escuro (alto contraste)
+        bg: '#DBEAFE',
+        border: '#2563EB',
+        text: '#1E40AF',
       },
       in_progress: {
-        bg: '#E0E7FF',      // Índigo claro
-        border: '#4F46E5',   // Índigo
-        text: '#3730A3',     // Índigo escuro (alto contraste)
+        bg: '#E0E7FF',
+        border: '#4F46E5',
+        text: '#3730A3',
       },
       completed: {
-        bg: '#F3F4F6',      // Cinza claro
-        border: '#6B7280',   // Cinza médio
-        text: '#374151',     // Cinza escuro (alto contraste)
+        bg: '#F3F4F6',
+        border: '#6B7280',
+        text: '#374151',
       },
       cancelled: {
-        bg: '#FEE2E2',      // Vermelho claro
-        border: '#DC2626',   // Vermelho
-        text: '#991B1B',     // Vermelho escuro (alto contraste)
+        bg: '#FEE2E2',
+        border: '#DC2626',
+        text: '#991B1B',
       },
       no_show: {
-        bg: '#FECACA',      // Vermelho rosado
-        border: '#B91C1C',   // Vermelho tijolo
-        text: '#7F1D1D',     // Vermelho muito escuro (alto contraste)
+        bg: '#FECACA',
+        border: '#B91C1C',
+        text: '#7F1D1D',
       },
     };
 
@@ -1415,7 +1688,7 @@ const CalendarPage: React.FC = () => {
         textDecoration: event.status === 'cancelled' ? 'line-through' : 'none',
       },
     };
-  };
+  }, [view]);
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event);
@@ -1652,6 +1925,11 @@ const CalendarPage: React.FC = () => {
             agendaTimeFormat: (date: Date) => format(date, 'HH:mm', { locale: ptBR }),
             agendaTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
               `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`,
+          }}
+          components={{
+            agenda: {
+              event: CustomAgendaEvent,
+            } as any,
           }}
           popup
           selectable

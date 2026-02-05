@@ -112,7 +112,7 @@ export const theme = {
 export type Theme = typeof theme;
 
 export const GlobalStyle = createGlobalStyle`
-  @import url('https://fonts.googleapis.com/css2?family=Italiana&family=Raleway:wght@400;500;600;700&display=swap');
+  /* Fontes carregadas via index.html para melhor performance */
 
   * {
     margin: 0;

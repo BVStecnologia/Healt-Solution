@@ -247,11 +247,11 @@ const UserInfo = styled.div`
   background: rgba(255, 255, 255, 0.03);
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.div<{ $hasImage?: boolean }>`
   width: 42px;
   height: 42px;
   border-radius: 10px;
-  background: linear-gradient(145deg, ${theme.colors.primary} 0%, #7A4833 100%);
+  background: ${props => props.$hasImage ? 'transparent' : `linear-gradient(145deg, ${theme.colors.primary} 0%, #7A4833 100%)`};
   color: white;
   display: flex;
   align-items: center;
@@ -260,6 +260,13 @@ const Avatar = styled.div`
   font-size: 15px;
   font-family: ${theme.typography.fontFamilyHeading};
   letter-spacing: -0.5px;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const UserDetails = styled.div`
@@ -379,7 +386,13 @@ const AdminSidebar: React.FC = () => {
 
       <UserSection>
         <UserInfo>
-          <Avatar>{initials}</Avatar>
+          <Avatar $hasImage={!!profile?.avatar_url}>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
+            ) : (
+              initials
+            )}
+          </Avatar>
           <UserDetails>
             <UserName>
               {profile ? `${profile.first_name} ${profile.last_name}` : 'Admin'}

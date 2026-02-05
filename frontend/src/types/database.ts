@@ -38,6 +38,7 @@ export interface Profile {
   first_name: string;
   last_name: string;
   phone: string | null;
+  avatar_url: string | null;
   patient_type: PatientType | null;
   last_visit_at: string | null;
   labs_completed_at: string | null;
@@ -98,6 +99,7 @@ export type Database = {
           first_name: string;
           last_name: string;
           phone?: string | null;
+          avatar_url?: string | null;
           patient_type?: PatientType | null;
           last_visit_at?: string | null;
           labs_completed_at?: string | null;
@@ -111,6 +113,7 @@ export type Database = {
           first_name?: string;
           last_name?: string;
           phone?: string | null;
+          avatar_url?: string | null;
           patient_type?: PatientType | null;
           last_visit_at?: string | null;
           labs_completed_at?: string | null;
