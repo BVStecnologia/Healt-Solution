@@ -20,6 +20,9 @@ import {
   Pill,
   ChevronRight,
   MapPin,
+  X,
+  Save,
+  Shield,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -387,6 +390,31 @@ const Card = styled.div<{ $delay?: number }>`
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: ${props => props.$delay || 0}ms;
   animation-fill-mode: both;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 0%, ${theme.colors.primarySoft}10 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(146, 86, 62, 0.12), 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    &::after {
+      opacity: 1;
+    }
+  }
 `;
 
 const CardHeader = styled.div`
@@ -485,6 +513,8 @@ const StatCard = styled.div<{ $color: string; $delay?: number }>`
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: ${props => props.$delay || 0}ms;
   animation-fill-mode: both;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
 
   &::before {
     content: '';
@@ -494,6 +524,33 @@ const StatCard = styled.div<{ $color: string; $delay?: number }>`
     width: 4px;
     height: 100%;
     background: ${props => props.$color};
+    transition: width 0.3s ease;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    background: ${props => props.$color}08;
+    border-radius: 50%;
+    transform: translate(30%, -30%);
+    transition: all 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+    &::before {
+      width: 6px;
+    }
+
+    &::after {
+      transform: translate(20%, -20%) scale(1.2);
+    }
   }
 `;
 
@@ -645,6 +702,262 @@ const EmptyState = styled.div`
   }
 `;
 
+// Modal animation - must be defined before ModalContainer
+const slideIn = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+`;
+
+// Edit Modal Styles
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(57, 57, 57, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: ${theme.spacing.lg};
+  animation: ${fadeInUp} 0.3s ease-out;
+`;
+
+const ModalContainer = styled.div`
+  background: linear-gradient(180deg, #FFFDFB 0%, #FAF8F6 100%);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+              0 0 0 1px rgba(146, 86, 62, 0.05);
+  overflow: hidden;
+  animation: ${slideIn} 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight}, ${theme.colors.primary});
+    background-size: 200% 100%;
+    animation: ${shimmer} 3s linear infinite;
+  }
+`;
+
+const ModalHeader = styled.div`
+  padding: 28px 28px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid ${theme.colors.borderLight};
+`;
+
+const ModalTitle = styled.h2`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 22px;
+  font-weight: 400;
+  color: ${theme.colors.text};
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    color: ${theme.colors.primary};
+  }
+`;
+
+const CloseButton = styled.button`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: ${theme.colors.background};
+  color: ${theme.colors.textSecondary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${theme.colors.primarySoft};
+    color: ${theme.colors.primary};
+    transform: rotate(90deg);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 24px 28px;
+`;
+
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormGroup = styled.div<{ $fullWidth?: boolean }>`
+  ${props => props.$fullWidth && css`
+    grid-column: 1 / -1;
+  `}
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${theme.colors.textMuted};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 12px;
+  font-size: 15px;
+  color: ${theme.colors.text};
+  background: white;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+
+  &::placeholder {
+    color: ${theme.colors.textMuted};
+  }
+
+  &:disabled {
+    background: ${theme.colors.background};
+    color: ${theme.colors.textSecondary};
+    cursor: not-allowed;
+  }
+`;
+
+const FormSelect = styled.select`
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 12px;
+  font-size: 15px;
+  color: ${theme.colors.text};
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238C8B8B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 44px;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+`;
+
+const ModalFooter = styled.div`
+  padding: 20px 28px 28px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid ${theme.colors.borderLight};
+`;
+
+const ModalButton = styled.button<{ $variant: 'primary' | 'secondary' }>`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  ${props => props.$variant === 'primary' ? css`
+    background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 14px rgba(146, 86, 62, 0.3);
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(146, 86, 62, 0.4);
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  ` : css`
+    background: white;
+    color: ${theme.colors.text};
+    border: 1px solid ${theme.colors.border};
+
+    &:hover {
+      background: ${theme.colors.background};
+      border-color: ${theme.colors.primary}40;
+    }
+  `}
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const SuccessMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  border: 1px solid #10B98140;
+  border-radius: 12px;
+  color: #065F46;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: #059669;
+  }
+`;
+
 const LoadingState = styled.div`
   display: flex;
   flex-direction: column;
@@ -749,6 +1062,14 @@ interface AppointmentWithProvider extends Omit<Appointment, 'provider'> {
   };
 }
 
+const PATIENT_TYPES: { value: PatientType; label: string }[] = [
+  { value: 'new', label: 'Novo Paciente' },
+  { value: 'general', label: 'Geral' },
+  { value: 'trt', label: 'TRT' },
+  { value: 'hormone', label: 'Hormonal' },
+  { value: 'vip', label: 'VIP' }
+];
+
 const PatientProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -760,6 +1081,17 @@ const PatientProfilePage: React.FC = () => {
     completed: 0,
     upcoming: 0,
   });
+
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    first_name: '',
+    last_name: '',
+    phone: '',
+    patient_type: 'general' as PatientType,
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -849,6 +1181,63 @@ const PatientProfilePage: React.FC = () => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
+  const openEditModal = () => {
+    if (patient) {
+      setEditForm({
+        first_name: patient.first_name,
+        last_name: patient.last_name,
+        phone: patient.phone || '',
+        patient_type: patient.patient_type || 'general',
+      });
+      setSaveSuccess(false);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setSaveSuccess(false);
+  };
+
+  const handleSavePatient = async () => {
+    if (!patient) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: editForm.first_name,
+          last_name: editForm.last_name,
+          phone: editForm.phone || null,
+          patient_type: editForm.patient_type,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', patient.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setPatient(prev => prev ? {
+        ...prev,
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        phone: editForm.phone || null,
+        patient_type: editForm.patient_type,
+        updated_at: new Date().toISOString(),
+      } : null);
+
+      setSaveSuccess(true);
+      setTimeout(() => {
+        closeEditModal();
+      }, 1500);
+    } catch (error) {
+      console.error('Error saving patient:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <PageContainer>
@@ -897,7 +1286,7 @@ const PatientProfilePage: React.FC = () => {
             </HeaderInfo>
 
             <HeaderActions>
-              <ActionButton $variant="secondary" onClick={() => navigate(`/admin/patients?edit=${patient.id}`)}>
+              <ActionButton $variant="secondary" onClick={openEditModal}>
                 <Edit3 />
                 Editar
               </ActionButton>
@@ -1061,6 +1450,106 @@ const PatientProfilePage: React.FC = () => {
           </FullWidthCard>
         </Grid>
       </PageContainer>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <ModalOverlay onClick={closeEditModal}>
+          <ModalContainer onClick={e => e.stopPropagation()}>
+            <ModalHeader>
+              <ModalTitle>
+                <Edit3 />
+                Editar Paciente
+              </ModalTitle>
+              <CloseButton onClick={closeEditModal}>
+                <X />
+              </CloseButton>
+            </ModalHeader>
+
+            <ModalBody>
+              {saveSuccess && (
+                <SuccessMessage>
+                  <CheckCircle />
+                  Dados salvos com sucesso!
+                </SuccessMessage>
+              )}
+
+              <FormGrid>
+                <FormGroup>
+                  <FormLabel>Nome</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.first_name}
+                    onChange={e => setEditForm(prev => ({ ...prev, first_name: e.target.value }))}
+                    placeholder="Nome"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Sobrenome</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.last_name}
+                    onChange={e => setEditForm(prev => ({ ...prev, last_name: e.target.value }))}
+                    placeholder="Sobrenome"
+                  />
+                </FormGroup>
+
+                <FormGroup $fullWidth>
+                  <FormLabel>Email</FormLabel>
+                  <FormInput
+                    type="email"
+                    value={patient?.email || ''}
+                    disabled
+                    placeholder="Email não pode ser alterado"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Telefone</FormLabel>
+                  <FormInput
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="(11) 99999-9999"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Tipo de Paciente</FormLabel>
+                  <FormSelect
+                    value={editForm.patient_type}
+                    onChange={e => setEditForm(prev => ({ ...prev, patient_type: e.target.value as PatientType }))}
+                  >
+                    {PATIENT_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+              </FormGrid>
+            </ModalBody>
+
+            <ModalFooter>
+              <ModalButton $variant="secondary" onClick={closeEditModal}>
+                Cancelar
+              </ModalButton>
+              <ModalButton
+                $variant="primary"
+                onClick={handleSavePatient}
+                disabled={saving || !editForm.first_name || !editForm.last_name}
+              >
+                {saving ? (
+                  <>Salvando...</>
+                ) : (
+                  <>
+                    <Save />
+                    Salvar Alterações
+                  </>
+                )}
+              </ModalButton>
+            </ModalFooter>
+          </ModalContainer>
+        </ModalOverlay>
+      )}
     </AdminLayout>
   );
 };

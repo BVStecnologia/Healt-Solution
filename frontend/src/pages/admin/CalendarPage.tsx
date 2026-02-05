@@ -18,8 +18,10 @@ import {
   CheckCircle,
   XCircle,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Save,
 } from 'lucide-react';
+import { AppointmentType } from '../../types/database';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -875,6 +877,248 @@ const ModalButton = styled.button<{ $variant: 'primary' | 'success' | 'danger' |
   }
 `;
 
+// New Appointment Modal Styles
+const NewAppointmentModal = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, #FFFDFB 0%, #FAF8F6 100%);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+              0 0 0 1px rgba(146, 86, 62, 0.05);
+  animation: ${slideIn} 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1001;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, ${theme.colors.primary}, #D4AF37, ${theme.colors.primary});
+    background-size: 200% 100%;
+  }
+`;
+
+const NewAppointmentHeader = styled.div`
+  padding: 28px 28px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid ${theme.colors.borderLight};
+
+  h2 {
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 22px;
+    font-weight: 400;
+    color: ${theme.colors.text};
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      color: ${theme.colors.primary};
+    }
+  }
+`;
+
+const NewAppointmentBody = styled.div`
+  padding: 24px 28px;
+`;
+
+const PatientBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(135deg, ${theme.colors.primarySoft} 0%, #E8D5CC 100%);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  border: 1px solid ${theme.colors.primary}20;
+`;
+
+const PatientAvatar = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover});
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 18px;
+  font-weight: 600;
+`;
+
+const PatientBannerInfo = styled.div`
+  flex: 1;
+
+  .name {
+    font-weight: 600;
+    color: ${theme.colors.text};
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+
+  .label {
+    font-size: 12px;
+    color: ${theme.colors.textSecondary};
+  }
+`;
+
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormGroup = styled.div<{ $fullWidth?: boolean }>`
+  ${props => props.$fullWidth && `
+    grid-column: 1 / -1;
+  `}
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${theme.colors.textMuted};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 12px;
+  font-size: 15px;
+  color: ${theme.colors.text};
+  background: white;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+
+  &::placeholder {
+    color: ${theme.colors.textMuted};
+  }
+`;
+
+const FormSelect = styled.select`
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 12px;
+  font-size: 15px;
+  color: ${theme.colors.text};
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238C8B8B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 44px;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+`;
+
+const FormTextarea = styled.textarea`
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 12px;
+  font-size: 15px;
+  color: ${theme.colors.text};
+  background: white;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+
+  &::placeholder {
+    color: ${theme.colors.textMuted};
+  }
+`;
+
+const NewAppointmentFooter = styled.div`
+  padding: 20px 28px 28px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid ${theme.colors.borderLight};
+`;
+
+const SuccessMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+  border: 1px solid #10B98140;
+  border-radius: 12px;
+  color: #065F46;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: #059669;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+  border: 1px solid #EF444440;
+  border-radius: 12px;
+  color: #991B1B;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: #DC2626;
+  }
+`;
+
 interface CalendarEvent {
   id: string;
   title: string;
@@ -886,6 +1130,34 @@ interface CalendarEvent {
   providerName: string;
   type: string;
 }
+
+interface Provider {
+  id: string;
+  user_id: string;
+  specialty: string;
+  profile?: {
+    first_name: string;
+    last_name: string;
+  };
+}
+
+interface Patient {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+const APPOINTMENT_TYPES: { value: AppointmentType; label: string; duration: number }[] = [
+  { value: 'initial_consultation', label: 'Consulta Inicial', duration: 60 },
+  { value: 'follow_up', label: 'Retorno', duration: 30 },
+  { value: 'hormone_check', label: 'Avaliação Hormonal', duration: 45 },
+  { value: 'lab_review', label: 'Revisão de Exames', duration: 20 },
+  { value: 'nutrition', label: 'Nutrição', duration: 45 },
+  { value: 'health_coaching', label: 'Health Coaching', duration: 30 },
+  { value: 'therapy', label: 'Terapia', duration: 50 },
+  { value: 'personal_training', label: 'Personal Training', duration: 60 },
+];
 
 const messages = {
   today: 'Hoje',
@@ -908,6 +1180,23 @@ const CalendarPage: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // New appointment modal state
+  const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [newAppointmentForm, setNewAppointmentForm] = useState({
+    patient_id: '',
+    provider_id: '',
+    type: 'follow_up' as AppointmentType,
+    scheduled_date: format(new Date(), 'yyyy-MM-dd'),
+    scheduled_time: '09:00',
+    notes: '',
+  });
+  const [savingAppointment, setSavingAppointment] = useState(false);
+  const [appointmentSuccess, setAppointmentSuccess] = useState(false);
+  const [appointmentError, setAppointmentError] = useState('');
 
   // Ler view da URL ou usar 'month' como padrão
   const viewFromUrl = searchParams.get('view') as View | null;
@@ -993,6 +1282,81 @@ const CalendarPage: React.FC = () => {
   useEffect(() => {
     loadAppointments();
   }, [loadAppointments]);
+
+  // Load providers and patients for new appointment modal
+  useEffect(() => {
+    const loadProvidersAndPatients = async () => {
+      try {
+        // Fetch providers
+        const { data: providersData } = await supabase
+          .from('providers')
+          .select(`
+            id,
+            user_id,
+            specialty,
+            profile:profiles(first_name, last_name)
+          `)
+          .eq('is_active', true);
+
+        // Map to ensure profile is an object, not array
+        const mappedProviders = (providersData || []).map((p: any) => ({
+          id: p.id,
+          user_id: p.user_id,
+          specialty: p.specialty,
+          profile: Array.isArray(p.profile) ? p.profile[0] : p.profile,
+        }));
+
+        setProviders(mappedProviders);
+
+        // Fetch patients
+        const { data: patientsData } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .eq('role', 'patient')
+          .order('first_name');
+
+        setPatients(patientsData || []);
+      } catch (error) {
+        console.error('Error loading providers/patients:', error);
+      }
+    };
+
+    loadProvidersAndPatients();
+  }, []);
+
+  // Store patientId from URL to apply when patients are loaded
+  const [pendingPatientId, setPendingPatientId] = useState<string | null>(null);
+
+  // Check URL for new appointment modal
+  useEffect(() => {
+    const newAppointment = searchParams.get('newAppointment');
+    const patientId = searchParams.get('patientId');
+
+    if (newAppointment === 'true') {
+      if (patientId) {
+        setPendingPatientId(patientId);
+      }
+      setIsNewAppointmentOpen(true);
+
+      // Clear URL params
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('newAppointment');
+      newParams.delete('patientId');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Apply pending patient when patients are loaded
+  useEffect(() => {
+    if (pendingPatientId && patients.length > 0) {
+      const patient = patients.find(p => p.id === pendingPatientId);
+      if (patient) {
+        setSelectedPatient(patient);
+        setNewAppointmentForm(prev => ({ ...prev, patient_id: pendingPatientId }));
+      }
+      setPendingPatientId(null);
+    }
+  }, [pendingPatientId, patients]);
 
   const eventStyleGetter = (event: CalendarEvent) => {
     // Paleta luxuosa com alto contraste - tons que harmonizam com marrom/bege
@@ -1155,6 +1519,77 @@ const CalendarPage: React.FC = () => {
     updateUrl(view, today);
   }, [view, updateUrl]);
 
+  // New Appointment handlers
+  const openNewAppointmentModal = () => {
+    setNewAppointmentForm({
+      patient_id: '',
+      provider_id: '',
+      type: 'follow_up',
+      scheduled_date: format(new Date(), 'yyyy-MM-dd'),
+      scheduled_time: '09:00',
+      notes: '',
+    });
+    setSelectedPatient(null);
+    setAppointmentSuccess(false);
+    setAppointmentError('');
+    setIsNewAppointmentOpen(true);
+  };
+
+  const closeNewAppointmentModal = () => {
+    setIsNewAppointmentOpen(false);
+    setSelectedPatient(null);
+    setAppointmentSuccess(false);
+    setAppointmentError('');
+  };
+
+  const handleCreateAppointment = async () => {
+    if (!newAppointmentForm.patient_id || !newAppointmentForm.provider_id) {
+      setAppointmentError('Selecione o paciente e o médico');
+      return;
+    }
+
+    setSavingAppointment(true);
+    setAppointmentError('');
+
+    try {
+      const scheduledAt = new Date(`${newAppointmentForm.scheduled_date}T${newAppointmentForm.scheduled_time}`);
+      const appointmentType = APPOINTMENT_TYPES.find(t => t.value === newAppointmentForm.type);
+      const duration = appointmentType?.duration || 30;
+
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert({
+          patient_id: newAppointmentForm.patient_id,
+          provider_id: newAppointmentForm.provider_id,
+          type: newAppointmentForm.type,
+          scheduled_at: scheduledAt.toISOString(),
+          duration,
+          notes: newAppointmentForm.notes || null,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setAppointmentSuccess(true);
+      loadAppointments();
+
+      setTimeout(() => {
+        closeNewAppointmentModal();
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error creating appointment:', error);
+      setAppointmentError(error.message || 'Erro ao criar agendamento');
+    } finally {
+      setSavingAppointment(false);
+    }
+  };
+
+  const getPatientInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
   // Contagem de eventos do dia atual
   const todayEvents = useMemo(() => {
     const today = new Date();
@@ -1185,7 +1620,7 @@ const CalendarPage: React.FC = () => {
               <span className="event-count">{todayEvents.length} consulta{todayEvents.length > 1 ? 's' : ''}</span>
             )}
           </TodayInfo>
-          <Button $variant="primary">
+          <Button $variant="primary" onClick={openNewAppointmentModal}>
             <Plus />
             Nova Consulta
           </Button>
@@ -1332,6 +1767,153 @@ const CalendarPage: React.FC = () => {
               </ModalButton>
             </ModalFooter>
           </ModalContainer>
+        </>
+      )}
+
+      {/* New Appointment Modal */}
+      {isNewAppointmentOpen && (
+        <>
+          <ModalOverlay onClick={closeNewAppointmentModal} />
+          <NewAppointmentModal onClick={e => e.stopPropagation()}>
+            <NewAppointmentHeader>
+              <h2>
+                <Plus />
+                Nova Consulta
+              </h2>
+              <CloseButton onClick={closeNewAppointmentModal}>
+                <X />
+              </CloseButton>
+            </NewAppointmentHeader>
+
+            <NewAppointmentBody>
+              {appointmentSuccess && (
+                <SuccessMessage>
+                  <CheckCircle />
+                  Consulta agendada com sucesso!
+                </SuccessMessage>
+              )}
+
+              {appointmentError && (
+                <ErrorMessage>
+                  <AlertCircle />
+                  {appointmentError}
+                </ErrorMessage>
+              )}
+
+              {selectedPatient && (
+                <PatientBanner>
+                  <PatientAvatar>
+                    {getPatientInitials(selectedPatient.first_name, selectedPatient.last_name)}
+                  </PatientAvatar>
+                  <PatientBannerInfo>
+                    <div className="name">{selectedPatient.first_name} {selectedPatient.last_name}</div>
+                    <div className="label">Paciente selecionado</div>
+                  </PatientBannerInfo>
+                </PatientBanner>
+              )}
+
+              <FormGrid>
+                {!selectedPatient && (
+                  <FormGroup $fullWidth>
+                    <FormLabel>Paciente</FormLabel>
+                    <FormSelect
+                      value={newAppointmentForm.patient_id}
+                      onChange={e => {
+                        const patientId = e.target.value;
+                        setNewAppointmentForm(prev => ({ ...prev, patient_id: patientId }));
+                        const patient = patients.find(p => p.id === patientId);
+                        setSelectedPatient(patient || null);
+                      }}
+                    >
+                      <option value="">Selecione o paciente</option>
+                      {patients.map(patient => (
+                        <option key={patient.id} value={patient.id}>
+                          {patient.first_name} {patient.last_name}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </FormGroup>
+                )}
+
+                <FormGroup $fullWidth>
+                  <FormLabel>Médico</FormLabel>
+                  <FormSelect
+                    value={newAppointmentForm.provider_id}
+                    onChange={e => setNewAppointmentForm(prev => ({ ...prev, provider_id: e.target.value }))}
+                  >
+                    <option value="">Selecione o médico</option>
+                    {providers.map(provider => (
+                      <option key={provider.id} value={provider.id}>
+                        Dr(a). {provider.profile?.first_name} {provider.profile?.last_name} - {provider.specialty}
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+
+                <FormGroup $fullWidth>
+                  <FormLabel>Tipo de Consulta</FormLabel>
+                  <FormSelect
+                    value={newAppointmentForm.type}
+                    onChange={e => setNewAppointmentForm(prev => ({ ...prev, type: e.target.value as AppointmentType }))}
+                  >
+                    {APPOINTMENT_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label} ({type.duration} min)
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Data</FormLabel>
+                  <FormInput
+                    type="date"
+                    value={newAppointmentForm.scheduled_date}
+                    onChange={e => setNewAppointmentForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
+                    min={format(new Date(), 'yyyy-MM-dd')}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Horário</FormLabel>
+                  <FormInput
+                    type="time"
+                    value={newAppointmentForm.scheduled_time}
+                    onChange={e => setNewAppointmentForm(prev => ({ ...prev, scheduled_time: e.target.value }))}
+                  />
+                </FormGroup>
+
+                <FormGroup $fullWidth>
+                  <FormLabel>Observações (opcional)</FormLabel>
+                  <FormTextarea
+                    value={newAppointmentForm.notes}
+                    onChange={e => setNewAppointmentForm(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Notas adicionais sobre a consulta..."
+                  />
+                </FormGroup>
+              </FormGrid>
+            </NewAppointmentBody>
+
+            <NewAppointmentFooter>
+              <ModalButton $variant="secondary" onClick={closeNewAppointmentModal}>
+                Cancelar
+              </ModalButton>
+              <ModalButton
+                $variant="primary"
+                onClick={handleCreateAppointment}
+                disabled={savingAppointment || !newAppointmentForm.patient_id || !newAppointmentForm.provider_id}
+              >
+                {savingAppointment ? (
+                  <>Salvando...</>
+                ) : (
+                  <>
+                    <Save />
+                    Agendar Consulta
+                  </>
+                )}
+              </ModalButton>
+            </NewAppointmentFooter>
+          </NewAppointmentModal>
         </>
       )}
     </AdminLayout>

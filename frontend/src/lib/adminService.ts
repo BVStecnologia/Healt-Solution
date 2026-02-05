@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'http://localhost:8000';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL!;
 const serviceRoleKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY;
 const anonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 

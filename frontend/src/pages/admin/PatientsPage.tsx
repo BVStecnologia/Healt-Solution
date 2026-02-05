@@ -442,16 +442,15 @@ const PatientsPage: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Abrir ficha do paciente se vier da URL
+  // Abrir modal de edição se vier da URL
   useEffect(() => {
-    const viewPatientId = searchParams.get('view');
-    if (viewPatientId && patients.length > 0) {
-      const patient = patients.find(p => p.id === viewPatientId);
+    const editPatientId = searchParams.get('edit');
+    if (editPatientId && patients.length > 0) {
+      const patient = patients.find(p => p.id === editPatientId);
       if (patient) {
-        setViewingPatient(patient);
-        setShowDetailModal(true);
+        handleOpenModal(patient);
         // Limpar parâmetro da URL
-        searchParams.delete('view');
+        searchParams.delete('edit');
         setSearchParams(searchParams);
       }
     }
