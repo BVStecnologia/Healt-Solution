@@ -551,6 +551,17 @@ Role: admin
 
 ## Servidor de Produção (VPS)
 
+### Pasta `Servidor/` (Espelho do VPS)
+A pasta `Servidor/` contém o estado atual de produção para comparar antes de deploy:
+```
+Servidor/
+├── README.md              # Visão geral + comandos
+├── supabase/VERSOES.md    # Containers + migrations aplicadas
+├── evolution/VERSOES.md   # Containers + config
+└── frontend/VERSOES.md    # Commit atual + pendentes
+```
+**Sempre consultar antes de deploy** para ver diferenças entre local e VPS.
+
 ### Acesso SSH
 ```bash
 # Conexão rápida (configurado em ~/.ssh/config)
