@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import {
   Users,
   Stethoscope,
@@ -8,191 +8,512 @@ import {
   CheckCircle,
   XCircle,
   MessageCircle,
-  Send,
   Loader2,
+  TrendingUp,
+  Activity,
+  Phone,
+  Sparkles,
+  PieChart,
+  BarChart3,
+  CalendarCheck,
+  UserCheck,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+} from 'recharts';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
 
+// ============================================
+// ANIMATIONS
+// ============================================
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const pulse = keyframes`
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+`;
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+`;
+
+// ============================================
+// LUXURY COLOR PALETTE
+// ============================================
+const luxuryColors = {
+  primary: '#92563E',
+  primaryLight: '#B8956E',
+  primaryDark: '#6B3D2A',
+  gold: '#D4AF37',
+  goldMuted: '#C9A962',
+  cream: '#FDF8F3',
+  warmWhite: '#FEFCFA',
+  beige: '#F5EDE4',
+  beigeLight: '#FAF6F1',
+  textDark: '#3D2E24',
+  textMuted: '#8B7355',
+  success: '#6B8E6B',
+  successLight: '#E8F0E8',
+  warning: '#C9923E',
+  warningLight: '#FEF3E2',
+  danger: '#B85C5C',
+  dangerLight: '#FBEAEA',
+};
+
+// Chart colors palette
+const chartColors = [
+  luxuryColors.primary,
+  luxuryColors.primaryLight,
+  luxuryColors.gold,
+  luxuryColors.warning,
+  luxuryColors.success,
+  luxuryColors.goldMuted,
+];
+
+// ============================================
+// STYLED COMPONENTS
+// ============================================
+const PageWrapper = styled.div`
+  animation: ${fadeInUp} 0.6s ease-out;
+`;
+
 const Header = styled.div`
-  margin-bottom: ${theme.spacing.xl};
+  margin-bottom: 32px;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, ${luxuryColors.primary}, ${luxuryColors.gold});
+    border-radius: 2px;
+  }
 
   h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: ${theme.colors.text};
-    margin: 0 0 ${theme.spacing.xs};
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: ${luxuryColors.textDark};
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
   }
 
   p {
-    color: ${theme.colors.textSecondary};
+    color: ${luxuryColors.textMuted};
     margin: 0;
+    font-size: 15px;
+    font-weight: 400;
   }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${theme.spacing.lg};
-  margin-bottom: ${theme.spacing.xl};
-`;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
 
-const StatCard = styled.div<{ $color?: string }>`
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.xl};
-  padding: ${theme.spacing.lg};
-  box-shadow: ${theme.shadows.sm};
-  display: flex;
-  align-items: center;
-  gap: ${theme.spacing.md};
-`;
-
-const StatIcon = styled.div<{ $color: string }>`
-  width: 48px;
-  height: 48px;
-  border-radius: ${theme.borderRadius.lg};
-  background: ${props => props.$color}15;
-  color: ${props => props.$color};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 24px;
-    height: 24px;
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
   }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+interface StatCardProps {
+  $delay?: number;
+  $accentColor?: string;
+}
+
+const StatCard = styled.div<StatCardProps>`
+  background: ${luxuryColors.warmWhite};
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  animation: ${fadeInUp} 0.5s ease-out;
+  animation-delay: ${props => props.$delay || 0}ms;
+  animation-fill-mode: both;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg,
+      ${props => props.$accentColor || luxuryColors.primary},
+      ${props => props.$accentColor ? `${props.$accentColor}99` : luxuryColors.primaryLight}
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle at top right,
+      ${props => props.$accentColor || luxuryColors.primary}08,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 12px 40px rgba(146, 86, 62, 0.12),
+      0 4px 12px rgba(146, 86, 62, 0.08);
+    border-color: rgba(146, 86, 62, 0.15);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+`;
+
+const StatCardContent = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 `;
 
 const StatInfo = styled.div`
   flex: 1;
 `;
 
-const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: ${theme.colors.text};
-  line-height: 1;
-`;
-
 const StatLabel = styled.div`
   font-size: 13px;
-  color: ${theme.colors.textSecondary};
-  margin-top: 4px;
+  color: ${luxuryColors.textMuted};
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
 `;
 
-const SectionTitle = styled.h2`
-  font-size: 18px;
+const StatValue = styled.div`
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 42px;
   font-weight: 600;
-  color: ${theme.colors.text};
-  margin: 0 0 ${theme.spacing.md};
+  color: ${luxuryColors.textDark};
+  line-height: 1;
+  letter-spacing: -1px;
 `;
 
-const Grid = styled.div`
+const StatIcon = styled.div<{ $color: string }>`
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, ${props => props.$color}15, ${props => props.$color}08);
+  color: ${props => props.$color};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+
+  svg {
+    width: 26px;
+    height: 26px;
+    stroke-width: 1.5;
+  }
+
+  ${StatCard}:hover & {
+    transform: scale(1.08);
+    background: linear-gradient(135deg, ${props => props.$color}20, ${props => props.$color}12);
+  }
+`;
+
+const StatTrend = styled.div<{ $positive?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: ${props => props.$positive ? luxuryColors.success : luxuryColors.textMuted};
+  font-weight: 500;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
+// Charts Section
+const ChartsGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${theme.spacing.xl};
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const Card = styled.div`
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.xl};
-  padding: ${theme.spacing.lg};
-  box-shadow: ${theme.shadows.sm};
+const ChartCard = styled.div<{ $delay?: number }>`
+  background: ${luxuryColors.warmWhite};
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(146, 86, 62, 0.06);
+  transition: all 0.3s ease;
+  animation: ${fadeInUp} 0.5s ease-out;
+  animation-delay: ${props => props.$delay || 0}ms;
+  animation-fill-mode: both;
+
+  &:hover {
+    box-shadow: 0 8px 32px rgba(146, 86, 62, 0.08);
+  }
+`;
+
+const ChartHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+`;
+
+const ChartTitle = styled.h3`
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: ${luxuryColors.textDark};
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: ${luxuryColors.primary};
+    stroke-width: 1.5;
+  }
+`;
+
+const ChartLegend = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+`;
+
+const LegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: ${luxuryColors.textMuted};
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+`;
+
+const SectionGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Card = styled.div<{ $delay?: number }>`
+  background: ${luxuryColors.warmWhite};
+  border-radius: 20px;
+  padding: 28px;
+  border: 1px solid rgba(146, 86, 62, 0.06);
+  transition: all 0.3s ease;
+  animation: ${fadeInUp} 0.5s ease-out;
+  animation-delay: ${props => props.$delay || 0}ms;
+  animation-fill-mode: both;
+
+  &:hover {
+    box-shadow: 0 8px 32px rgba(146, 86, 62, 0.08);
+  }
 `;
 
 const CardHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: ${theme.spacing.md};
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${luxuryColors.beige};
 `;
 
-const WhatsAppStatus = styled.div<{ $connected: boolean }>`
+const SectionTitle = styled.h2`
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: ${luxuryColors.textDark};
+  margin: 0;
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.md};
-  background: ${props => props.$connected ? '#10B98115' : '#EF444415'};
-  border-radius: ${theme.borderRadius.lg};
-  margin-bottom: ${theme.spacing.md};
+  gap: 10px;
 
-  .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: ${props => props.$connected ? '#10B981' : '#EF4444'};
+  svg {
+    width: 20px;
+    height: 20px;
+    color: ${luxuryColors.primary};
+    stroke-width: 1.5;
   }
+`;
 
-  span {
-    font-size: 14px;
-    color: ${props => props.$connected ? '#10B981' : '#EF4444'};
-    font-weight: 500;
-  }
+const CardBadge = styled.span`
+  background: ${luxuryColors.primary}12;
+  color: ${luxuryColors.primary};
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
 `;
 
 const PendingList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${theme.spacing.md};
+  gap: 12px;
 `;
 
 const PendingItem = styled.div`
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.md};
-  padding: ${theme.spacing.md};
-  background: ${theme.colors.background};
-  border-radius: ${theme.borderRadius.lg};
+  gap: 16px;
+  padding: 16px;
+  background: ${luxuryColors.beigeLight};
+  border-radius: 14px;
+  transition: all 0.25s ease;
+  border: 1px solid transparent;
+
+  &:hover {
+    background: ${luxuryColors.beige};
+    border-color: rgba(146, 86, 62, 0.1);
+    transform: translateX(4px);
+  }
+`;
+
+const PendingAvatar = styled.div`
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, ${luxuryColors.primary}, ${luxuryColors.primaryLight});
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
 `;
 
 const PendingInfo = styled.div`
   flex: 1;
+  min-width: 0;
 
   .name {
-    font-weight: 500;
-    color: ${theme.colors.text};
-    font-size: 14px;
+    font-weight: 600;
+    color: ${luxuryColors.textDark};
+    font-size: 15px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .details {
     font-size: 13px;
-    color: ${theme.colors.textSecondary};
-    margin-top: 2px;
+    color: ${luxuryColors.textMuted};
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .tag {
+    background: ${luxuryColors.primary}10;
+    color: ${luxuryColors.primary};
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
   }
 `;
 
 const PendingActions = styled.div`
   display: flex;
-  gap: ${theme.spacing.xs};
+  gap: 8px;
 `;
 
 const ActionButton = styled.button<{ $variant: 'approve' | 'reject' }>`
-  width: 36px;
-  height: 36px;
-  border-radius: ${theme.borderRadius.md};
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
 
-  ${props => props.$variant === 'approve' && `
-    background: #10B98115;
-    color: #10B981;
-    &:hover:not(:disabled) { background: #10B98125; }
+  ${props => props.$variant === 'approve' && css`
+    background: ${luxuryColors.successLight};
+    color: ${luxuryColors.success};
+
+    &:hover:not(:disabled) {
+      background: ${luxuryColors.success};
+      color: white;
+      transform: scale(1.08);
+    }
   `}
 
-  ${props => props.$variant === 'reject' && `
-    background: #EF444415;
-    color: #EF4444;
-    &:hover:not(:disabled) { background: #EF444425; }
+  ${props => props.$variant === 'reject' && css`
+    background: ${luxuryColors.dangerLight};
+    color: ${luxuryColors.danger};
+
+    &:hover:not(:disabled) {
+      background: ${luxuryColors.danger};
+      color: white;
+      transform: scale(1.08);
+    }
   `}
 
   &:disabled {
@@ -201,8 +522,8 @@ const ActionButton = styled.button<{ $variant: 'approve' | 'reject' }>`
   }
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   .spin {
@@ -217,17 +538,254 @@ const ActionButton = styled.button<{ $variant: 'approve' | 'reject' }>`
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: ${theme.spacing.xl};
-  color: ${theme.colors.textSecondary};
+  padding: 40px 20px;
+  color: ${luxuryColors.textMuted};
 
   svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: ${theme.spacing.md};
-    opacity: 0.3;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
+    stroke-width: 1;
+    color: ${luxuryColors.primaryLight};
+    animation: ${float} 3s ease-in-out infinite;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
   }
 `;
 
+const WhatsAppCard = styled(Card)`
+  background: linear-gradient(135deg, ${luxuryColors.warmWhite}, ${luxuryColors.cream});
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, ${luxuryColors.success}08, transparent 70%);
+    pointer-events: none;
+  }
+`;
+
+const WhatsAppStatus = styled.div<{ $connected: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: ${props => props.$connected ? luxuryColors.successLight : luxuryColors.dangerLight};
+  border-radius: 30px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: ${props => props.$connected ? luxuryColors.success : luxuryColors.danger};
+    animation: ${props => props.$connected ? pulse : 'none'} 2s ease-in-out infinite;
+  }
+
+  span {
+    font-size: 14px;
+    color: ${props => props.$connected ? luxuryColors.success : luxuryColors.danger};
+    font-weight: 600;
+  }
+`;
+
+const PhoneDisplay = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  background: ${luxuryColors.beigeLight};
+  border-radius: 14px;
+  margin-top: 8px;
+
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, ${luxuryColors.success}, ${luxuryColors.success}CC);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .info {
+    flex: 1;
+
+    .label {
+      font-size: 12px;
+      color: ${luxuryColors.textMuted};
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .number {
+      font-size: 18px;
+      font-weight: 600;
+      color: ${luxuryColors.textDark};
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+  }
+`;
+
+const QuickActions = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+`;
+
+const QuickActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: ${luxuryColors.primary}08;
+  border: 1px solid ${luxuryColors.primary}15;
+  border-radius: 12px;
+  color: ${luxuryColors.primary};
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: ${luxuryColors.primary};
+    color: white;
+    border-color: ${luxuryColors.primary};
+    transform: translateY(-2px);
+  }
+`;
+
+// Today's appointments
+const TodayList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: ${luxuryColors.beige};
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${luxuryColors.primaryLight};
+    border-radius: 2px;
+  }
+`;
+
+const TodayItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: ${luxuryColors.beigeLight};
+  border-radius: 12px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${luxuryColors.beige};
+  }
+`;
+
+const TodayTime = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${luxuryColors.primary};
+  min-width: 50px;
+`;
+
+const TodayInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  .name {
+    font-weight: 500;
+    color: ${luxuryColors.textDark};
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .type {
+    font-size: 12px;
+    color: ${luxuryColors.textMuted};
+  }
+`;
+
+const TodayStatus = styled.div<{ $status: string }>`
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+
+  ${props => {
+    switch (props.$status) {
+      case 'confirmed':
+        return `background: ${luxuryColors.successLight}; color: ${luxuryColors.success};`;
+      case 'pending':
+        return `background: ${luxuryColors.warningLight}; color: ${luxuryColors.warning};`;
+      case 'in_progress':
+        return `background: ${luxuryColors.primary}15; color: ${luxuryColors.primary};`;
+      default:
+        return `background: ${luxuryColors.beige}; color: ${luxuryColors.textMuted};`;
+    }
+  }}
+`;
+
+// Custom Tooltip for charts
+const CustomTooltip = styled.div`
+  background: ${luxuryColors.warmWhite};
+  border: 1px solid ${luxuryColors.beige};
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+  .label {
+    font-size: 12px;
+    color: ${luxuryColors.textMuted};
+    margin-bottom: 4px;
+  }
+
+  .value {
+    font-size: 16px;
+    font-weight: 600;
+    color: ${luxuryColors.textDark};
+  }
+`;
+
+// ============================================
+// INTERFACES
+// ============================================
 interface Stats {
   totalPatients: number;
   totalProviders: number;
@@ -245,9 +803,30 @@ interface PendingAppointment {
   type: string;
 }
 
+interface TodayAppointment {
+  id: string;
+  patient_name: string;
+  time: string;
+  type: string;
+  status: string;
+}
+
+interface WeeklyData {
+  day: string;
+  consultas: number;
+}
+
+interface TypeDistribution {
+  name: string;
+  value: number;
+}
+
 const EVOLUTION_API_URL = process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
 const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_evolution_aqui';
 
+// ============================================
+// COMPONENT
+// ============================================
 const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<Stats>({
     totalPatients: 0,
@@ -256,32 +835,29 @@ const AdminDashboard: React.FC = () => {
     todayAppointments: 0,
   });
   const [pendingAppointments, setPendingAppointments] = useState<PendingAppointment[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<TodayAppointment[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
+  const [typeDistribution, setTypeDistribution] = useState<TypeDistribution[]>([]);
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // Hook de notificações WhatsApp
   const { sendConfirmation, sendRejection, isConnected: whatsappReady } = useWhatsAppNotifications();
 
-  // Verificar status do WhatsApp
   const checkWhatsAppStatus = async () => {
     try {
       const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
+        headers: { 'apikey': EVOLUTION_API_KEY },
       });
 
       if (response.ok) {
         const instances = await response.json();
-        // Verificar se há alguma instância conectada
         const connectedInstance = instances.find((inst: any) =>
           inst.connectionStatus === 'open' || inst.state === 'open'
         );
 
         if (connectedInstance) {
           setWhatsappConnected(true);
-          // Buscar detalhes da instância conectada
           const detailResponse = await fetch(
             `${EVOLUTION_API_URL}/instance/connectionState/${connectedInstance.name || connectedInstance.instanceName}`,
             { headers: { 'apikey': EVOLUTION_API_KEY } }
@@ -306,34 +882,31 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     loadStats();
     loadPendingAppointments();
+    loadTodayAppointments();
+    loadWeeklyData();
+    loadTypeDistribution();
     checkWhatsAppStatus();
-
-    // Polling para atualizar status do WhatsApp a cada 10 segundos
     const interval = setInterval(checkWhatsAppStatus, 10000);
     return () => clearInterval(interval);
   }, []);
 
   const loadStats = async () => {
     try {
-      // Contar pacientes
       const { count: patientsCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
         .eq('role', 'patient');
 
-      // Contar providers
       const { count: providersCount } = await supabase
         .from('providers')
         .select('*', { count: 'exact', head: true })
         .eq('is_active', true);
 
-      // Contar consultas pendentes
       const { count: pendingCount } = await supabase
         .from('appointments')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
 
-      // Contar consultas hoje
       const today = new Date().toISOString().split('T')[0];
       const { count: todayCount } = await supabase
         .from('appointments')
@@ -388,10 +961,95 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const loadTodayAppointments = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          scheduled_at,
+          type,
+          status,
+          patient:profiles!appointments_patient_id_fkey(first_name, last_name)
+        `)
+        .gte('scheduled_at', `${today}T00:00:00`)
+        .lt('scheduled_at', `${today}T23:59:59`)
+        .order('scheduled_at', { ascending: true })
+        .limit(10);
+
+      if (error) throw error;
+
+      const formatted = (data || []).map((apt: any) => ({
+        id: apt.id,
+        patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
+        time: new Date(apt.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        type: apt.type,
+        status: apt.status,
+      }));
+
+      setTodayAppointments(formatted);
+    } catch (error) {
+      console.error('Error loading today appointments:', error);
+    }
+  };
+
+  const loadWeeklyData = async () => {
+    try {
+      const days = [];
+      const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const { count } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .gte('scheduled_at', `${dateStr}T00:00:00`)
+          .lt('scheduled_at', `${dateStr}T23:59:59`);
+
+        days.push({
+          day: dayNames[date.getDay()],
+          consultas: count || 0,
+        });
+      }
+
+      setWeeklyData(days);
+    } catch (error) {
+      console.error('Error loading weekly data:', error);
+    }
+  };
+
+  const loadTypeDistribution = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('type');
+
+      if (error) throw error;
+
+      const typeCounts: Record<string, number> = {};
+      (data || []).forEach((apt: any) => {
+        const typeName = formatType(apt.type);
+        typeCounts[typeName] = (typeCounts[typeName] || 0) + 1;
+      });
+
+      const distribution = Object.entries(typeCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+
+      setTypeDistribution(distribution);
+    } catch (error) {
+      console.error('Error loading type distribution:', error);
+    }
+  };
+
   const handleApprove = async (apt: PendingAppointment) => {
     setProcessingId(apt.id);
     try {
-      // Atualizar status no banco
       const { error } = await supabase
         .from('appointments')
         .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
@@ -399,7 +1057,6 @@ const AdminDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Enviar notificação WhatsApp se tiver telefone
       if (apt.patient_phone && whatsappReady) {
         const date = new Date(apt.scheduled_at);
         await sendConfirmation({
@@ -412,11 +1069,11 @@ const AdminDashboard: React.FC = () => {
           appointmentTime: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           appointmentId: apt.id,
         });
-        console.log('[Dashboard] Notificação de confirmação enviada');
       }
 
       loadStats();
       loadPendingAppointments();
+      loadTodayAppointments();
     } catch (error) {
       console.error('Error approving appointment:', error);
     } finally {
@@ -427,7 +1084,6 @@ const AdminDashboard: React.FC = () => {
   const handleReject = async (apt: PendingAppointment) => {
     setProcessingId(apt.id);
     try {
-      // Atualizar status no banco
       const { error } = await supabase
         .from('appointments')
         .update({ status: 'cancelled', rejection_reason: 'Horário não disponível' })
@@ -435,7 +1091,6 @@ const AdminDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      // Enviar notificação WhatsApp se tiver telefone
       if (apt.patient_phone && whatsappReady) {
         await sendRejection({
           patientName: apt.patient_name,
@@ -448,7 +1103,6 @@ const AdminDashboard: React.FC = () => {
           appointmentId: apt.id,
           reason: 'Horário não disponível',
         });
-        console.log('[Dashboard] Notificação de rejeição enviada');
       }
 
       loadStats();
@@ -482,6 +1136,17 @@ const AdminDashboard: React.FC = () => {
     return types[type] || type;
   };
 
+  const formatStatus = (status: string) => {
+    const statuses: Record<string, string> = {
+      pending: 'Pendente',
+      confirmed: 'Confirmado',
+      in_progress: 'Em andamento',
+      completed: 'Concluído',
+      cancelled: 'Cancelado',
+    };
+    return statuses[status] || status;
+  };
+
   const formatPhone = (phone: string | null) => {
     if (!phone) return '';
     const cleaned = phone.replace('@s.whatsapp.net', '').replace('@c.us', '');
@@ -496,123 +1161,315 @@ const AdminDashboard: React.FC = () => {
     return `+${cleaned}`;
   };
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+  };
+
+  // Custom tooltip component for Recharts
+  const renderTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <CustomTooltip>
+          <div className="label">{label}</div>
+          <div className="value">{payload[0].value} consultas</div>
+        </CustomTooltip>
+      );
+    }
+    return null;
+  };
+
   return (
     <AdminLayout>
-      <Header>
-        <h1>Dashboard</h1>
-        <p>Visão geral do sistema</p>
-      </Header>
+      <PageWrapper>
+        <Header>
+          <h1>Dashboard</h1>
+          <p>Visão geral do sistema da clínica</p>
+        </Header>
 
-      <StatsGrid>
-        <StatCard>
-          <StatIcon $color={theme.colors.primary}>
-            <Users />
-          </StatIcon>
-          <StatInfo>
-            <StatValue>{stats.totalPatients}</StatValue>
-            <StatLabel>Pacientes</StatLabel>
-          </StatInfo>
-        </StatCard>
+        <StatsGrid>
+          <StatCard $delay={0} $accentColor={luxuryColors.primary}>
+            <StatCardContent>
+              <StatInfo>
+                <StatLabel>Pacientes</StatLabel>
+                <StatValue>{stats.totalPatients}</StatValue>
+                <StatTrend $positive>
+                  <TrendingUp />
+                  <span>Ativos</span>
+                </StatTrend>
+              </StatInfo>
+              <StatIcon $color={luxuryColors.primary}>
+                <Users />
+              </StatIcon>
+            </StatCardContent>
+          </StatCard>
 
-        <StatCard>
-          <StatIcon $color="#8B5CF6">
-            <Stethoscope />
-          </StatIcon>
-          <StatInfo>
-            <StatValue>{stats.totalProviders}</StatValue>
-            <StatLabel>Médicos</StatLabel>
-          </StatInfo>
-        </StatCard>
+          <StatCard $delay={100} $accentColor={luxuryColors.primaryLight}>
+            <StatCardContent>
+              <StatInfo>
+                <StatLabel>Médicos</StatLabel>
+                <StatValue>{stats.totalProviders}</StatValue>
+                <StatTrend $positive>
+                  <Activity />
+                  <span>Disponíveis</span>
+                </StatTrend>
+              </StatInfo>
+              <StatIcon $color={luxuryColors.primaryLight}>
+                <Stethoscope />
+              </StatIcon>
+            </StatCardContent>
+          </StatCard>
 
-        <StatCard>
-          <StatIcon $color="#F59E0B">
-            <Clock />
-          </StatIcon>
-          <StatInfo>
-            <StatValue>{stats.pendingAppointments}</StatValue>
-            <StatLabel>Pendentes</StatLabel>
-          </StatInfo>
-        </StatCard>
+          <StatCard $delay={200} $accentColor={luxuryColors.warning}>
+            <StatCardContent>
+              <StatInfo>
+                <StatLabel>Pendentes</StatLabel>
+                <StatValue>{stats.pendingAppointments}</StatValue>
+                <StatTrend>
+                  <Clock />
+                  <span>Aguardando</span>
+                </StatTrend>
+              </StatInfo>
+              <StatIcon $color={luxuryColors.warning}>
+                <Clock />
+              </StatIcon>
+            </StatCardContent>
+          </StatCard>
 
-        <StatCard>
-          <StatIcon $color="#10B981">
-            <Calendar />
-          </StatIcon>
-          <StatInfo>
-            <StatValue>{stats.todayAppointments}</StatValue>
-            <StatLabel>Hoje</StatLabel>
-          </StatInfo>
-        </StatCard>
-      </StatsGrid>
+          <StatCard $delay={300} $accentColor={luxuryColors.gold}>
+            <StatCardContent>
+              <StatInfo>
+                <StatLabel>Hoje</StatLabel>
+                <StatValue>{stats.todayAppointments}</StatValue>
+                <StatTrend $positive>
+                  <Sparkles />
+                  <span>Agendadas</span>
+                </StatTrend>
+              </StatInfo>
+              <StatIcon $color={luxuryColors.gold}>
+                <Calendar />
+              </StatIcon>
+            </StatCardContent>
+          </StatCard>
+        </StatsGrid>
 
-      <Grid>
-        <Card>
-          <CardHeader>
-            <SectionTitle>Consultas Pendentes</SectionTitle>
-          </CardHeader>
+        {/* Charts Section */}
+        <ChartsGrid>
+          <ChartCard $delay={350}>
+            <ChartHeader>
+              <ChartTitle>
+                <BarChart3 />
+                Consultas - Últimos 7 dias
+              </ChartTitle>
+            </ChartHeader>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorConsultas" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={luxuryColors.primary} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={luxuryColors.primary} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: luxuryColors.textMuted, fontSize: 12 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: luxuryColors.textMuted, fontSize: 12 }}
+                />
+                <Tooltip content={renderTooltip} />
+                <Area
+                  type="monotone"
+                  dataKey="consultas"
+                  stroke={luxuryColors.primary}
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorConsultas)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
 
-          {pendingAppointments.length > 0 ? (
-            <PendingList>
-              {pendingAppointments.map(apt => (
-                <PendingItem key={apt.id}>
-                  <PendingInfo>
-                    <div className="name">{apt.patient_name}</div>
-                    <div className="details">
-                      {formatType(apt.type)} • {apt.provider_name} • {formatDate(apt.scheduled_at)}
-                    </div>
-                  </PendingInfo>
-                  <PendingActions>
-                    <ActionButton
-                      $variant="approve"
-                      onClick={() => handleApprove(apt)}
-                      title="Aprovar"
-                      disabled={processingId === apt.id}
+          <ChartCard $delay={400}>
+            <ChartHeader>
+              <ChartTitle>
+                <PieChart />
+                Tipos de Consulta
+              </ChartTitle>
+            </ChartHeader>
+            {typeDistribution.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={160}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={typeDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={70}
+                      paddingAngle={3}
+                      dataKey="value"
                     >
-                      {processingId === apt.id ? <Loader2 className="spin" /> : <CheckCircle />}
-                    </ActionButton>
-                    <ActionButton
-                      $variant="reject"
-                      onClick={() => handleReject(apt)}
-                      title="Rejeitar"
-                      disabled={processingId === apt.id}
-                    >
-                      <XCircle />
-                    </ActionButton>
-                  </PendingActions>
-                </PendingItem>
-              ))}
-            </PendingList>
-          ) : (
-            <EmptyState>
-              <CheckCircle />
-              <p>Nenhuma consulta pendente</p>
-            </EmptyState>
-          )}
-        </Card>
+                      {typeDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+                <ChartLegend>
+                  {typeDistribution.map((item, index) => (
+                    <LegendItem key={item.name}>
+                      <div className="dot" style={{ background: chartColors[index % chartColors.length] }} />
+                      <span>{item.name} ({item.value})</span>
+                    </LegendItem>
+                  ))}
+                </ChartLegend>
+              </>
+            ) : (
+              <EmptyState>
+                <PieChart />
+                <p>Sem dados de consultas</p>
+              </EmptyState>
+            )}
+          </ChartCard>
+        </ChartsGrid>
 
-        <Card>
-          <CardHeader>
-            <SectionTitle>WhatsApp</SectionTitle>
-          </CardHeader>
+        {/* Today's Schedule + Pending */}
+        <SectionGrid>
+          <Card $delay={450}>
+            <CardHeader>
+              <SectionTitle>
+                <Clock />
+                Consultas Pendentes
+              </SectionTitle>
+              {pendingAppointments.length > 0 && (
+                <CardBadge>{pendingAppointments.length} nova{pendingAppointments.length > 1 ? 's' : ''}</CardBadge>
+              )}
+            </CardHeader>
 
-          <WhatsAppStatus $connected={whatsappConnected}>
-            <div className="dot" />
-            <span>{whatsappConnected ? 'Conectado' : 'Desconectado'}</span>
-          </WhatsAppStatus>
+            {pendingAppointments.length > 0 ? (
+              <PendingList>
+                {pendingAppointments.map(apt => (
+                  <PendingItem key={apt.id}>
+                    <PendingAvatar>
+                      {getInitials(apt.patient_name)}
+                    </PendingAvatar>
+                    <PendingInfo>
+                      <div className="name">{apt.patient_name}</div>
+                      <div className="details">
+                        <span className="tag">{formatType(apt.type)}</span>
+                        <span>{apt.provider_name}</span>
+                        <span>•</span>
+                        <span>{formatDate(apt.scheduled_at)}</span>
+                      </div>
+                    </PendingInfo>
+                    <PendingActions>
+                      <ActionButton
+                        $variant="approve"
+                        onClick={() => handleApprove(apt)}
+                        title="Aprovar"
+                        disabled={processingId === apt.id}
+                      >
+                        {processingId === apt.id ? <Loader2 className="spin" /> : <CheckCircle />}
+                      </ActionButton>
+                      <ActionButton
+                        $variant="reject"
+                        onClick={() => handleReject(apt)}
+                        title="Rejeitar"
+                        disabled={processingId === apt.id}
+                      >
+                        <XCircle />
+                      </ActionButton>
+                    </PendingActions>
+                  </PendingItem>
+                ))}
+              </PendingList>
+            ) : (
+              <EmptyState>
+                <CheckCircle />
+                <p>Nenhuma consulta pendente<br />Todas as solicitações foram processadas</p>
+              </EmptyState>
+            )}
+          </Card>
 
-          {whatsappConnected && whatsappPhone ? (
-            <EmptyState>
-              <MessageCircle />
-              <p>Número: {formatPhone(whatsappPhone)}</p>
-            </EmptyState>
-          ) : (
-            <EmptyState>
-              <MessageCircle />
-              <p>Configure uma instância em<br />Configurações → WhatsApp</p>
-            </EmptyState>
-          )}
-        </Card>
-      </Grid>
+          <Card $delay={500}>
+            <CardHeader>
+              <SectionTitle>
+                <CalendarCheck />
+                Agenda de Hoje
+              </SectionTitle>
+              {todayAppointments.length > 0 && (
+                <CardBadge>{todayAppointments.length}</CardBadge>
+              )}
+            </CardHeader>
+
+            {todayAppointments.length > 0 ? (
+              <TodayList>
+                {todayAppointments.map(apt => (
+                  <TodayItem key={apt.id}>
+                    <TodayTime>{apt.time}</TodayTime>
+                    <TodayInfo>
+                      <div className="name">{apt.patient_name}</div>
+                      <div className="type">{formatType(apt.type)}</div>
+                    </TodayInfo>
+                    <TodayStatus $status={apt.status}>
+                      {formatStatus(apt.status)}
+                    </TodayStatus>
+                  </TodayItem>
+                ))}
+              </TodayList>
+            ) : (
+              <EmptyState>
+                <Calendar />
+                <p>Nenhuma consulta hoje</p>
+              </EmptyState>
+            )}
+          </Card>
+        </SectionGrid>
+
+        {/* WhatsApp Status - Compact */}
+        <div style={{ marginTop: '24px' }}>
+          <WhatsAppCard $delay={550}>
+            <CardHeader>
+              <SectionTitle>
+                <MessageCircle />
+                WhatsApp
+              </SectionTitle>
+              <WhatsAppStatus $connected={whatsappConnected}>
+                <div className="dot" />
+                <span>{whatsappConnected ? 'Conectado' : 'Desconectado'}</span>
+              </WhatsAppStatus>
+            </CardHeader>
+
+            {whatsappConnected && whatsappPhone ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <PhoneDisplay style={{ flex: 1, margin: 0 }}>
+                  <div className="icon-wrapper">
+                    <Phone />
+                  </div>
+                  <div className="info">
+                    <div className="label">Número conectado</div>
+                    <div className="number">{formatPhone(whatsappPhone)}</div>
+                  </div>
+                </PhoneDisplay>
+                <QuickActionButton onClick={() => window.location.href = '/admin/whatsapp'}>
+                  <MessageCircle />
+                  Gerenciar
+                </QuickActionButton>
+              </div>
+            ) : (
+              <EmptyState style={{ padding: '20px' }}>
+                <MessageCircle />
+                <p>Configure uma instância em <strong>Configurações → WhatsApp</strong></p>
+              </EmptyState>
+            )}
+          </WhatsAppCard>
+        </div>
+      </PageWrapper>
     </AdminLayout>
   );
 };
