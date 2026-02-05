@@ -1342,7 +1342,7 @@ const PatientProfilePage: React.FC = () => {
               </InfoItem>
               <InfoItem>
                 <InfoLabel>Idioma Preferido</InfoLabel>
-                <InfoValue>{patient.preferred_language === 'en' ? 'English' : 'Portugues'}</InfoValue>
+                <InfoValue>{patient.preferred_language === 'en' ? 'English' : 'Português'}</InfoValue>
               </InfoItem>
             </InfoGrid>
           </Card>
@@ -1538,7 +1538,7 @@ const PatientProfilePage: React.FC = () => {
                     value={editForm.preferred_language}
                     onChange={e => setEditForm(prev => ({ ...prev, preferred_language: e.target.value as 'pt' | 'en' }))}
                   >
-                    <option value="pt">Portugues</option>
+                    <option value="pt">Português</option>
                     <option value="en">English</option>
                   </FormSelect>
                 </FormGroup>

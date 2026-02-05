@@ -1368,7 +1368,7 @@ const PatientsPage: React.FC = () => {
                     value={formData.preferred_language}
                     onChange={(e) => setFormData({ ...formData, preferred_language: e.target.value as PreferredLanguage })}
                   >
-                    <option value="pt">Portugues</option>
+                    <option value="pt">Português</option>
                     <option value="en">English</option>
                   </FormSelect>
                 </FormGroup>

@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { supabase } from '../lib/supabaseClient';
 
 const fadeIn = keyframes`
   from {
@@ -371,8 +372,7 @@ const LoginPage: React.FC = () => {
       }
 
       // Sincronizar idioma do perfil do usuário após login
-      // O userId será obtido pelo LanguageContext via supabase.auth.getUser()
-      const { data: { user: loggedUser } } = await import('../lib/supabaseClient').then(m => m.supabase.auth.getUser());
+      const { data: { user: loggedUser } } = await supabase.auth.getUser();
       if (loggedUser) {
         await syncFromDatabase(loggedUser.id);
       }
