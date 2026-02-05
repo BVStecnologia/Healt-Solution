@@ -864,8 +864,14 @@ const AdminDashboard: React.FC = () => {
           );
           if (detailResponse.ok) {
             const detail = await detailResponse.json();
-            if (detail.instance?.user?.id) {
-              setWhatsappPhone(detail.instance.user.id);
+            // Tenta diferentes caminhos possíveis para o número
+            const phoneNumber = detail.instance?.user?.id
+              || detail.instance?.wuid?.user
+              || detail.state?.user?.id
+              || connectedInstance.ownerJid?.split('@')[0]
+              || null;
+            if (phoneNumber) {
+              setWhatsappPhone(phoneNumber);
             }
           }
         } else {
@@ -1445,7 +1451,7 @@ const AdminDashboard: React.FC = () => {
               </WhatsAppStatus>
             </CardHeader>
 
-            {whatsappConnected && whatsappPhone ? (
+            {whatsappConnected ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <PhoneDisplay style={{ flex: 1, margin: 0 }}>
                   <div className="icon-wrapper">
@@ -1453,7 +1459,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <div className="info">
                     <div className="label">Número conectado</div>
-                    <div className="number">{formatPhone(whatsappPhone)}</div>
+                    <div className="number">{whatsappPhone ? formatPhone(whatsappPhone) : 'Carregando...'}</div>
                   </div>
                 </PhoneDisplay>
                 <QuickActionButton onClick={() => window.location.href = '/admin/whatsapp'}>

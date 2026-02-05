@@ -26,6 +26,7 @@ const Main = styled.main`
 const Content = styled.div`
   padding: ${theme.spacing.xl};
   padding-right: 80px; /* Espaço para o seletor de idioma fixo */
+  overflow-x: hidden; /* Previne overflow horizontal */
 
   @media (max-width: 768px) {
     padding: ${theme.spacing.md};

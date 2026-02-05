@@ -40,6 +40,25 @@ const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_
 // Debug mode - ativa logs detalhados
 const DEBUG = true;
 
+// NÚMEROS DE TESTE - Em desenvolvimento, só envia WhatsApp para esses números
+// Para desabilitar essa restrição, defina REACT_APP_WHATSAPP_ALLOW_ALL=true
+const TEST_PHONE_NUMBERS = [
+  '5548998384402',  // Número de teste 1
+  '554831971656',   // Número de teste 2
+];
+
+const ALLOW_ALL_NUMBERS = process.env.REACT_APP_WHATSAPP_ALLOW_ALL === 'true';
+
+function isAllowedPhoneNumber(phone: string): boolean {
+  if (ALLOW_ALL_NUMBERS) return true;
+
+  // Remove caracteres não numéricos para comparação
+  const cleanPhone = phone.replace(/\D/g, '');
+  return TEST_PHONE_NUMBERS.some(testPhone =>
+    cleanPhone.includes(testPhone) || testPhone.includes(cleanPhone)
+  );
+}
+
 function log(message: string, data?: any) {
   if (DEBUG) {
     console.log(`[WhatsApp] ${message}`, data || '');
@@ -174,6 +193,15 @@ async function sendText(
   }
 ): Promise<SendMessageResult> {
   const formattedPhone = formatPhoneNumber(phoneNumber);
+
+  // Validação de número de teste (em desenvolvimento)
+  if (!isAllowedPhoneNumber(formattedPhone)) {
+    log(`BLOQUEADO: Número ${formattedPhone} não está na lista de teste. Mensagem não enviada.`);
+    return {
+      success: false,
+      error: `Número ${formattedPhone} não está autorizado para receber mensagens de teste.`,
+    };
+  }
 
   log('Enviando mensagem:', {
     instance: instanceName,

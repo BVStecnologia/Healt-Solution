@@ -1703,7 +1703,7 @@ const CalendarPage: React.FC = () => {
   const handleViewPatient = () => {
     if (selectedEvent?.patientId) {
       closeModal();
-      navigate(`/admin/patients/${selectedEvent.patientId}`);
+      navigate(`/admin/patients/${selectedEvent.patientId}`, { state: { from: '/admin/calendar' } });
     }
   };
 

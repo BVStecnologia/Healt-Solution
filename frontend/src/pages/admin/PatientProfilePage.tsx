@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Edit3,
@@ -382,7 +382,7 @@ const Grid = styled.div`
   }
 `;
 
-const Card = styled.div<{ $delay?: number }>`
+const Card = styled.div<{ $delay?: number; $borderColor?: string }>`
   background: ${theme.colors.surface};
   border-radius: ${theme.borderRadius.xl};
   padding: ${theme.spacing.xl};
@@ -393,27 +393,11 @@ const Card = styled.div<{ $delay?: number }>`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, transparent 0%, ${theme.colors.primarySoft}10 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-  }
+  border-left: 4px solid ${props => props.$borderColor || theme.colors.primary};
 
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(146, 86, 62, 0.12), 0 4px 12px rgba(0, 0, 0, 0.05);
-
-    &::after {
-      opacity: 1;
-    }
   }
 `;
 
@@ -567,7 +551,7 @@ const StatLabel = styled.div`
   color: ${theme.colors.textSecondary};
 `;
 
-const FullWidthCard = styled(Card)`
+const FullWidthCard = styled(Card)<{ $borderColor?: string }>`
   grid-column: 1 / -1;
 `;
 
@@ -1073,6 +1057,20 @@ const PATIENT_TYPES: { value: PatientType; label: string }[] = [
 const PatientProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Navegação inteligente: volta para onde o usuário veio
+  const handleBack = () => {
+    const from = (location.state as { from?: string })?.from;
+    if (from) {
+      navigate(from);
+    } else if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate('/admin/patients');
+    }
+  };
+
   const [patient, setPatient] = useState<Profile | null>(null);
   const [appointments, setAppointments] = useState<AppointmentWithProvider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1241,9 +1239,9 @@ const PatientProfilePage: React.FC = () => {
   return (
     <AdminLayout>
       <PageContainer>
-        <BackButton onClick={() => navigate('/admin/patients')}>
+        <BackButton onClick={handleBack}>
           <ArrowLeft />
-          Voltar para Pacientes
+          Voltar
         </BackButton>
 
         <ProfileHeader $type={patient.patient_type}>
@@ -1314,7 +1312,7 @@ const PatientProfilePage: React.FC = () => {
         </StatsRow>
 
         <Grid>
-          <Card $delay={400}>
+          <Card $delay={400} $borderColor={theme.colors.primary}>
             <CardHeader>
               <CardTitle>
                 <User />
@@ -1341,7 +1339,7 @@ const PatientProfilePage: React.FC = () => {
             </InfoGrid>
           </Card>
 
-          <Card $delay={500}>
+          <Card $delay={500} $borderColor="#10B981">
             <CardHeader>
               <CardTitle>
                 <Activity />
@@ -1369,7 +1367,7 @@ const PatientProfilePage: React.FC = () => {
           </Card>
 
           {upcomingAppointments.length > 0 && (
-            <FullWidthCard $delay={600}>
+            <FullWidthCard $delay={600} $borderColor="#3B82F6">
               <CardHeader>
                 <CardTitle>
                   <Calendar />
@@ -1406,7 +1404,7 @@ const PatientProfilePage: React.FC = () => {
             </FullWidthCard>
           )}
 
-          <FullWidthCard $delay={700}>
+          <FullWidthCard $delay={700} $borderColor="#8B5CF6">
             <CardHeader>
               <CardTitle>
                 <FileText />

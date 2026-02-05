@@ -261,17 +261,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Logo>
 
         <Nav>
-          {navItems.map(item => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              $active={location.pathname === item.path}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <item.icon />
-              {item.label}
-            </NavLink>
-          ))}
+          {navItems.map(item => {
+            // Para / (dashboard), verifica igualdade exata
+            // Para outras rotas, verifica se começa com o path (inclui sub-rotas)
+            const isActive = item.path === '/'
+              ? location.pathname === item.path
+              : location.pathname.startsWith(item.path);
+
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                $active={isActive}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <item.icon />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </Nav>
 
         <UserSection>

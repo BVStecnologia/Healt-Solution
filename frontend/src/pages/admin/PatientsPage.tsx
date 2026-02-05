@@ -885,7 +885,7 @@ const PatientsPage: React.FC = () => {
   };
 
   const handleViewPatient = (patient: Profile) => {
-    navigate(`/admin/patients/${patient.id}`);
+    navigate(`/admin/patients/${patient.id}`, { state: { from: '/admin/patients' } });
   };
 
   const handleSave = async () => {

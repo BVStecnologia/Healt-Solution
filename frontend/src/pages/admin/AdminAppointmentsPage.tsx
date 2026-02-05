@@ -322,164 +322,258 @@ const KanbanWrapper = styled.div`
   max-width: calc(100vw - 270px - 80px); /* viewport - sidebar - paddings */
 `;
 
-// Animação de pulso sutil para indicar interatividade
-const navButtonPulse = keyframes`
-  0%, 100% {
-    box-shadow:
-      0 2px 8px rgba(146, 86, 62, 0.15),
-      0 4px 20px rgba(146, 86, 62, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+// Animação de brilho percorrendo o botão
+const shimmerGlow = keyframes`
+  0% {
+    background-position: -100% 0;
   }
-  50% {
-    box-shadow:
-      0 4px 16px rgba(146, 86, 62, 0.25),
-      0 8px 32px rgba(212, 175, 55, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  100% {
+    background-position: 200% 0;
   }
 `;
 
-// Animação da seta convidando ao clique
-const arrowBounce = keyframes`
+// Animação suave de respiração
+const breathe = keyframes`
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 4px 20px rgba(146, 86, 62, 0.12),
+      0 8px 32px rgba(212, 175, 55, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow:
+      0 6px 28px rgba(146, 86, 62, 0.18),
+      0 12px 40px rgba(212, 175, 55, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+`;
+
+// Animação da seta - deslize suave
+const arrowSlide = keyframes`
   0%, 100% {
     transform: translateX(0);
+    opacity: 1;
   }
   50% {
-    transform: translateX(3px);
+    transform: translateX(4px);
+    opacity: 0.7;
   }
 `;
 
-const arrowBounceLeft = keyframes`
+const arrowSlideLeft = keyframes`
   0%, 100% {
     transform: translateX(0);
+    opacity: 1;
   }
   50% {
-    transform: translateX(-3px);
+    transform: translateX(-4px);
+    opacity: 0.7;
   }
 `;
 
-// Botões de navegação lateral - Design luxuoso flutuante
+// Botões de navegação lateral - Design pill vertical com glassmorphism
 const ScrollNavButton = styled.button<{ $visible: boolean; $direction?: 'left' | 'right' }>`
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  border-radius: 50%;
+  width: 44px;
+  height: 96px;
+  min-width: 44px;
+  border-radius: 22px;
   background: ${props => props.$visible
-    ? `linear-gradient(145deg, ${luxuryColors.warmWhite} 0%, ${luxuryColors.cream} 50%, ${luxuryColors.beige} 100%)`
-    : luxuryColors.beige};
-  border: 1.5px solid ${props => props.$visible
-    ? `rgba(212, 175, 55, 0.4)`
+    ? `linear-gradient(
+        180deg,
+        rgba(253, 248, 243, 0.95) 0%,
+        rgba(245, 237, 228, 0.9) 50%,
+        rgba(253, 248, 243, 0.95) 100%
+      )`
     : 'transparent'};
+  backdrop-filter: ${props => props.$visible ? 'blur(12px)' : 'none'};
+  -webkit-backdrop-filter: ${props => props.$visible ? 'blur(12px)' : 'none'};
+  border: none;
   cursor: ${props => props.$visible ? 'pointer' : 'default'};
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   opacity: ${props => props.$visible ? 1 : 0};
   visibility: ${props => props.$visible ? 'visible' : 'hidden'};
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   flex-shrink: 0;
   position: relative;
   overflow: hidden;
 
-  /* Sombra em camadas para profundidade */
+  /* Sombra em camadas elegante */
   box-shadow: ${props => props.$visible ? `
-    0 2px 8px rgba(146, 86, 62, 0.15),
-    0 4px 20px rgba(146, 86, 62, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8)
+    0 4px 20px rgba(146, 86, 62, 0.12),
+    0 8px 32px rgba(212, 175, 55, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5)
   ` : 'none'};
 
-  /* Brilho interno sutil */
+  /* Borda gradiente dourada */
   &::before {
     content: '';
     position: absolute;
-    top: 2px;
-    left: 10%;
-    right: 10%;
-    height: 40%;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.7) 0%,
-      rgba(255, 255, 255, 0) 100%
-    );
-    border-radius: 50% 50% 0 0;
+    inset: 0;
+    border-radius: 22px;
+    padding: 1.5px;
+    background: ${props => props.$visible
+      ? `linear-gradient(
+          180deg,
+          rgba(212, 175, 55, 0.5) 0%,
+          rgba(146, 86, 62, 0.3) 50%,
+          rgba(212, 175, 55, 0.5) 100%
+        )`
+      : 'transparent'};
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
     pointer-events: none;
-    opacity: ${props => props.$visible ? 1 : 0};
-    transition: opacity 0.3s ease;
+    transition: all 0.4s ease;
   }
 
-  /* Anel dourado decorativo */
+  /* Efeito shimmer que percorre o botão */
   &::after {
     content: '';
     position: absolute;
-    inset: 3px;
-    border-radius: 50%;
-    border: 1px solid transparent;
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), transparent 60%) border-box;
-    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(212, 175, 55, 0.15) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
     opacity: ${props => props.$visible ? 1 : 0};
-    transition: opacity 0.3s ease;
+    animation: ${props => props.$visible ? css`${shimmerGlow} 3s ease-in-out infinite` : 'none'};
+    pointer-events: none;
+    border-radius: 22px;
   }
 
-  /* Animação de pulso quando visível */
+  /* Animação de respiração quando visível */
   ${props => props.$visible && css`
-    animation: ${navButtonPulse} 3s ease-in-out infinite;
+    animation: ${breathe} 4s ease-in-out infinite;
   `}
 
-  svg {
-    width: 20px;
-    height: 20px;
-    color: ${props => props.$visible ? luxuryColors.primary : luxuryColors.beige};
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Container do ícone */
+  .icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(
+      135deg,
+      ${luxuryColors.primary} 0%,
+      ${luxuryColors.primaryDark} 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
     z-index: 1;
-    filter: ${props => props.$visible ? 'drop-shadow(0 1px 2px rgba(146, 86, 62, 0.2))' : 'none'};
+    box-shadow:
+      0 2px 8px rgba(146, 86, 62, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
   }
 
   /* Animação da seta direita */
   ${props => props.$visible && props.$direction === 'right' && css`
     svg {
-      animation: ${arrowBounce} 2s ease-in-out infinite;
+      animation: ${arrowSlide} 2s ease-in-out infinite;
     }
   `}
 
   /* Animação da seta esquerda */
   ${props => props.$visible && props.$direction === 'left' && css`
     svg {
-      animation: ${arrowBounceLeft} 2s ease-in-out infinite;
+      animation: ${arrowSlideLeft} 2s ease-in-out infinite;
     }
   `}
 
-  &:hover {
-    ${props => props.$visible && `
-      transform: scale(1.08);
-      background: linear-gradient(145deg, ${luxuryColors.cream} 0%, ${luxuryColors.primaryLight}20 100%);
-      border-color: ${luxuryColors.gold};
-      box-shadow:
-        0 6px 24px rgba(146, 86, 62, 0.25),
-        0 12px 40px rgba(212, 175, 55, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  /* Indicadores de pontos decorativos */
+  .dots {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+    z-index: 1;
+  }
 
-      svg {
-        color: ${luxuryColors.primaryDark};
-        transform: scale(1.1);
-        animation: none;
+  .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: ${luxuryColors.gold};
+    opacity: 0.4;
+    transition: all 0.3s ease;
+  }
+
+  &:hover {
+    ${props => props.$visible && css`
+      animation: none;
+      transform: scale(1.05);
+      box-shadow:
+        0 8px 32px rgba(146, 86, 62, 0.2),
+        0 16px 48px rgba(212, 175, 55, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+      &::before {
+        background: linear-gradient(
+          180deg,
+          rgba(212, 175, 55, 0.8) 0%,
+          rgba(146, 86, 62, 0.5) 50%,
+          rgba(212, 175, 55, 0.8) 100%
+        );
       }
 
       &::after {
-        background: linear-gradient(135deg, rgba(212, 175, 55, 0.5), transparent 60%) border-box;
+        animation: none;
+        opacity: 0;
+      }
+
+      .icon-wrapper {
+        transform: scale(1.1);
+        box-shadow:
+          0 4px 16px rgba(146, 86, 62, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        background: linear-gradient(
+          135deg,
+          ${luxuryColors.gold} 0%,
+          ${luxuryColors.primary} 100%
+        );
+      }
+
+      svg {
+        animation: none;
+        transform: scale(1.1);
+      }
+
+      .dot {
+        opacity: 0.8;
+        background: ${luxuryColors.primary};
       }
     `}
   }
 
   &:active {
-    ${props => props.$visible && `
-      transform: scale(0.95);
+    ${props => props.$visible && css`
+      transform: scale(0.98);
       box-shadow:
-        0 2px 8px rgba(146, 86, 62, 0.2),
+        0 2px 12px rgba(146, 86, 62, 0.15),
         inset 0 2px 4px rgba(0, 0, 0, 0.05);
 
-      svg {
+      .icon-wrapper {
         transform: scale(0.95);
       }
     `}
@@ -1650,7 +1744,17 @@ const AdminAppointmentsPage: React.FC = () => {
                 onClick={() => canScrollLeft && scrollKanban('left')}
                 aria-label="Scroll para esquerda"
               >
-                <ChevronLeft />
+                <div className="dots">
+                  <span className="dot" />
+                  <span className="dot" />
+                </div>
+                <div className="icon-wrapper">
+                  <ChevronLeft />
+                </div>
+                <div className="dots">
+                  <span className="dot" />
+                  <span className="dot" />
+                </div>
               </ScrollNavButton>
 
               <KanbanContainer ref={kanbanContainerRef}>
@@ -1693,7 +1797,7 @@ const AdminAppointmentsPage: React.FC = () => {
                               getInitials={getInitials}
                               onApprove={handleApprove}
                               onReject={handleReject}
-                              onViewProfile={(id) => navigate(`/admin/patients/${id}`)}
+                              onViewProfile={(id) => navigate(`/admin/patients/${id}`, { state: { from: '/admin/appointments' } })}
                               processingId={processingId}
                             />
                           ))
@@ -1712,7 +1816,17 @@ const AdminAppointmentsPage: React.FC = () => {
                 onClick={() => canScrollRight && scrollKanban('right')}
                 aria-label="Scroll para direita"
               >
-                <ChevronRight />
+                <div className="dots">
+                  <span className="dot" />
+                  <span className="dot" />
+                </div>
+                <div className="icon-wrapper">
+                  <ChevronRight />
+                </div>
+                <div className="dots">
+                  <span className="dot" />
+                  <span className="dot" />
+                </div>
               </ScrollNavButton>
             </KanbanWrapper>
 

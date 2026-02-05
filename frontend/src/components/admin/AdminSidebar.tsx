@@ -370,16 +370,24 @@ const AdminSidebar: React.FC = () => {
             <NavSectionTitle>{section.title}</NavSectionTitle>
             {navItems
               .filter(item => item.section === section.key)
-              .map(item => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  $active={location.pathname === item.path}
-                >
-                  <item.icon />
-                  {item.label}
-                </NavLink>
-              ))}
+              .map(item => {
+                // Para /admin (dashboard), verifica igualdade exata
+                // Para outras rotas, verifica se começa com o path (inclui sub-rotas)
+                const isActive = item.path === '/admin'
+                  ? location.pathname === item.path
+                  : location.pathname.startsWith(item.path);
+
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    $active={isActive}
+                  >
+                    <item.icon />
+                    {item.label}
+                  </NavLink>
+                );
+              })}
           </NavSection>
         ))}
       </Nav>
