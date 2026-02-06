@@ -812,6 +812,8 @@ async function notifyPatientProviderCancellation(
     return { success: false, error: 'WhatsApp não conectado' };
   }
 
+  const portalUrl = window.location.origin || 'https://essencemedicalclinic.com';
+
   return sendFromTemplate(
     instance.name,
     data.patientPhone,
@@ -822,6 +824,7 @@ async function notifyPatientProviderCancellation(
       data: data.appointmentDate,
       hora: data.appointmentTime,
       motivo: data.reason,
+      link: `${portalUrl}/appointments/new`,
     },
     language,
     {

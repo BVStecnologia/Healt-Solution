@@ -4,9 +4,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Users, UserPlus, Search, Edit2, Check, AlertCircle, Eye,
   Crown, Activity, Phone, Mail, ChevronLeft, ChevronRight, X,
-  Sparkles
+  Sparkles, AlertTriangle
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile, PatientType, PreferredLanguage } from '../../types/database';
 
@@ -55,25 +56,27 @@ const float = keyframes`
 // THEME CONSTANTS
 // ============================================
 const luxuryTheme = {
+  // Accent colors (hex for concatenation/dynamic props)
   primary: '#92563E',
   primaryLight: '#B8956E',
   primaryDark: '#7A4832',
   gold: '#D4AF37',
   goldLight: '#E8C547',
-  cream: '#FDF8F3',
-  surface: '#FFFFFF',
-  border: '#E8DDD4',
-  text: '#3D2E24',
-  textSecondary: '#8B7355',
   success: '#059669',
-  successLight: '#D1FAE5',
   error: '#DC2626',
-  errorLight: '#FEE2E2',
   trt: '#92563E',
   hormone: '#C77D8E',
   vip: '#D4AF37',
   newPatient: '#059669',
   general: '#8B7355',
+  // Theme-responsive colors (CSS variables - adapt to dark mode)
+  cream: theme.colors.background,
+  surface: theme.colors.surface,
+  border: theme.colors.border,
+  text: theme.colors.text,
+  textSecondary: theme.colors.textSecondary,
+  successLight: theme.colors.successLight,
+  errorLight: theme.colors.errorLight,
 };
 
 // ============================================
@@ -388,6 +391,9 @@ const PatientName = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const PatientEmail = styled.div`
@@ -470,6 +476,25 @@ const PatientBadge = styled.span<{ $type: PatientType | null }>`
   @media (max-width: 900px) {
     grid-column: 2;
     justify-self: start;
+  }
+`;
+
+const NoShowBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: ${luxuryTheme.error}15;
+  color: ${luxuryTheme.error};
+  border: 1px solid ${luxuryTheme.error}25;
+  white-space: nowrap;
+
+  svg {
+    width: 11px;
+    height: 11px;
   }
 `;
 
@@ -1208,7 +1233,15 @@ const PatientsPage: React.FC = () => {
                   </PatientAvatar>
 
                   <PatientInfo>
-                    <PatientName>{patient.first_name} {patient.last_name}</PatientName>
+                    <PatientName>
+                      {patient.first_name} {patient.last_name}
+                      {(patient.no_show_count || 0) > 0 && (
+                        <NoShowBadge title={`${patient.no_show_count} falta(s)`}>
+                          <AlertTriangle />
+                          {patient.no_show_count}
+                        </NoShowBadge>
+                      )}
+                    </PatientName>
                     <PatientEmail>
                       <Mail size={12} />
                       {patient.email}

@@ -132,7 +132,7 @@ const ProfileHeader = styled.div<{ $type: PatientType | null }>`
     right: 0;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, ${theme.colors.primarySoft}30 0%, transparent 70%);
+    background: radial-gradient(circle, ${theme.colors.primarySoftA30} 0%, transparent 70%);
     pointer-events: none;
   }
 `;
@@ -912,7 +912,7 @@ const ModalButton = styled.button<{ $variant: 'primary' | 'secondary' }>`
 
     &:hover {
       background: ${theme.colors.background};
-      border-color: ${theme.colors.primary}40;
+      border-color: ${theme.colors.primaryA40};
     }
   `}
 
@@ -1364,12 +1364,14 @@ const PatientProfilePage: React.FC = () => {
                 <InfoValue>{formatDate(patient.labs_completed_at)}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Cadastrado em</InfoLabel>
-                <InfoValue>{formatDate(patient.created_at)}</InfoValue>
+                <InfoLabel>Faltas (No-Show)</InfoLabel>
+                <InfoValue style={(patient.no_show_count || 0) > 0 ? { color: '#DC2626', fontWeight: 600 } : undefined}>
+                  {patient.no_show_count || 0}
+                </InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Última Atualização</InfoLabel>
-                <InfoValue>{formatDate(patient.updated_at)}</InfoValue>
+                <InfoLabel>Cadastrado em</InfoLabel>
+                <InfoValue>{formatDate(patient.created_at)}</InfoValue>
               </InfoItem>
             </InfoGrid>
           </Card>

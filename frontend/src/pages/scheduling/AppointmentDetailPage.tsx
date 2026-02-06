@@ -88,7 +88,7 @@ const DetailIcon = styled.div`
   width: 40px;
   height: 40px;
   border-radius: ${theme.borderRadius.md};
-  background: ${theme.colors.primary}10;
+  background: ${theme.colors.primaryA10};
   color: ${theme.colors.primary};
   display: flex;
   align-items: center;
@@ -127,8 +127,8 @@ const Actions = styled.div`
 `;
 
 const CancelledInfo = styled.div`
-  background: ${theme.colors.error}10;
-  border: 1px solid ${theme.colors.error}30;
+  background: ${theme.colors.errorA10};
+  border: 1px solid ${theme.colors.errorA30};
   border-radius: ${theme.borderRadius.md};
   padding: ${theme.spacing.md};
   margin-top: ${theme.spacing.md};
@@ -198,13 +198,26 @@ const AppointmentDetailPage: React.FC = () => {
   const handleCancel = async () => {
     if (!appointment) return;
 
+    // Verificar se é cancelamento tardio (< 24h)
+    const scheduledTime = new Date(appointment.scheduled_at).getTime();
+    const now = Date.now();
+    const hoursUntil = (scheduledTime - now) / (1000 * 60 * 60);
+
+    if (hoursUntil < 24 && hoursUntil > 0) {
+      const confirmed = window.confirm(
+        'Sua consulta é em menos de 24 horas.\n\n' +
+        'Cancelamentos tardios podem estar sujeitos a políticas da clínica.\n\n' +
+        'Deseja continuar com o cancelamento?'
+      );
+      if (!confirmed) return;
+    }
+
     const reason = window.prompt('Por favor, informe o motivo do cancelamento:');
     if (!reason) return;
 
     try {
       setCancelling(true);
       await cancelAppointment(appointment.id, reason);
-      // Atualizar dados locais
       setAppointment(prev => prev ? { ...prev, status: 'cancelled', cancellation_reason: reason } : null);
     } catch (error) {
       console.error('Error cancelling appointment:', error);
