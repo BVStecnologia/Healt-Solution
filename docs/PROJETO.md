@@ -12,19 +12,20 @@
 | # | Módulo | Status | Upwork To-do |
 |---|--------|--------|--------------|
 | 1 | Infraestrutura Docker (13 serviços) | ✅ Completo | ✅ Completed |
-| 2 | Database Schema (14 migrações, 000-013) | ✅ Completo | ✅ Completed |
+| 2 | Database Schema (15 migrações, 000-014) | ✅ Completo | ✅ Completed |
 | 3 | Portal do Paciente (7 páginas) | ✅ Completo | ✅ Completed |
-| 4 | Painel Admin + Portal Médico (12 páginas) | ✅ Completo | ✅ Completed |
+| 4 | Painel Admin + Portal Médico (13 páginas) | ✅ Completo | ✅ Completed |
 | 5 | WhatsApp - Notificações Bilíngues (28 templates) | ✅ Completo | ✅ Completed |
 | 6 | WhatsApp - Automation Médico + Paciente | ✅ Completo | ⬜ Active |
 | 7 | Lembretes automáticos (cron + notification_rules) | ✅ Completo | - |
 | 8 | No-show automático + Cancelamento inteligente | ✅ Completo | - |
 | 9 | Dark/Light mode + Onboarding admin | ✅ Completo | ⬜ Active |
 | 10 | Google OAuth (VPS via nip.io) | ✅ Completo | - |
-| 11 | Upload de documentos/exames | ❌ Pendente | - |
-| 12 | IA/Chatbot WhatsApp | ❌ Pendente | - |
-| 13 | E-commerce (produtos) | ❌ Pendente | - |
-| 14 | Integrações externas (OptiMantra) | ❌ Pendente | - |
+| 11 | Confiabilidade WhatsApp (retry + monitoramento) | ✅ Completo | - |
+| 12 | Upload de documentos/exames | ❌ Pendente | - |
+| 13 | IA/Chatbot WhatsApp | ❌ Pendente | - |
+| 14 | E-commerce (produtos) | ❌ Pendente | - |
+| 15 | Integrações externas (OptiMantra) | ❌ Pendente | - |
 
 ---
 
@@ -38,7 +39,7 @@
 - VPS Contabo configurada e rodando (217.216.81.92)
 - Portainer para gerenciamento visual
 
-### 2. Banco de Dados (13 migrações)
+### 2. Banco de Dados (15 migrações)
 | Migração | Descrição |
 |----------|-----------|
 | 000 | Schema migrations (controle de versões) |
@@ -55,6 +56,7 @@
 | 011 | Regras de notificação configuráveis (notification_rules) |
 | 012 | No-show automático + confirmação de presença + templates no-show |
 | 013 | Auto-create profile (trigger on auth.users para Google OAuth + email) |
+| 014 | retry_count e last_retry_at no message_logs (sistema de retry) |
 
 **Totais:** 9 tabelas, 4 ENUMs, 8+ RPCs, RLS completo, triggers automáticos
 
@@ -144,6 +146,16 @@
 - Backup pré-deploy: scripts/backup.sh (pg_dump + gzip + rotação)
 - Migrações seguras: BEGIN/COMMIT + ON_ERROR_STOP + backup automático
 
+### 11. Confiabilidade WhatsApp (Retry + Monitoramento)
+- Webhook `sendMessage()` retorna boolean (sucesso/falha)
+- Falhas de envio gravadas corretamente no `message_logs` com `status: 'failed'`
+- Dedup de lembretes ignora mensagens falhas (permite retry automático)
+- Retry automático: cron a cada 5min, até 3 tentativas por mensagem
+- `retry_count` e `last_retry_at` no message_logs (migration 014)
+- Admin alertado via popup quando notificação WhatsApp falha ao confirmar/rejeitar
+- Página `/admin/failed-messages`: lista mensagens falhas com retry manual
+- Sidebar admin: link "Msgs Falhas" na seção configurações
+
 ---
 
 ## URLs de Produção
@@ -209,11 +221,11 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 | Métrica | Valor |
 |---------|-------|
-| Páginas frontend | 19 (7 portal + 12 admin/médico) |
+| Páginas frontend | 20 (7 portal + 13 admin/médico) |
 | Componentes React | 19 |
 | Hooks customizados | 6 |
 | Contextos React | 3 (Auth, Language, Theme) |
-| Migrações SQL | 13 (000-012) |
+| Migrações SQL | 15 (000-014) |
 | Tabelas no banco | 9 |
 | RPCs PostgreSQL | 8+ |
 | Templates WhatsApp | 28 (14 tipos x 2 idiomas) |
@@ -245,4 +257,4 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 ---
 
-*Atualizado: 06/02/2026*
+*Atualizado: 06/02/2026 (v2 - Confiabilidade WhatsApp)*

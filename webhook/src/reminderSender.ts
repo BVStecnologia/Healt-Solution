@@ -122,8 +122,8 @@ function applyVariables(content: string, vars: Record<string, string>): string {
 }
 
 /**
- * Checks if a reminder was already sent for this appointment + template + role.
- * Uses message_logs to prevent duplicate sends.
+ * Checks if a reminder was already successfully sent for this appointment + template + role.
+ * Uses message_logs to prevent duplicate sends. Failed messages are NOT counted (allow retry).
  */
 async function wasAlreadySent(
   appointmentId: string,
@@ -137,7 +137,8 @@ async function wasAlreadySent(
     .select('id', { count: 'exact', head: true })
     .eq('appointment_id', appointmentId)
     .eq('template_name', templateName)
-    .eq('phone_number', phone);
+    .eq('phone_number', phone)
+    .in('status', ['sent', 'delivered', 'read']);
 
   if (error) {
     console.error('[Reminder] Error checking duplicates:', error);
@@ -148,7 +149,7 @@ async function wasAlreadySent(
 }
 
 /**
- * Logs a sent message to message_logs.
+ * Logs a message to message_logs with the actual send status.
  */
 async function logMessage(
   appointmentId: string,
@@ -156,22 +157,31 @@ async function logMessage(
   templateName: string,
   phone: string,
   message: string,
-  language: Language
+  language: Language,
+  status: 'sent' | 'failed' = 'sent',
+  errorText?: string
 ): Promise<void> {
   const client = getClient();
 
+  const record: Record<string, any> = {
+    appointment_id: appointmentId,
+    patient_id: patientId,
+    template_name: templateName,
+    phone_number: phone,
+    message,
+    status,
+    language,
+  };
+
+  if (status === 'sent') {
+    record.sent_at = new Date().toISOString();
+  } else if (errorText) {
+    record.error = errorText;
+  }
+
   const { error } = await client
     .from('message_logs')
-    .insert({
-      appointment_id: appointmentId,
-      patient_id: patientId,
-      template_name: templateName,
-      phone_number: phone,
-      message,
-      status: 'sent',
-      sent_at: new Date().toISOString(),
-      language,
-    });
+    .insert(record);
 
   if (error) {
     console.error('[Reminder] Error logging message:', error);
@@ -243,24 +253,31 @@ export async function sendReminder(
 
   // Send
   const remoteJid = formatPhoneForWhatsApp(phone);
-  await sendMessage(instanceName, remoteJid, message);
+  const success = await sendMessage(instanceName, remoteJid, message);
 
-  // Log
+  // Log with actual status
   await logMessage(
     appointment.id,
     appointment.patient_id,
     rule.template_name,
     phone,
     message,
-    language
+    language,
+    success ? 'sent' : 'failed',
+    success ? undefined : 'Evolution API send failed'
   );
 
   const recipientName = isPatient
     ? `${appointment.patient_first_name} ${appointment.patient_last_name}`
     : `Dr. ${appointment.provider_first_name} ${appointment.provider_last_name}`;
 
-  console.log(`[Reminder] Sent "${rule.template_name}" to ${recipientName} (${phone})`);
-  return true;
+  if (success) {
+    console.log(`[Reminder] Sent "${rule.template_name}" to ${recipientName} (${phone})`);
+  } else {
+    console.error(`[Reminder] FAILED "${rule.template_name}" to ${recipientName} (${phone})`);
+  }
+
+  return success;
 }
 
 // ============================================
@@ -313,9 +330,13 @@ export async function sendNoShowNotification(data: NoShowData): Promise<void> {
         });
 
         const remoteJid = formatPhoneForWhatsApp(data.patientPhone);
-        await sendMessage(instanceName, remoteJid, message);
-        await logMessage(data.appointmentId, data.patientId, 'no_show_patient', data.patientPhone, message, data.patientLanguage);
-        console.log(`[NoShow] Notified patient ${data.patientFirstName} (${data.patientPhone})`);
+        const success = await sendMessage(instanceName, remoteJid, message);
+        await logMessage(data.appointmentId, data.patientId, 'no_show_patient', data.patientPhone, message, data.patientLanguage, success ? 'sent' : 'failed', success ? undefined : 'Evolution API send failed');
+        if (success) {
+          console.log(`[NoShow] Notified patient ${data.patientFirstName} (${data.patientPhone})`);
+        } else {
+          console.error(`[NoShow] FAILED to notify patient ${data.patientFirstName} (${data.patientPhone})`);
+        }
       }
     }
   }
@@ -335,9 +356,13 @@ export async function sendNoShowNotification(data: NoShowData): Promise<void> {
         });
 
         const remoteJid = formatPhoneForWhatsApp(data.providerPhone);
-        await sendMessage(instanceName, remoteJid, message);
-        await logMessage(data.appointmentId, data.patientId, 'no_show_provider', data.providerPhone, message, data.providerLanguage);
-        console.log(`[NoShow] Notified provider Dr. ${data.providerFirstName} (${data.providerPhone})`);
+        const success = await sendMessage(instanceName, remoteJid, message);
+        await logMessage(data.appointmentId, data.patientId, 'no_show_provider', data.providerPhone, message, data.providerLanguage, success ? 'sent' : 'failed', success ? undefined : 'Evolution API send failed');
+        if (success) {
+          console.log(`[NoShow] Notified provider Dr. ${data.providerFirstName} (${data.providerPhone})`);
+        } else {
+          console.error(`[NoShow] FAILED to notify provider Dr. ${data.providerFirstName} (${data.providerPhone})`);
+        }
       }
     }
   }

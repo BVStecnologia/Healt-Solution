@@ -1153,7 +1153,7 @@ const AdminDashboard: React.FC = () => {
 
       if (apt.patient_phone && whatsappReady) {
         const date = new Date(apt.scheduled_at);
-        await sendConfirmation({
+        const result = await sendConfirmation({
           patientName: apt.patient_name,
           patientPhone: apt.patient_phone,
           patientId: apt.patient_id,
@@ -1163,6 +1163,9 @@ const AdminDashboard: React.FC = () => {
           appointmentTime: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           appointmentId: apt.id,
         });
+        if (!result.success) {
+          window.alert(`Consulta confirmada, mas a notificação WhatsApp falhou: ${result.error || 'Erro desconhecido'}`);
+        }
       }
 
       loadStats();
@@ -1196,7 +1199,7 @@ const AdminDashboard: React.FC = () => {
       if (error) throw error;
 
       if (apt.patient_phone && whatsappReady) {
-        await sendRejection({
+        const result = await sendRejection({
           patientName: apt.patient_name,
           patientPhone: apt.patient_phone,
           patientId: apt.patient_id,
@@ -1207,6 +1210,9 @@ const AdminDashboard: React.FC = () => {
           appointmentId: apt.id,
           reason: reason || 'Horário não disponível',
         });
+        if (!result.success) {
+          window.alert(`Consulta rejeitada, mas a notificação WhatsApp falhou: ${result.error || 'Erro desconhecido'}`);
+        }
       }
 
       loadStats();

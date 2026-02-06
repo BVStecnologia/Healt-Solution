@@ -26,7 +26,7 @@ async function sendTypingPresence(instanceName: string, remoteJid: string): Prom
  * Sends a WhatsApp message via Evolution API.
  * Shows "typing..." indicator and adds a natural delay before sending.
  */
-export async function sendMessage(instanceName: string, remoteJid: string, text: string): Promise<void> {
+export async function sendMessage(instanceName: string, remoteJid: string, text: string): Promise<boolean> {
   const url = `${config.evolutionApiUrl}/message/sendText/${instanceName}`;
 
   try {
@@ -52,9 +52,13 @@ export async function sendMessage(instanceName: string, remoteJid: string, text:
     if (!response.ok) {
       const body = await response.text();
       console.error(`Error sending message: ${response.status} - ${body}`);
+      return false;
     }
+
+    return true;
   } catch (error) {
     console.error('Error sending WhatsApp message:', error);
+    return false;
   }
 }
 

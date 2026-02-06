@@ -29,6 +29,7 @@ const ProvidersPage = lazy(() => import('./pages/admin/ProvidersPage'));
 const AdminsPage = lazy(() => import('./pages/admin/AdminsPage'));
 const MySchedulePage = lazy(() => import('./pages/admin/MySchedulePage'));
 const NotificationRulesPage = lazy(() => import('./pages/admin/NotificationRulesPage'));
+const FailedMessagesPage = lazy(() => import('./pages/admin/FailedMessagesPage'));
 
 const App: React.FC = () => {
   const { loading } = useAuth();
@@ -144,6 +145,12 @@ const App: React.FC = () => {
         <Route path="/admin/notifications" element={
           <AdminProtectedRoute>
             <NotificationRulesPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/failed-messages" element={
+          <AdminProtectedRoute>
+            <FailedMessagesPage />
           </AdminProtectedRoute>
         } />
 

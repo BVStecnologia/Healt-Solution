@@ -153,6 +153,7 @@ webhook/src/
 ├── patientHandler.ts       # Handler de pacientes
 ├── patientManager.ts       # Manager de pacientes
 ├── patientResponder.ts     # Responder para pacientes
+├── retrySender.ts          # Retry de mensagens falhas (até 3 tentativas)
 ├── urlShortener.ts         # Encurtador de URLs
 └── userIdentifier.ts       # Identificação de usuário
 
@@ -187,6 +188,7 @@ scripts/
 | `/admin/admins` | AdminsPage | CRUD de administradores |
 | `/admin/whatsapp` | WhatsAppPage | Configuração Evolution API |
 | `/admin/notifications` | NotificationRulesPage | Regras de lembrete para pacientes |
+| `/admin/failed-messages` | FailedMessagesPage | Mensagens WhatsApp falhas com retry |
 | `/admin/my-schedule` | MySchedulePage | Agenda dos médicos |
 
 ### Painel Médico
@@ -342,6 +344,7 @@ CREATE TABLE schema_migrations (
 | 011 | notification_rules | Regras de notificação configuráveis + templates provider_reminder_2h/15min |
 | 012 | no_show_system | no_show_count, confirmed_by_patient_at, trigger auto-increment, templates no_show_patient/provider |
 | 013 | auto_create_profile | Trigger on auth.users para auto-criar profile (Google OAuth + email/senha) |
+| 014 | message_retry | retry_count e last_retry_at no message_logs + índice para retry |
 
 ### Aplicar Migrações
 
@@ -563,6 +566,16 @@ EVOLUTION_API_KEY=sua-chave-evolution
 - [x] Badge de no-show na lista de pacientes e ficha
 - [x] Confirmação de presença via WhatsApp ("OK", "sim", "yes", "confirmo")
 - [x] `confirmed_by_patient_at` registrado na appointments
+
+### Confiabilidade WhatsApp (Retry + Monitoramento)
+- [x] Webhook `sendMessage()` retorna `boolean` (sucesso/falha)
+- [x] Falhas de envio gravadas no `message_logs` com `status: 'failed'`
+- [x] Dedup ignora mensagens falhas (permite retry)
+- [x] Retry automático: até 3 tentativas via cron (5min)
+- [x] `retry_count` e `last_retry_at` no `message_logs` (migration 014)
+- [x] Admin alertado via `window.alert` quando notificação WhatsApp falha
+- [x] Página "Mensagens Falhas" (`/admin/failed-messages`) com retry manual
+- [x] Sidebar admin: link "Msgs Falhas" na seção configurações
 
 ### Internacionalização
 - [x] Português (padrão)

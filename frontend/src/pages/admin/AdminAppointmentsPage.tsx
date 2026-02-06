@@ -1664,7 +1664,7 @@ const AdminAppointmentsPage: React.FC = () => {
 
       if (apt.patient?.phone && whatsappReady) {
         const date = new Date(apt.scheduled_at);
-        await sendConfirmation({
+        const result = await sendConfirmation({
           patientName: `${apt.patient.first_name} ${apt.patient.last_name}`,
           patientPhone: apt.patient.phone,
           patientId: apt.patient_id,
@@ -1674,6 +1674,9 @@ const AdminAppointmentsPage: React.FC = () => {
           appointmentTime: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           appointmentId: apt.id,
         });
+        if (!result.success) {
+          window.alert(`Consulta confirmada, mas a notificação WhatsApp falhou: ${result.error || 'Erro desconhecido'}`);
+        }
       }
 
       loadAppointments();
@@ -1709,7 +1712,7 @@ const AdminAppointmentsPage: React.FC = () => {
       if (whatsappReady) {
         const date = new Date(apt.scheduled_at);
         const providerProfile = apt.provider?.profile;
-        await sendCancellationCrossNotify({
+        const cancelResult = await sendCancellationCrossNotify({
           patientName: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : '',
           patientPhone: apt.patient?.phone || '',
           patientId: apt.patient_id,
@@ -1722,6 +1725,12 @@ const AdminAppointmentsPage: React.FC = () => {
           appointmentId: apt.id,
           reason: reason || 'Horário não disponível',
         }, 'admin');
+        const failedParts: string[] = [];
+        if (cancelResult.patient && !cancelResult.patient.success) failedParts.push('paciente');
+        if (cancelResult.provider && !cancelResult.provider.success) failedParts.push('médico');
+        if (failedParts.length > 0) {
+          window.alert(`Consulta cancelada, mas a notificação WhatsApp para ${failedParts.join(' e ')} falhou.`);
+        }
       }
 
       loadAppointments();

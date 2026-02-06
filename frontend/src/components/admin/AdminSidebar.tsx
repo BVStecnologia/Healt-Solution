@@ -14,6 +14,7 @@ import {
   Clock,
   ChevronDown,
   User,
+  AlertTriangle,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
@@ -436,6 +437,7 @@ const allNavItems = [
   { subpath: '/notifications', label: 'Notificacoes', icon: Bell, section: 'config', envs: ['admin'] as Environment[] },
   { subpath: '/notifications', label: 'Meus Lembretes', icon: Bell, section: 'config', envs: ['doctor'] as Environment[] },
   { subpath: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
+  { subpath: '/failed-messages', label: 'Msgs Falhas', icon: AlertTriangle, section: 'config', envs: ['admin'] as Environment[] },
 ];
 
 // ============================================
