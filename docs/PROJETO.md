@@ -12,7 +12,7 @@
 | # | Módulo | Status | Upwork To-do |
 |---|--------|--------|--------------|
 | 1 | Infraestrutura Docker (13 serviços) | ✅ Completo | ✅ Completed |
-| 2 | Database Schema (13 migrações) | ✅ Completo | ✅ Completed |
+| 2 | Database Schema (14 migrações, 000-013) | ✅ Completo | ✅ Completed |
 | 3 | Portal do Paciente (7 páginas) | ✅ Completo | ✅ Completed |
 | 4 | Painel Admin + Portal Médico (12 páginas) | ✅ Completo | ✅ Completed |
 | 5 | WhatsApp - Notificações Bilíngues (28 templates) | ✅ Completo | ✅ Completed |
@@ -20,7 +20,7 @@
 | 7 | Lembretes automáticos (cron + notification_rules) | ✅ Completo | - |
 | 8 | No-show automático + Cancelamento inteligente | ✅ Completo | - |
 | 9 | Dark/Light mode + Onboarding admin | ✅ Completo | ⬜ Active |
-| 10 | Google OAuth (VPS) | 🔧 Em progresso | - |
+| 10 | Google OAuth (VPS via nip.io) | ✅ Completo | - |
 | 11 | Upload de documentos/exames | ❌ Pendente | - |
 | 12 | IA/Chatbot WhatsApp | ❌ Pendente | - |
 | 13 | E-commerce (produtos) | ❌ Pendente | - |
@@ -54,6 +54,7 @@
 | 010 | Tema escuro/claro do paciente (preferred_theme) |
 | 011 | Regras de notificação configuráveis (notification_rules) |
 | 012 | No-show automático + confirmação de presença + templates no-show |
+| 013 | Auto-create profile (trigger on auth.users para Google OAuth + email) |
 
 **Totais:** 9 tabelas, 4 ENUMs, 8+ RPCs, RLS completo, triggers automáticos
 
@@ -134,6 +135,15 @@
 - Empty States educativos: orientações quando listas estão vazias
 - Help Tips: dicas contextuais dismissíveis por página
 
+### 10. Google OAuth + Segurança
+- Google OAuth na VPS via nip.io (217-216-81-92.nip.io)
+- Auto-create profile: trigger on auth.users (migration 013)
+- RLS fix: is_admin() com SECURITY DEFINER (sem recursão)
+- .gitignore: bloqueia .env.* (exceto .example)
+- .env.local removido do histórico git (filter-branch)
+- Backup pré-deploy: scripts/backup.sh (pg_dump + gzip + rotação)
+- Migrações seguras: BEGIN/COMMIT + ON_ERROR_STOP + backup automático
+
 ---
 
 ## URLs de Produção
@@ -167,7 +177,7 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 | # | Feature | Prioridade | Depende de |
 |---|---------|------------|------------|
-| 1 | Google OAuth na VPS | 🔴 Alta | Domínio ou nip.io workaround |
+| 1 | ~~Google OAuth na VPS~~ | ✅ Feito | nip.io (217-216-81-92.nip.io) |
 | 2 | Upload de documentos/exames | 🔴 Alta | Nada (Supabase Storage pronto) |
 | 3 | Relatórios e analytics | 🟡 Média | Nada |
 | 4 | Chatbot IA WhatsApp | 🟡 Média | Escolha de provider IA (Claude/OpenAI) |
