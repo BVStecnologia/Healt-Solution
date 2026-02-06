@@ -64,6 +64,20 @@ CREATE TRIGGER profiles_updated_at
   BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- Função auxiliar para verificar se o usuário é admin (SECURITY DEFINER para evitar recursão RLS)
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$;
+
 -- RLS para profiles
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
@@ -77,11 +91,7 @@ CREATE POLICY "Users can update own profile"
 
 CREATE POLICY "Admins can view all profiles"
   ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  USING (is_admin());
 
 -- =============================================
 -- TABELA: providers

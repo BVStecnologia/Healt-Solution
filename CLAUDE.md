@@ -333,6 +333,7 @@ CREATE TABLE schema_migrations (
 | 010 | patient_theme | Tema escuro/claro do paciente |
 | 011 | notification_rules | Regras de notificação configuráveis + templates provider_reminder_2h/15min |
 | 012 | no_show_system | no_show_count, confirmed_by_patient_at, trigger auto-increment, templates no_show_patient/provider |
+| 013 | auto_create_profile | Trigger on auth.users para auto-criar profile (Google OAuth + email/senha) |
 
 ### Aplicar Migrações
 
