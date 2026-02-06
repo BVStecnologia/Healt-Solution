@@ -29,7 +29,7 @@ const ProviderCard = styled.button<{ $selected: boolean }>`
   align-items: center;
   gap: ${theme.spacing.md};
   padding: ${theme.spacing.md};
-  background: ${props => props.$selected ? theme.colors.primary + '10' : theme.colors.surface};
+  background: ${props => props.$selected ? theme.colors.primaryA10 : theme.colors.surface};
   border: 2px solid ${props => props.$selected ? theme.colors.primary : theme.colors.border};
   border-radius: ${theme.borderRadius.lg};
   cursor: pointer;

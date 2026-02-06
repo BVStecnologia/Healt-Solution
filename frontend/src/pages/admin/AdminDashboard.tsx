@@ -66,23 +66,25 @@ const float = keyframes`
 // LUXURY COLOR PALETTE
 // ============================================
 const luxuryColors = {
+  // Accent colors (hex for concatenation/dynamic props)
   primary: '#92563E',
   primaryLight: '#B8956E',
   primaryDark: '#6B3D2A',
   gold: '#D4AF37',
   goldMuted: '#C9A962',
-  cream: '#FDF8F3',
-  warmWhite: '#FEFCFA',
-  beige: '#F5EDE4',
-  beigeLight: '#FAF6F1',
-  textDark: '#3D2E24',
-  textMuted: '#8B7355',
   success: '#6B8E6B',
-  successLight: '#E8F0E8',
   warning: '#C9923E',
-  warningLight: '#FEF3E2',
   danger: '#B85C5C',
-  dangerLight: '#FBEAEA',
+  // Theme-responsive colors (CSS variables - adapt to dark mode)
+  cream: theme.colors.surface,
+  warmWhite: theme.colors.surface,
+  beige: theme.colors.borderLight,
+  beigeLight: theme.colors.background,
+  textDark: theme.colors.text,
+  textMuted: theme.colors.textSecondary,
+  successLight: theme.colors.successLight,
+  warningLight: theme.colors.warningLight,
+  dangerLight: theme.colors.errorLight,
 };
 
 // Chart colors palette
@@ -1173,11 +1175,21 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleReject = async (apt: PendingAppointment) => {
+    const reason = window.prompt(
+      'Motivo da rejeição:\n\n• Horário não disponível\n• Médico indisponível\n• Outro motivo',
+      'Horário não disponível'
+    );
+    if (reason === null) return; // Cancelou o prompt
+
     setProcessingId(apt.id);
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'cancelled', rejection_reason: 'Horário não disponível' })
+        .update({
+          status: 'cancelled',
+          cancellation_reason: reason || 'Horário não disponível',
+          cancelled_at: new Date().toISOString(),
+        })
         .eq('id', apt.id);
 
       if (error) throw error;
@@ -1192,7 +1204,7 @@ const AdminDashboard: React.FC = () => {
           appointmentDate: '',
           appointmentTime: '',
           appointmentId: apt.id,
-          reason: 'Horário não disponível',
+          reason: reason || 'Horário não disponível',
         });
       }
 

@@ -193,7 +193,7 @@ const PasswordToggle = styled.button`
 
 const ErrorMessage = styled.div`
   background: ${theme.colors.errorLight};
-  border: 1px solid ${theme.colors.error}30;
+  border: 1px solid ${theme.colors.errorA30};
   color: ${theme.colors.error};
   padding: ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};
@@ -205,7 +205,7 @@ const ErrorMessage = styled.div`
 
 const SuccessMessage = styled.div`
   background: ${theme.colors.successLight};
-  border: 1px solid ${theme.colors.success}30;
+  border: 1px solid ${theme.colors.successA30};
   color: ${theme.colors.success};
   padding: ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};

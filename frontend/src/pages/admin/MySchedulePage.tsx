@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { theme } from '../../styles/GlobalStyle';
 import { supabase, callRPC } from '../../lib/supabaseClient';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 
@@ -81,19 +82,21 @@ const DEFAULT_SCHEDULES: DaySchedule[] = DAYS_OF_WEEK.map(day => ({
 // THEME
 // ============================================
 const luxuryTheme = {
+  // Accent colors (hex for concatenation/dynamic props)
   primary: '#92563E',
   primaryLight: '#AF8871',
   primarySoft: '#F4E7DE',
   primaryDark: '#7A4832',
-  cream: '#FDF8F3',
-  surface: '#FFFFFF',
-  border: '#E5E0DB',
-  text: '#393939',
-  textSecondary: '#8C8B8B',
   success: '#10B981',
-  successLight: '#D1FAE5',
   error: '#EF4444',
-  errorLight: '#FEE2E2',
+  // Theme-responsive colors (CSS variables - adapt to dark mode)
+  cream: theme.colors.background,
+  surface: theme.colors.surface,
+  border: theme.colors.border,
+  text: theme.colors.text,
+  textSecondary: theme.colors.textSecondary,
+  successLight: theme.colors.successLight,
+  errorLight: theme.colors.errorLight,
 };
 
 // ============================================

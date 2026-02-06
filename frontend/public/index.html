@@ -24,6 +24,13 @@
     <title>Essence Medical Clinic - Portal do Paciente</title>
   </head>
   <body>
+    <script>
+      // Anti-flash: apply theme before first paint
+      (function() {
+        var t = localStorage.getItem('essence-theme');
+        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      })();
+    </script>
     <noscript>Você precisa habilitar JavaScript para rodar esta aplicação.</noscript>
     <div id="root"></div>
   </body>

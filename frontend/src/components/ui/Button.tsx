@@ -34,7 +34,7 @@ const variantStyles = {
     border: 1px solid ${theme.colors.primary};
 
     &:hover:not(:disabled) {
-      background: ${theme.colors.primary}10;
+      background: ${theme.colors.primaryA10};
     }
   `,
   danger: css`
@@ -97,7 +97,7 @@ const StyledButton = styled.button<{
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 3px ${theme.colors.primary}40;
+    box-shadow: 0 0 0 3px ${theme.colors.primaryA40};
   }
 `;
 

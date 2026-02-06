@@ -14,6 +14,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AppointmentsPage = lazy(() => import('./pages/scheduling/AppointmentsPage'));
 const NewAppointmentPage = lazy(() => import('./pages/scheduling/NewAppointmentPage'));
 const AppointmentDetailPage = lazy(() => import('./pages/scheduling/AppointmentDetailPage'));
+const ProfilePage = lazy(() => import('./pages/patient/ProfilePage'));
+const SettingsPage = lazy(() => import('./pages/patient/SettingsPage'));
 
 // Lazy loading das páginas - Painel Admin
 const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
@@ -26,6 +28,7 @@ const PatientProfilePage = lazy(() => import('./pages/admin/PatientProfilePage')
 const ProvidersPage = lazy(() => import('./pages/admin/ProvidersPage'));
 const AdminsPage = lazy(() => import('./pages/admin/AdminsPage'));
 const MySchedulePage = lazy(() => import('./pages/admin/MySchedulePage'));
+const NotificationRulesPage = lazy(() => import('./pages/admin/NotificationRulesPage'));
 
 const App: React.FC = () => {
   const { loading } = useAuth();
@@ -65,6 +68,18 @@ const App: React.FC = () => {
         <Route path="/appointments/:id" element={
           <ProtectedRoute>
             <AppointmentDetailPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         } />
 
@@ -126,6 +141,12 @@ const App: React.FC = () => {
           </AdminProtectedRoute>
         } />
 
+        <Route path="/admin/notifications" element={
+          <AdminProtectedRoute>
+            <NotificationRulesPage />
+          </AdminProtectedRoute>
+        } />
+
         {/* Rotas Médico - Públicas */}
         <Route path="/doctor/login" element={<AdminLoginPage />} />
 
@@ -151,6 +172,12 @@ const App: React.FC = () => {
         <Route path="/doctor/my-schedule" element={
           <DoctorProtectedRoute>
             <MySchedulePage />
+          </DoctorProtectedRoute>
+        } />
+
+        <Route path="/doctor/notifications" element={
+          <DoctorProtectedRoute>
+            <NotificationRulesPage />
           </DoctorProtectedRoute>
         } />
 

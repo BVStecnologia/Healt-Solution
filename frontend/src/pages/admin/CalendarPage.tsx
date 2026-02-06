@@ -109,7 +109,7 @@ const TodayInfo = styled.button`
 
   &:hover {
     background: ${theme.colors.primarySoft};
-    border-color: ${theme.colors.primary}40;
+    border-color: ${theme.colors.primaryA40};
     transform: translateY(-1px);
   }
 
@@ -189,7 +189,7 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
 
     &:hover {
       background: ${theme.colors.background};
-      border-color: ${theme.colors.primary}50;
+      border-color: ${theme.colors.primaryA50};
     }
   `}
 
@@ -249,7 +249,7 @@ const CalendarWrapper = styled.div`
     transition: background 0.2s ease;
 
     &:hover {
-      background: ${theme.colors.primarySoft}30;
+      background: ${theme.colors.primarySoftA30};
     }
   }
 
@@ -262,7 +262,7 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-today {
-    background: linear-gradient(180deg, ${theme.colors.primarySoft}60 0%, ${theme.colors.primarySoft}30 100%) !important;
+    background: linear-gradient(180deg, ${theme.colors.primarySoftA60} 0%, ${theme.colors.primarySoftA30} 100%) !important;
     position: relative;
 
     &::before {
@@ -375,7 +375,7 @@ const CalendarWrapper = styled.div`
 
     &:hover {
       background: ${theme.colors.primarySoft};
-      border-color: ${theme.colors.primary}50;
+      border-color: ${theme.colors.primaryA50};
       transform: translateY(-1px);
     }
 
@@ -556,7 +556,7 @@ const CalendarWrapper = styled.div`
 
       &:hover {
         td {
-          background: ${theme.colors.primarySoft}30;
+          background: ${theme.colors.primarySoftA30};
         }
         td:first-child {
           border-left-color: ${theme.colors.primary};
@@ -794,7 +794,7 @@ const CloseButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${theme.colors.primary}15;
+    background: ${theme.colors.primaryA15};
     color: ${theme.colors.primary};
     transform: rotate(90deg);
   }
@@ -890,7 +890,7 @@ const DetailIcon = styled.div<{ $color?: string }>`
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: ${props => props.$color || theme.colors.primary}12;
+  background: ${props => props.$color ? props.$color + '12' : theme.colors.primaryA12};
   color: ${props => props.$color || theme.colors.primary};
   display: flex;
   align-items: center;
@@ -985,7 +985,7 @@ const ModalButton = styled.button<{ $variant: 'primary' | 'success' | 'danger' |
 
           &:hover {
             background: ${theme.colors.primarySoft};
-            border-color: ${theme.colors.primary}40;
+            border-color: ${theme.colors.primaryA40};
           }
         `;
     }
@@ -1067,7 +1067,7 @@ const PatientBanner = styled.div`
   background: linear-gradient(135deg, ${theme.colors.primarySoft} 0%, #E8D5CC 100%);
   border-radius: 16px;
   margin-bottom: 24px;
-  border: 1px solid ${theme.colors.primary}20;
+  border: 1px solid ${theme.colors.primaryA20};
 `;
 
 const PatientAvatar = styled.div`

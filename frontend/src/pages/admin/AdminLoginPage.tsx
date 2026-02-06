@@ -4,6 +4,8 @@ import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, Shield, Stethoscope, ArrowRight } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../lib/supabaseClient';
 
 const fadeInUp = keyframes`
@@ -452,6 +454,8 @@ const AdminLoginPage: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const { signIn, signInWithGoogle } = useAuth();
+  const { syncFromDatabase: syncThemeFromDatabase } = useTheme();
+  const { syncFromDatabase: syncLanguageFromDatabase } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -490,6 +494,12 @@ const AdminLoginPage: React.FC = () => {
         setLoading(false);
         return;
       }
+
+      // Sincronizar tema e idioma do DB
+      await Promise.all([
+        syncThemeFromDatabase(user.id),
+        syncLanguageFromDatabase(user.id),
+      ]);
 
       // Smart redirect: provider → /doctor, admin → /admin
       navigate(profile.role === 'provider' ? '/doctor' : '/admin');

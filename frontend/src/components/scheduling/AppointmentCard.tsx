@@ -78,7 +78,7 @@ const ActionButton = styled.button<{ $variant?: 'danger' }>`
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.$variant === 'danger' ? theme.colors.error + '10' : theme.colors.border};
+    background: ${props => props.$variant === 'danger' ? theme.colors.errorA10 : theme.colors.border};
   }
 `;
 

@@ -107,7 +107,7 @@ const TypeCard = styled.button<{ $selected: boolean; $disabled: boolean }>`
     props.$selected ? theme.colors.primary : props.$disabled ? theme.colors.border : theme.colors.border};
   border-radius: ${theme.borderRadius.lg};
   background: ${props =>
-    props.$selected ? theme.colors.primary + '10' : props.$disabled ? theme.colors.border + '30' : theme.colors.surface};
+    props.$selected ? theme.colors.primaryA10 : props.$disabled ? theme.colors.borderA30 : theme.colors.surface};
   cursor: ${props => (props.$disabled ? 'not-allowed' : 'pointer')};
   text-align: left;
   opacity: ${props => (props.$disabled ? 0.6 : 1)};

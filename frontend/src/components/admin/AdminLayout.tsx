@@ -1,8 +1,9 @@
 import React, { ReactNode, useState } from 'react';
 import styled from 'styled-components';
-import { Menu, Shield } from 'lucide-react';
+import { Menu, Shield, Sun, Moon } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminSidebar from './AdminSidebar';
+import { useTheme } from '../../context/ThemeContext';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -43,7 +44,8 @@ const MobileHeader = styled.header`
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: linear-gradient(135deg, #2D2420 0%, #3D322B 100%);
+    background: ${theme.colors.surface};
+    border-bottom: 1px solid ${theme.colors.border};
     position: sticky;
     top: 0;
     z-index: 50;
@@ -51,7 +53,7 @@ const MobileHeader = styled.header`
 `;
 
 const MobileMenuButton = styled.button`
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   border: none;
   border-radius: 8px;
   padding: 8px;
@@ -59,11 +61,11 @@ const MobileMenuButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: ${theme.colors.text};
   transition: background 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: ${theme.colors.surfaceHover};
   }
 
   svg {
@@ -75,7 +77,7 @@ const MobileMenuButton = styled.button`
 const MobileTitle = styled.h1`
   font-family: ${theme.typography.fontFamilyHeading};
   font-size: 18px;
-  color: white;
+  color: ${theme.colors.primary};
   margin: 0;
   font-weight: 800;
 `;
@@ -95,8 +97,33 @@ const Overlay = styled.div<{ $open: boolean }>`
   }
 `;
 
+const MobileThemeToggle = styled.button`
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${theme.colors.textSecondary};
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${theme.colors.surfaceHover};
+    color: ${theme.colors.text};
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { themeMode, toggleTheme } = useTheme();
 
   return (
     <Container>
@@ -109,6 +136,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </MobileMenuButton>
           <Shield size={20} color="rgba(146, 86, 62, 0.8)" />
           <MobileTitle>Essence</MobileTitle>
+          <MobileThemeToggle onClick={toggleTheme}>
+            {themeMode === 'light' ? <Moon /> : <Sun />}
+          </MobileThemeToggle>
         </MobileHeader>
         <Content>{children}</Content>
       </Main>

@@ -6,6 +6,7 @@ import {
   ChevronLeft, ChevronRight, Sparkles
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { createProvider, getProfileByEmail, promoteToProvider, supabaseAdmin } from '../../lib/adminService';
 import { Profile, Provider } from '../../types/database';
@@ -57,19 +58,21 @@ const float = keyframes`
 // THEME - Paleta Terracota (consistente com design principal)
 // ============================================
 const luxuryTheme = {
+  // Accent colors (hex for concatenation/dynamic props)
   primary: '#92563E',
   primaryLight: '#AF8871',
   primarySoft: '#F4E7DE',
   primaryDark: '#7A4832',
-  cream: '#FDF8F3',
-  surface: '#FFFFFF',
-  border: '#E5E0DB',
-  text: '#393939',
-  textSecondary: '#8C8B8B',
   success: '#10B981',
-  successLight: '#D1FAE5',
   error: '#EF4444',
-  errorLight: '#FEE2E2',
+  // Theme-responsive colors (CSS variables - adapt to dark mode)
+  cream: theme.colors.background,
+  surface: theme.colors.surface,
+  border: theme.colors.border,
+  text: theme.colors.text,
+  textSecondary: theme.colors.textSecondary,
+  successLight: theme.colors.successLight,
+  errorLight: theme.colors.errorLight,
 };
 
 // ============================================

@@ -8,6 +8,7 @@ import {
   UserCog,
   Stethoscope,
   MessageCircle,
+  Bell,
   LogOut,
   Shield,
   Clock,
@@ -16,6 +17,8 @@ import {
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 
 const subtleGlow = keyframes`
   0%, 100% {
@@ -28,8 +31,8 @@ const subtleGlow = keyframes`
 
 const Sidebar = styled.aside<{ $open: boolean }>`
   width: 270px;
-  background:
-    linear-gradient(180deg, #2D2420 0%, #3D322B 50%, #4A3C33 100%);
+  background: ${theme.colors.surface};
+  border-right: 1px solid ${theme.colors.border};
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -39,34 +42,6 @@ const Sidebar = styled.aside<{ $open: boolean }>`
   z-index: 100;
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.02;
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 1px;
-    height: 100%;
-    background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(255, 255, 255, 0.1) 20%,
-      rgba(255, 255, 255, 0.1) 80%,
-      transparent
-    );
-  }
 
   @media (max-width: 768px) {
     transform: translateX(${props => (props.$open ? '0' : '-100%')});
@@ -78,29 +53,13 @@ const Logo = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 20px;
-    right: 20px;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.1) 20%,
-      rgba(255, 255, 255, 0.1) 80%,
-      transparent
-    );
-  }
+  border-bottom: 1px solid ${theme.colors.border};
 
   h1 {
     font-family: ${theme.typography.fontFamilyHeading};
     font-size: 22px;
     font-weight: 800;
-    color: white;
+    color: ${theme.colors.primary};
     margin: 0;
     letter-spacing: -0.5px;
   }
@@ -108,13 +67,13 @@ const Logo = styled.div`
   .badge {
     font-size: 10px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.08);
+    color: ${theme.colors.textMuted};
+    background: ${theme.colors.primaryA10};
     padding: 4px 10px;
     border-radius: 6px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid ${theme.colors.border};
   }
 `;
 
@@ -150,18 +109,18 @@ const SwitcherButton = styled.button<{ $open?: boolean }>`
   gap: 10px;
   width: 100%;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: ${theme.colors.primaryA10};
+  border: 1px solid ${theme.colors.border};
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.85);
+  color: ${theme.colors.text};
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: ${theme.colors.primaryA20};
+    border-color: ${theme.colors.primary};
   }
 
   .env-icon {
@@ -202,8 +161,8 @@ const SwitcherDropdown = styled.div<{ $open: boolean }>`
   top: calc(100% + 4px);
   left: 12px;
   right: 12px;
-  background: #3D322B;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: ${theme.colors.surface};
+  border: 1px solid ${theme.colors.border};
   border-radius: 10px;
   overflow: hidden;
   z-index: 10;
@@ -211,7 +170,7 @@ const SwitcherDropdown = styled.div<{ $open: boolean }>`
   transform: translateY(${props => props.$open ? '0' : '-8px'});
   pointer-events: ${props => props.$open ? 'auto' : 'none'};
   transition: all 0.2s ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: ${theme.shadows.lg};
 `;
 
 const SwitcherOption = styled.button<{ $active?: boolean }>`
@@ -220,17 +179,17 @@ const SwitcherOption = styled.button<{ $active?: boolean }>`
   gap: 10px;
   width: 100%;
   padding: 10px 14px;
-  background: ${props => props.$active ? 'rgba(146, 86, 62, 0.2)' : 'transparent'};
+  background: ${props => props.$active ? theme.colors.primaryA10 : 'transparent'};
   border: none;
-  color: ${props => props.$active ? 'white' : 'rgba(255, 255, 255, 0.6)'};
+  color: ${props => props.$active ? theme.colors.primary : theme.colors.textSecondary};
   font-size: 13px;
   font-weight: ${props => props.$active ? '600' : '500'};
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
-    background: ${props => props.$active ? 'rgba(146, 86, 62, 0.25)' : 'rgba(255, 255, 255, 0.06)'};
-    color: white;
+    background: ${props => props.$active ? theme.colors.primaryA20 : theme.colors.surfaceHover};
+    color: ${theme.colors.text};
   }
 
   .env-icon {
@@ -265,7 +224,7 @@ const Nav = styled.nav`
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${theme.colors.borderLight};
     border-radius: 4px;
   }
 `;
@@ -281,7 +240,7 @@ const NavSection = styled.div`
 const NavSectionTitle = styled.div`
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.35);
+  color: ${theme.colors.textMuted};
   text-transform: uppercase;
   letter-spacing: 1.5px;
   padding: 0 16px;
@@ -294,8 +253,8 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   gap: 14px;
   padding: 12px 16px;
   border-radius: 10px;
-  color: ${props => (props.$active ? 'white' : 'rgba(255, 255, 255, 0.6)')};
-  background: ${props => (props.$active ? 'rgba(146, 86, 62, 0.15)' : 'transparent')};
+  color: ${props => (props.$active ? theme.colors.primary : theme.colors.text)};
+  background: ${props => (props.$active ? theme.colors.primaryA10 : 'transparent')};
   font-weight: ${props => (props.$active ? '600' : '500')};
   font-size: 14px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -317,8 +276,8 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   `}
 
   &:hover {
-    background: ${props => props.$active ? 'rgba(146, 86, 62, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
-    color: white;
+    background: ${props => props.$active ? theme.colors.primaryA20 : theme.colors.surfaceHover};
+    color: ${theme.colors.primary};
     transform: translateX(2px);
   }
 
@@ -339,24 +298,7 @@ const NavLink = styled(Link)<{ $active: boolean }>`
 // ============================================
 const UserSection = styled.div`
   padding: 16px;
-  position: relative;
-  background: rgba(0, 0, 0, 0.2);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 16px;
-    right: 16px;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.1) 20%,
-      rgba(255, 255, 255, 0.1) 80%,
-      transparent
-    );
-  }
+  border-top: 1px solid ${theme.colors.border};
 `;
 
 const UserInfo = styled.div`
@@ -366,7 +308,6 @@ const UserInfo = styled.div`
   padding: 8px;
   margin-bottom: 12px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
 `;
 
 const Avatar = styled.div<{ $hasImage?: boolean }>`
@@ -399,7 +340,7 @@ const UserDetails = styled.div`
 const UserName = styled.div`
   font-size: 14px;
   font-weight: 600;
-  color: white;
+  color: ${theme.colors.text};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -408,8 +349,42 @@ const UserName = styled.div`
 
 const UserRole = styled.div`
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: ${theme.colors.textSecondary};
   font-weight: 500;
+`;
+
+const UserActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+`;
+
+const AdminThemeToggle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: ${theme.colors.surfaceHover};
+  color: ${theme.colors.textSecondary};
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${theme.colors.primaryA10};
+    color: ${theme.colors.text};
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 `;
 
 const LogoutButton = styled.button`
@@ -421,21 +396,15 @@ const LogoutButton = styled.button`
   padding: 12px 16px;
   border: none;
   border-radius: 10px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  background: transparent;
+  color: ${theme.colors.error};
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
+    background: ${theme.colors.errorA10};
   }
 
   svg {
@@ -464,6 +433,8 @@ const allNavItems = [
   { subpath: '/patients', label: 'Pacientes', icon: Users, section: 'gestao', envs: ['admin'] as Environment[] },
   { subpath: '/providers', label: 'Médicos', icon: UserCog, section: 'gestao', envs: ['admin'] as Environment[] },
   { subpath: '/admins', label: 'Admins', icon: Shield, section: 'gestao', envs: ['admin'] as Environment[] },
+  { subpath: '/notifications', label: 'Notificacoes', icon: Bell, section: 'config', envs: ['admin'] as Environment[] },
+  { subpath: '/notifications', label: 'Meus Lembretes', icon: Bell, section: 'config', envs: ['doctor'] as Environment[] },
   { subpath: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
 ];
 
@@ -479,6 +450,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
+  const { themeMode, toggleTheme } = useTheme();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
 
@@ -640,6 +612,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
             <UserRole>{roleLabel}</UserRole>
           </UserDetails>
         </UserInfo>
+        <UserActions>
+          <AdminThemeToggle onClick={toggleTheme}>
+            {themeMode === 'light' ? <Moon /> : <Sun />}
+            {themeMode === 'light' ? 'Escuro' : 'Claro'}
+          </AdminThemeToggle>
+        </UserActions>
         <LogoutButton onClick={handleLogout}>
           <LogOut />
           Sair

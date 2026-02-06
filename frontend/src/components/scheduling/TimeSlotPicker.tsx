@@ -73,7 +73,7 @@ const DayButton = styled.button<{ $selected: boolean; $today: boolean; $disabled
   align-items: center;
   padding: ${theme.spacing.sm};
   border: 2px solid ${props =>
-    props.$disabled ? 'transparent' : props.$selected ? theme.colors.primary : props.$today ? theme.colors.primary + '40' : 'transparent'
+    props.$disabled ? 'transparent' : props.$selected ? theme.colors.primary : props.$today ? theme.colors.primaryA40 : 'transparent'
   };
   border-radius: ${theme.borderRadius.md};
   background: ${props => props.$disabled ? 'transparent' : props.$selected ? theme.colors.primary : 'transparent'};
@@ -134,7 +134,7 @@ const SlotButton = styled.button<{ $selected: boolean; $available: boolean }>`
   };
   border-radius: ${theme.borderRadius.md};
   background: ${props =>
-    props.$selected ? theme.colors.primary : props.$available ? theme.colors.surface : theme.colors.border + '50'
+    props.$selected ? theme.colors.primary : props.$available ? theme.colors.surface : theme.colors.borderA50
   };
   color: ${props =>
     props.$selected ? 'white' : props.$available ? theme.colors.text : theme.colors.textSecondary
@@ -148,7 +148,7 @@ const SlotButton = styled.button<{ $selected: boolean; $available: boolean }>`
   &:hover {
     ${props => props.$available && !props.$selected && `
       border-color: ${theme.colors.primary};
-      background: ${theme.colors.primary}10;
+      background: ${theme.colors.primaryA10};
     `}
   }
 `;

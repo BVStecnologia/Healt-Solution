@@ -32,7 +32,7 @@ const StyledCard = styled.div<{ $padding: string; $hoverable: boolean }>`
 
     &:hover {
       box-shadow: ${theme.shadows.md};
-      border-color: ${theme.colors.primary}40;
+      border-color: ${theme.colors.primaryA40};
     }
   `}
 `;

@@ -6,11 +6,12 @@ import {
   Calendar,
   LogOut,
   Menu,
-  X,
   User,
+  Settings,
 } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 interface LayoutProps {
   children: ReactNode;
@@ -60,6 +61,25 @@ const Logo = styled.div`
 const Nav = styled.nav`
   flex: 1;
   padding: ${theme.spacing.md};
+  overflow-y: auto;
+`;
+
+const NavSection = styled.div`
+  &:not(:first-child) {
+    margin-top: ${theme.spacing.md};
+    padding-top: ${theme.spacing.md};
+    border-top: 1px solid ${theme.colors.borderLight};
+  }
+`;
+
+const SectionLabel = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: ${theme.colors.textMuted};
+  padding: 0 ${theme.spacing.md};
+  margin-bottom: ${theme.spacing.sm};
 `;
 
 const NavLink = styled(Link)<{ $active: boolean }>`
@@ -69,13 +89,13 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   padding: ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};
   color: ${props => (props.$active ? theme.colors.primary : theme.colors.text)};
-  background: ${props => (props.$active ? theme.colors.primary + '10' : 'transparent')};
+  background: ${props => (props.$active ? theme.colors.primaryA10 : 'transparent')};
   font-weight: ${props => (props.$active ? '500' : '400')};
   transition: all 0.2s ease;
   margin-bottom: ${theme.spacing.xs};
 
   &:hover {
-    background: ${props => (props.$active ? theme.colors.primary + '10' : theme.colors.border)};
+    background: ${props => (props.$active ? theme.colors.primaryA10 : theme.colors.surfaceHover)};
   }
 
   svg {
@@ -97,7 +117,7 @@ const UserInfo = styled.div`
   margin-bottom: ${theme.spacing.sm};
 `;
 
-const Avatar = styled.div`
+const AvatarCircle = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -108,6 +128,7 @@ const Avatar = styled.div`
   justify-content: center;
   font-weight: 600;
   font-size: 16px;
+  flex-shrink: 0;
 `;
 
 const UserDetails = styled.div`
@@ -132,6 +153,12 @@ const UserEmail = styled.div`
   text-overflow: ellipsis;
 `;
 
+const UserActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+`;
+
 const LogoutButton = styled.button`
   display: flex;
   align-items: center;
@@ -147,7 +174,7 @@ const LogoutButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${theme.colors.error}10;
+    background: ${theme.colors.errorA10};
   }
 
   svg {
@@ -225,14 +252,37 @@ const Overlay = styled.div<{ $open: boolean }>`
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: ${theme.colors.overlay};
     z-index: 99;
   }
 `;
 
-const navItems = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/appointments', label: 'Consultas', icon: Calendar },
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.FC;
+}
+
+interface NavSectionConfig {
+  label: string;
+  items: NavItem[];
+}
+
+const navSections: NavSectionConfig[] = [
+  {
+    label: 'Principal',
+    items: [
+      { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+      { path: '/appointments', label: 'Consultas', icon: Calendar },
+    ],
+  },
+  {
+    label: 'Minha Conta',
+    items: [
+      { path: '/profile', label: 'Meu Perfil', icon: User },
+      { path: '/settings', label: 'Configurações', icon: Settings },
+    ],
+  },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -250,47 +300,52 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     ? `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase()
     : 'U';
 
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === path;
+    return location.pathname.startsWith(path);
+  };
+
   return (
     <Container>
       <Overlay $open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
 
       <Sidebar $open={sidebarOpen}>
         <Logo>
-          <h1>Clínica</h1>
+          <h1>Essence</h1>
           <span>Portal do Paciente</span>
         </Logo>
 
         <Nav>
-          {navItems.map(item => {
-            // Para / (dashboard), verifica igualdade exata
-            // Para outras rotas, verifica se começa com o path (inclui sub-rotas)
-            const isActive = item.path === '/'
-              ? location.pathname === item.path
-              : location.pathname.startsWith(item.path);
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                $active={isActive}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon />
-                {item.label}
-              </NavLink>
-            );
-          })}
+          {navSections.map((section, idx) => (
+            <NavSection key={idx}>
+              <SectionLabel>{section.label}</SectionLabel>
+              {section.items.map(item => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  $active={isActive(item.path)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <item.icon />
+                  {item.label}
+                </NavLink>
+              ))}
+            </NavSection>
+          ))}
         </Nav>
 
         <UserSection>
           <UserInfo>
-            <Avatar>{initials}</Avatar>
+            <AvatarCircle>{initials}</AvatarCircle>
             <UserDetails>
               <UserName>
                 {profile ? `${profile.first_name} ${profile.last_name}` : 'Usuário'}
               </UserName>
               <UserEmail>{profile?.email}</UserEmail>
             </UserDetails>
+            <UserActions>
+              <ThemeToggle />
+            </UserActions>
           </UserInfo>
           <LogoutButton onClick={handleLogout}>
             <LogOut />
@@ -304,8 +359,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <MobileMenuButton onClick={() => setSidebarOpen(true)}>
             <Menu />
           </MobileMenuButton>
-          <MobileTitle>Clínica</MobileTitle>
-          <div style={{ width: 40 }} />
+          <MobileTitle>Essence</MobileTitle>
+          <ThemeToggle />
         </Header>
 
         <Content>{children}</Content>

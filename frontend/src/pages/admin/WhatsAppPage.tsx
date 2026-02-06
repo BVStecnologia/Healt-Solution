@@ -93,18 +93,18 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'danger'; $l
 
     &:hover {
       background: ${theme.colors.background};
-      border-color: ${theme.colors.primary}50;
+      border-color: ${theme.colors.primaryA50};
     }
   `}
 
   ${props => props.$variant === 'danger' && css`
     background: transparent;
     color: ${theme.colors.error};
-    border: 1px solid ${theme.colors.error}30;
+    border: 1px solid ${theme.colors.errorA30};
 
     &:hover {
-      background: ${theme.colors.error}10;
-      border-color: ${theme.colors.error}50;
+      background: ${theme.colors.errorA10};
+      border-color: ${theme.colors.errorA50};
     }
   `}
 
