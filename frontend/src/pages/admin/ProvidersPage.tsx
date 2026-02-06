@@ -546,6 +546,36 @@ const EmptyState = styled.div`
   p {
     color: ${luxuryTheme.textSecondary};
     margin: 0;
+    line-height: 1.6;
+  }
+`;
+
+const EmptyStateCTA = styled.button`
+  margin-top: 20px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, ${luxuryTheme.primary}, #B8784E);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(146, 86, 62, 0.3);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: white;
+    margin: 0;
+    animation: none;
   }
 `;
 
@@ -1406,8 +1436,22 @@ const ProvidersPage: React.FC = () => {
         ) : paginatedProviders.length === 0 ? (
           <EmptyState>
             <Stethoscope />
-            <h3>Nenhum médico encontrado</h3>
-            <p>Adicione um novo médico ou ajuste os filtros</p>
+            {providers.length === 0 ? (
+              <>
+                <h3>Cadastre os médicos da clínica</h3>
+                <p>Comece adicionando os profissionais que atendem na clínica.<br />
+                Cada médico terá acesso ao seu próprio painel com agenda e notificações.</p>
+                <EmptyStateCTA onClick={() => setShowModal(true)}>
+                  <Plus size={16} />
+                  Adicionar Médico
+                </EmptyStateCTA>
+              </>
+            ) : (
+              <>
+                <h3>Nenhum médico encontrado</h3>
+                <p>Tente ajustar os termos da busca</p>
+              </>
+            )}
           </EmptyState>
         ) : (
           <>

@@ -324,6 +324,36 @@ const EmptyState = styled.div`
   p {
     color: ${luxuryTheme.textSecondary};
     margin: 0;
+    line-height: 1.6;
+  }
+`;
+
+const EmptyStateCTA = styled.button`
+  margin-top: 20px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, ${luxuryTheme.primary}, #B8784E);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(146, 86, 62, 0.3);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: white;
+    margin: 0;
+    animation: none;
   }
 `;
 
@@ -905,7 +935,12 @@ const NotificationRulesPage: React.FC = () => {
               <EmptyState>
                 <Bell />
                 <h3>Nenhuma regra de paciente</h3>
-                <p>Adicione regras para lembrar pacientes sobre consultas</p>
+                <p>Defina quando o paciente recebe um lembrete por WhatsApp antes da consulta.<br />
+                Ex: 24 horas antes, 1 hora antes.</p>
+                <EmptyStateCTA onClick={() => handleOpenModal()}>
+                  <Plus size={16} />
+                  Criar Regra
+                </EmptyStateCTA>
               </EmptyState>
             ) : (
               <RulesGrid>
@@ -922,7 +957,12 @@ const NotificationRulesPage: React.FC = () => {
               <EmptyState>
                 <Bell />
                 <h3>Nenhuma regra de medico</h3>
-                <p>Adicione regras para lembrar medicos sobre consultas</p>
+                <p>Envie lembretes por WhatsApp aos medicos antes de cada consulta.<br />
+                Cada medico pode personalizar seus proprios lembretes no painel.</p>
+                <EmptyStateCTA onClick={() => handleOpenModal()}>
+                  <Plus size={16} />
+                  Criar Regra
+                </EmptyStateCTA>
               </EmptyState>
             ) : (
               <RulesGrid>
@@ -944,7 +984,12 @@ const NotificationRulesPage: React.FC = () => {
               <EmptyState>
                 <Bell />
                 <h3>Nenhum lembrete configurado</h3>
-                <p>Crie regras para receber lembretes antes das suas consultas.</p>
+                <p>Receba avisos por WhatsApp antes das suas consultas.<br />
+                Escolha quanto tempo antes deseja ser lembrado (ex: 2 horas, 15 minutos).</p>
+                <EmptyStateCTA onClick={() => handleOpenModal()}>
+                  <Plus size={16} />
+                  Criar Lembrete
+                </EmptyStateCTA>
               </EmptyState>
             ) : (
               <RulesGrid>

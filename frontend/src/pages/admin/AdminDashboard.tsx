@@ -37,6 +37,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
+import SetupChecklist from '../../components/admin/SetupChecklist';
 
 // ============================================
 // ANIMATIONS
@@ -1288,6 +1289,13 @@ const AdminDashboard: React.FC = () => {
           <h1>{isProvider ? 'Meu Painel' : 'Dashboard'}</h1>
           <p>{isProvider ? 'Visão geral das suas consultas' : 'Visão geral do sistema da clínica'}</p>
         </Header>
+
+        {isAdmin && (
+          <SetupChecklist
+            whatsappConnected={whatsappConnected}
+            totalProviders={stats.totalProviders}
+          />
+        )}
 
         <StatsGrid>
           <StatCard $delay={0} $accentColor={luxuryColors.primary}>

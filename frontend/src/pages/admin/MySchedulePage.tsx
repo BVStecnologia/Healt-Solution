@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import AdminLayout from '../../components/admin/AdminLayout';
+import HelpTip from '../../components/ui/HelpTip';
 import { theme } from '../../styles/GlobalStyle';
 import { supabase, callRPC } from '../../lib/supabaseClient';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
@@ -1055,6 +1056,12 @@ const MySchedulePage: React.FC = () => {
             </p>
           </div>
         </Header>
+
+        <HelpTip id="my-schedule">
+          <strong>Como funciona:</strong> Ative os dias da semana e defina os turnos de atendimento.
+          Voce pode ter multiplos turnos por dia (ex: manha e tarde). Pacientes so conseguirao
+          agendar dentro desses horarios.
+        </HelpTip>
 
         {isAdmin && providers.length > 0 && (
           <ProviderSelect>

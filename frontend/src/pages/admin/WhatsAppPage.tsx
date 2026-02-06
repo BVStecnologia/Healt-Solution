@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
+import HelpTip from '../../components/ui/HelpTip';
 
 // Animações
 const pulse = keyframes`
@@ -607,15 +608,21 @@ const WhatsAppPage: React.FC = () => {
         </Button>
       </Header>
 
+      <HelpTip id="whatsapp">
+        <strong>Como funciona:</strong> Crie uma instancia, escaneie o QR Code com o WhatsApp Business da clinica e
+        pronto — lembretes de consulta e notificacoes serao enviados automaticamente. Use apenas um numero por instancia.
+      </HelpTip>
+
       <Grid>
         {instances.length === 0 && !loading ? (
           <EmptyState>
             <MessageCircle />
-            <h3>Nenhuma instância configurada</h3>
-            <p>Crie uma nova instância para conectar seu WhatsApp</p>
+            <h3>Conecte o WhatsApp da clinica</h3>
+            <p>Crie uma instancia e escaneie o QR Code com o WhatsApp Business da clinica.<br />
+            Lembretes de consulta e notificacoes serao enviados automaticamente aos pacientes.</p>
             <Button $variant="primary" onClick={() => setModalOpen(true)}>
               <Plus />
-              Criar Instância
+              Criar Instancia
             </Button>
           </EmptyState>
         ) : (

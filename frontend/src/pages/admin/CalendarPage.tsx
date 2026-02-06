@@ -27,6 +27,7 @@ import { AppointmentType, ProviderBlock } from '../../types/database';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
+import HelpTip from '../../components/ui/HelpTip';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 
@@ -2172,6 +2173,12 @@ const CalendarPage: React.FC = () => {
           </Button>
         </HeaderActions>
       </Header>
+
+      <HelpTip id="calendar">
+        <strong>Dica:</strong> Clique em uma consulta para ver detalhes e alterar o status.
+        Use os botoes acima para alternar entre visao de mes, semana ou dia.
+        {isAdmin && ' Filtre por medico para ver a agenda individual.'}
+      </HelpTip>
 
       <CalendarWrapper>
         <Calendar
