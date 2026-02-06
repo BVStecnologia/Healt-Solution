@@ -239,9 +239,14 @@ const CalendarWrapper = styled.div`
 
   .rbc-month-row {
     border-bottom: 1px solid ${theme.colors.borderLight};
+    min-height: 110px;
 
     &:last-child {
       border-bottom: none;
+    }
+
+    .rbc-row-content {
+      position: relative;
     }
   }
 
@@ -455,6 +460,13 @@ const CalendarWrapper = styled.div`
     text-decoration: none !important;
   }
 
+  /* Today's number: white text on brown circle - override the global .rbc-button-link rule */
+  .rbc-date-cell.rbc-now .rbc-button-link,
+  .rbc-date-cell.rbc-now > button {
+    color: white !important;
+    font-size: 15px !important;
+  }
+
   /* Linha do cabeçalho com nome dos dias (dom, seg, etc) */
   .rbc-time-header-content > .rbc-row.rbc-row-resource {
     border-bottom: 1px solid ${theme.colors.border};
@@ -568,7 +580,7 @@ const CalendarWrapper = styled.div`
     /* Cores da borda esquerda por status */
     tbody tr[class*="pending"] td:first-child,
     tbody tr:has(.rbc-agenda-event-cell [data-status="pending"]) td:first-child {
-      border-left-color: #D97706;
+      border-left-color: ${theme.colors.statusPendingBorder};
     }
 
     .rbc-agenda-date-cell {
@@ -617,12 +629,48 @@ const CalendarWrapper = styled.div`
 
   .rbc-show-more {
     color: ${theme.colors.primary};
-    font-weight: 600;
+    font-weight: 700;
     font-size: 11px;
-    background: transparent !important;
+    background: ${theme.colors.primaryA10} !important;
+    padding: 2px 8px;
+    border-radius: ${theme.borderRadius.sm};
+    transition: all 0.2s ease;
+    display: inline-block;
+    margin: 2px 4px;
 
     &:hover {
-      text-decoration: underline;
+      background: ${theme.colors.primaryA20} !important;
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+  }
+
+  /* Popup overlay when clicking "+N mais" */
+  .rbc-overlay {
+    background: ${theme.colors.surface} !important;
+    border: 1px solid ${theme.colors.border} !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+    padding: 8px !important;
+    z-index: 100;
+    max-width: 300px;
+    min-width: 220px;
+
+    .rbc-overlay-header {
+      font-family: ${theme.typography.fontFamilyHeading};
+      font-size: 15px;
+      font-weight: 400;
+      color: ${theme.colors.text};
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid ${theme.colors.borderLight};
+      margin-bottom: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .rbc-event {
+      margin: 4px 6px !important;
+      border-radius: 8px !important;
+      padding: 6px 10px !important;
     }
   }
 `;
@@ -664,27 +712,27 @@ const LegendItem = styled.div`
   }
 
   .pending {
-    background: #FEF3C7;
-    border-color: #D97706;
-    color: #92400E;
+    background: ${theme.colors.statusPendingBg};
+    border-color: ${theme.colors.statusPendingBorder};
+    color: ${theme.colors.statusPendingText};
   }
 
   .confirmed {
-    background: #D1FAE5;
-    border-color: #059669;
-    color: #065F46;
+    background: ${theme.colors.statusConfirmedBg};
+    border-color: ${theme.colors.statusConfirmedBorder};
+    color: ${theme.colors.statusConfirmedText};
   }
 
   .completed {
-    background: #F3F4F6;
-    border-color: #6B7280;
-    color: #374151;
+    background: ${theme.colors.statusCompletedBg};
+    border-color: ${theme.colors.statusCompletedBorder};
+    color: ${theme.colors.statusCompletedText};
   }
 
   .cancelled {
-    background: #FEE2E2;
-    border-color: #DC2626;
-    color: #991B1B;
+    background: ${theme.colors.statusCancelledBg};
+    border-color: ${theme.colors.statusCancelledBorder};
+    color: ${theme.colors.statusCancelledText};
   }
 `;
 
@@ -726,12 +774,12 @@ const ModalContainer = styled.div`
   transform: translate(-50%, -50%);
   width: 90%;
   max-width: 480px;
-  background: linear-gradient(145deg, #FFFBF7 0%, #FFF8F2 100%);
+  background: ${theme.colors.surface};
   border-radius: 24px;
   box-shadow:
-    0 25px 80px rgba(146, 86, 62, 0.25),
-    0 10px 30px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 25px 80px rgba(0, 0, 0, 0.3),
+    0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid ${theme.colors.borderLight};
   z-index: 1001;
   animation: ${modalSlideIn} 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
@@ -824,28 +872,28 @@ const StatusBadge = styled.div<{ $status: string }>`
     switch (props.$status) {
       case 'pending':
         return `
-          background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-          color: #92400E;
-          border: 1px solid #F59E0B40;
+          background: ${theme.colors.statusPendingBg};
+          color: ${theme.colors.statusPendingText};
+          border: 1px solid ${theme.colors.statusPendingBorder};
         `;
       case 'confirmed':
         return `
-          background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
-          color: #065F46;
-          border: 1px solid #10B98140;
+          background: ${theme.colors.statusConfirmedBg};
+          color: ${theme.colors.statusConfirmedText};
+          border: 1px solid ${theme.colors.statusConfirmedBorder};
         `;
       case 'completed':
         return `
-          background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
-          color: #374151;
-          border: 1px solid #6B728040;
+          background: ${theme.colors.statusCompletedBg};
+          color: ${theme.colors.statusCompletedText};
+          border: 1px solid ${theme.colors.statusCompletedBorder};
         `;
       case 'cancelled':
       case 'no_show':
         return `
-          background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
-          color: #991B1B;
-          border: 1px solid #EF444440;
+          background: ${theme.colors.statusCancelledBg};
+          color: ${theme.colors.statusCancelledText};
+          border: 1px solid ${theme.colors.statusCancelledBorder};
         `;
       default:
         return `
@@ -862,12 +910,11 @@ const StatusBadge = styled.div<{ $status: string }>`
 `;
 
 const DetailCard = styled.div`
-  background: white;
+  background: ${theme.colors.background};
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 16px;
   border: 1px solid ${theme.colors.borderLight};
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 `;
 
 const DetailRow = styled.div`
@@ -1008,14 +1055,14 @@ const NewAppointmentModal = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: linear-gradient(180deg, #FFFDFB 0%, #FAF8F6 100%);
+  background: ${theme.colors.surface};
   border-radius: 24px;
   width: 100%;
   max-width: 560px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
-              0 0 0 1px rgba(146, 86, 62, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+  border: 1px solid ${theme.colors.borderLight};
   animation: ${slideIn} 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 1001;
 
@@ -1065,7 +1112,7 @@ const PatientBanner = styled.div`
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: linear-gradient(135deg, ${theme.colors.primarySoft} 0%, #E8D5CC 100%);
+  background: ${theme.colors.primarySoft};
   border-radius: 16px;
   margin-bottom: 24px;
   border: 1px solid ${theme.colors.primaryA20};
@@ -1134,7 +1181,7 @@ const FormInput = styled.input`
   border-radius: 12px;
   font-size: 15px;
   color: ${theme.colors.text};
-  background: white;
+  background: ${theme.colors.surface};
   transition: all 0.2s ease;
   box-sizing: border-box;
 
@@ -1156,7 +1203,7 @@ const FormSelect = styled.select`
   border-radius: 12px;
   font-size: 15px;
   color: ${theme.colors.text};
-  background: white;
+  background: ${theme.colors.surface};
   cursor: pointer;
   transition: all 0.2s ease;
   appearance: none;
@@ -1179,7 +1226,7 @@ const FormTextarea = styled.textarea`
   border-radius: 12px;
   font-size: 15px;
   color: ${theme.colors.text};
-  background: white;
+  background: ${theme.colors.surface};
   transition: all 0.2s ease;
   box-sizing: border-box;
   resize: vertical;
@@ -1209,10 +1256,10 @@ const SuccessMessage = styled.div`
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
-  border: 1px solid #10B98140;
+  background: ${theme.colors.statusConfirmedBg};
+  border: 1px solid ${theme.colors.statusConfirmedBorder};
   border-radius: 12px;
-  color: #065F46;
+  color: ${theme.colors.statusConfirmedText};
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 20px;
@@ -1220,7 +1267,7 @@ const SuccessMessage = styled.div`
   svg {
     width: 18px;
     height: 18px;
-    color: #059669;
+    color: ${theme.colors.success};
   }
 `;
 
@@ -1229,10 +1276,10 @@ const ErrorMessage = styled.div`
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
-  border: 1px solid #EF444440;
+  background: ${theme.colors.statusCancelledBg};
+  border: 1px solid ${theme.colors.statusCancelledBorder};
   border-radius: 12px;
-  color: #991B1B;
+  color: ${theme.colors.statusCancelledText};
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 20px;
@@ -1240,7 +1287,7 @@ const ErrorMessage = styled.div`
   svg {
     width: 18px;
     height: 18px;
-    color: #DC2626;
+    color: ${theme.colors.error};
   }
 `;
 
@@ -1304,24 +1351,24 @@ const AgendaStatusBadge = styled.span<{ $status: string }>`
     switch (props.$status) {
       case 'pending':
         return `
-          background: #FEF3C7;
-          color: #92400E;
+          background: ${theme.colors.statusPendingBg};
+          color: ${theme.colors.statusPendingText};
         `;
       case 'confirmed':
         return `
-          background: #D1FAE5;
-          color: #065F46;
+          background: ${theme.colors.statusConfirmedBg};
+          color: ${theme.colors.statusConfirmedText};
         `;
       case 'completed':
         return `
-          background: #F3F4F6;
-          color: #4B5563;
+          background: ${theme.colors.statusCompletedBg};
+          color: ${theme.colors.statusCompletedText};
         `;
       case 'cancelled':
       case 'no_show':
         return `
-          background: #FEE2E2;
-          color: #991B1B;
+          background: ${theme.colors.statusCancelledBg};
+          color: ${theme.colors.statusCancelledText};
         `;
       default:
         return `
@@ -1775,7 +1822,7 @@ const CalendarPage: React.FC = () => {
           style: {
             backgroundColor: 'transparent',
             border: 'none',
-            color: '#991B1B',
+            color: theme.colors.statusCancelledText,
             fontWeight: 600,
             fontSize: '14px',
             padding: 0,
@@ -1785,10 +1832,10 @@ const CalendarPage: React.FC = () => {
       }
       return {
         style: {
-          backgroundColor: '#FEE2E2',
-          borderLeft: '4px solid #DC2626',
+          backgroundColor: theme.colors.statusCancelledBg,
+          borderLeft: `4px solid ${theme.colors.statusCancelledBorder}`,
           borderRadius: '6px',
-          color: '#991B1B',
+          color: theme.colors.statusCancelledText,
           fontWeight: 600,
           fontSize: '12px',
           padding: '4px 8px',
@@ -1818,39 +1865,39 @@ const CalendarPage: React.FC = () => {
     // Paleta para outras views (mês, semana, dia)
     const statusStyles: Record<string, { bg: string; border: string; text: string }> = {
       pending: {
-        bg: '#FEF3C7',
-        border: '#D97706',
-        text: '#92400E',
+        bg: theme.colors.statusPendingBg,
+        border: theme.colors.statusPendingBorder,
+        text: theme.colors.statusPendingText,
       },
       confirmed: {
-        bg: '#D1FAE5',
-        border: '#059669',
-        text: '#065F46',
+        bg: theme.colors.statusConfirmedBg,
+        border: theme.colors.statusConfirmedBorder,
+        text: theme.colors.statusConfirmedText,
       },
       checked_in: {
-        bg: '#DBEAFE',
-        border: '#2563EB',
-        text: '#1E40AF',
+        bg: theme.colors.statusCheckedInBg,
+        border: theme.colors.statusCheckedInBorder,
+        text: theme.colors.statusCheckedInText,
       },
       in_progress: {
-        bg: '#E0E7FF',
-        border: '#4F46E5',
-        text: '#3730A3',
+        bg: theme.colors.statusInProgressBg,
+        border: theme.colors.statusInProgressBorder,
+        text: theme.colors.statusInProgressText,
       },
       completed: {
-        bg: '#F3F4F6',
-        border: '#6B7280',
-        text: '#374151',
+        bg: theme.colors.statusCompletedBg,
+        border: theme.colors.statusCompletedBorder,
+        text: theme.colors.statusCompletedText,
       },
       cancelled: {
-        bg: '#FEE2E2',
-        border: '#DC2626',
-        text: '#991B1B',
+        bg: theme.colors.statusCancelledBg,
+        border: theme.colors.statusCancelledBorder,
+        text: theme.colors.statusCancelledText,
       },
       no_show: {
-        bg: '#FECACA',
-        border: '#B91C1C',
-        text: '#7F1D1D',
+        bg: theme.colors.statusNoShowBg,
+        border: theme.colors.statusNoShowBorder,
+        text: theme.colors.statusNoShowText,
       },
     };
 
@@ -2229,7 +2276,7 @@ const CalendarPage: React.FC = () => {
             <span className="status-badge cancelled">Cancelada</span>
           </LegendItem>
           <LegendItem>
-            <span className="status-badge cancelled" style={{ background: '#FEE2E2', borderColor: '#DC2626', color: '#991B1B' }}>
+            <span className="status-badge cancelled">
               🔒 Bloqueado
             </span>
           </LegendItem>

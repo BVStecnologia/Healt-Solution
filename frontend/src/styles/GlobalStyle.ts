@@ -33,6 +33,30 @@ export const theme = {
     errorA10: 'var(--color-error-a10)',
     errorA30: 'var(--color-error-a30)',
     errorA50: 'var(--color-error-a50)',
+
+    // Status badges (theme-aware)
+    statusPendingBg: 'var(--color-status-pending-bg)',
+    statusPendingText: 'var(--color-status-pending-text)',
+    statusPendingBorder: 'var(--color-status-pending-border)',
+    statusConfirmedBg: 'var(--color-status-confirmed-bg)',
+    statusConfirmedText: 'var(--color-status-confirmed-text)',
+    statusConfirmedBorder: 'var(--color-status-confirmed-border)',
+    statusCheckedInBg: 'var(--color-status-checkedin-bg)',
+    statusCheckedInText: 'var(--color-status-checkedin-text)',
+    statusCheckedInBorder: 'var(--color-status-checkedin-border)',
+    statusInProgressBg: 'var(--color-status-inprogress-bg)',
+    statusInProgressText: 'var(--color-status-inprogress-text)',
+    statusInProgressBorder: 'var(--color-status-inprogress-border)',
+    statusCompletedBg: 'var(--color-status-completed-bg)',
+    statusCompletedText: 'var(--color-status-completed-text)',
+    statusCompletedBorder: 'var(--color-status-completed-border)',
+    statusCancelledBg: 'var(--color-status-cancelled-bg)',
+    statusCancelledText: 'var(--color-status-cancelled-text)',
+    statusCancelledBorder: 'var(--color-status-cancelled-border)',
+    statusNoShowBg: 'var(--color-status-noshow-bg)',
+    statusNoShowText: 'var(--color-status-noshow-text)',
+    statusNoShowBorder: 'var(--color-status-noshow-border)',
+
     info: 'var(--color-info)',
     infoLight: 'var(--color-info-light)',
 
@@ -161,6 +185,30 @@ export const GlobalStyle = createGlobalStyle`
     --color-error-a10: rgba(239, 68, 68, 0.063);
     --color-error-a30: rgba(239, 68, 68, 0.19);
     --color-error-a50: rgba(239, 68, 68, 0.31);
+
+    /* Status badges */
+    --color-status-pending-bg: #FEF3C7;
+    --color-status-pending-text: #92400E;
+    --color-status-pending-border: #D97706;
+    --color-status-confirmed-bg: #D1FAE5;
+    --color-status-confirmed-text: #065F46;
+    --color-status-confirmed-border: #059669;
+    --color-status-checkedin-bg: #DBEAFE;
+    --color-status-checkedin-text: #1E40AF;
+    --color-status-checkedin-border: #2563EB;
+    --color-status-inprogress-bg: #E0E7FF;
+    --color-status-inprogress-text: #3730A3;
+    --color-status-inprogress-border: #4F46E5;
+    --color-status-completed-bg: #F3F4F6;
+    --color-status-completed-text: #374151;
+    --color-status-completed-border: #6B7280;
+    --color-status-cancelled-bg: #FEE2E2;
+    --color-status-cancelled-text: #991B1B;
+    --color-status-cancelled-border: #DC2626;
+    --color-status-noshow-bg: #FECACA;
+    --color-status-noshow-text: #7F1D1D;
+    --color-status-noshow-border: #B91C1C;
+
     --color-info: #AF8871;
     --color-info-light: #F4E7DE;
 
@@ -222,6 +270,30 @@ export const GlobalStyle = createGlobalStyle`
     --color-error-a10: rgba(248, 113, 113, 0.1);
     --color-error-a30: rgba(248, 113, 113, 0.19);
     --color-error-a50: rgba(248, 113, 113, 0.31);
+
+    /* Status badges */
+    --color-status-pending-bg: rgba(251, 191, 36, 0.15);
+    --color-status-pending-text: #FDE68A;
+    --color-status-pending-border: #D97706;
+    --color-status-confirmed-bg: rgba(52, 211, 153, 0.15);
+    --color-status-confirmed-text: #6EE7B7;
+    --color-status-confirmed-border: #059669;
+    --color-status-checkedin-bg: rgba(59, 130, 246, 0.15);
+    --color-status-checkedin-text: #93C5FD;
+    --color-status-checkedin-border: #3B82F6;
+    --color-status-inprogress-bg: rgba(99, 102, 241, 0.15);
+    --color-status-inprogress-text: #A5B4FC;
+    --color-status-inprogress-border: #6366F1;
+    --color-status-completed-bg: rgba(156, 163, 175, 0.12);
+    --color-status-completed-text: #9CA3AF;
+    --color-status-completed-border: #6B7280;
+    --color-status-cancelled-bg: rgba(248, 113, 113, 0.15);
+    --color-status-cancelled-text: #FCA5A5;
+    --color-status-cancelled-border: #EF4444;
+    --color-status-noshow-bg: rgba(248, 113, 113, 0.2);
+    --color-status-noshow-text: #FCA5A5;
+    --color-status-noshow-border: #DC2626;
+
     --color-info: #C4896B;
     --color-info-light: #3D2E24;
 
