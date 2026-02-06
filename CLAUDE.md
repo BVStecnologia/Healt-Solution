@@ -132,6 +132,22 @@ supabase/
 ├── volumes/functions/      # Edge Functions
 └── docker-compose.yml      # 13 serviços Supabase
 
+webhook/src/
+├── index.ts                # Express server + webhook routes
+├── config.ts               # URLs Supabase, Evolution API, panel
+├── types.ts                # Tipos compartilhados
+├── scheduleManager.ts      # Supabase client (service_role_key)
+├── whatsappResponder.ts    # sendMessage(), getTypeLabel(), formatDateShort()
+├── commandParser.ts        # Parser de comandos WhatsApp
+├── reminderScheduler.ts    # Cron job a cada 5 min (node-cron)
+├── reminderSender.ts       # getTemplate(), sendReminder(), dedup
+├── conversationState.ts    # Estado de conversação
+├── patientHandler.ts       # Handler de pacientes
+├── patientManager.ts       # Manager de pacientes
+├── patientResponder.ts     # Responder para pacientes
+├── urlShortener.ts         # Encurtador de URLs
+└── userIdentifier.ts       # Identificação de usuário
+
 scripts/
 └── migrate.sh              # Script de migrações (local/vps)
 ```
@@ -162,6 +178,18 @@ scripts/
 | `/admin/providers` | ProvidersPage | CRUD de médicos |
 | `/admin/admins` | AdminsPage | CRUD de administradores |
 | `/admin/whatsapp` | WhatsAppPage | Configuração Evolution API |
+| `/admin/notifications` | NotificationRulesPage | Regras de lembrete para pacientes |
+| `/admin/my-schedule` | MySchedulePage | Agenda dos médicos |
+
+### Painel Médico
+| Rota | Componente | Descrição |
+|------|------------|-----------|
+| `/doctor/login` | AdminLoginPage | Login médico |
+| `/doctor` | AdminDashboard | Dashboard do médico |
+| `/doctor/calendar` | CalendarPage | Calendário de consultas |
+| `/doctor/appointments` | AdminAppointmentsPage | Consultas do médico |
+| `/doctor/my-schedule` | MySchedulePage | Minha agenda |
+| `/doctor/notifications` | NotificationRulesPage | Meus lembretes (auto-configurável) |
 
 ---
 
@@ -295,6 +323,16 @@ CREATE TABLE schema_migrations (
 | 000 | schema_migrations | Tabela de controle |
 | 001 | scheduling_tables | Profiles, providers, appointments, RLS, RPCs |
 | 002 | whatsapp_notifications | Instâncias, templates, logs de mensagens |
+| 003 | admin_rls_policies | Políticas RLS para admins |
+| 004 | avatar_url | Campo avatar_url nos profiles |
+| 005 | add_preferred_language | Idioma preferido + templates EN |
+| 006 | provider_notifications | Templates de notificação para médicos |
+| 007 | provider_blocks | Bloqueios de agenda |
+| 008 | admin_provider_schedules | Gestão de horários pelo admin |
+| 009 | multiple_schedule_segments | Múltiplos turnos por dia |
+| 010 | patient_theme | Tema escuro/claro do paciente |
+| 011 | notification_rules | Regras de notificação configuráveis + templates provider_reminder_2h/15min |
+| 012 | no_show_system | no_show_count, confirmed_by_patient_at, trigger auto-increment, templates no_show_patient/provider |
 
 ### Aplicar Migrações
 
@@ -495,6 +533,28 @@ EVOLUTION_API_KEY=sua-chave-evolution
 - [x] Deletar instância
 - [x] Status em tempo real
 
+### Lembretes Automáticos (WhatsApp)
+- [x] Tabela `notification_rules` com regras configuráveis
+- [x] Cron job a cada 5 min no webhook (node-cron)
+- [x] Deduplica por `message_logs` (appointment_id + template_name + phone)
+- [x] Bilíngue (PT/EN) baseado no `preferred_language` do destinatário
+- [x] Override: regra específica do médico substitui global (mesmo minutes_before)
+- [x] UI Admin: `/admin/notifications` - CRUD de regras para pacientes
+- [x] UI Médico: `/doctor/notifications` - "Meus Lembretes" (auto-configurável) + "Regras da Clínica" (read-only)
+- [x] Templates: reminder_24h, reminder_1h, provider_reminder_2h, provider_reminder_15min, no_show_patient, no_show_provider
+
+### Cancelamento Inteligente e No-Show
+- [x] Bug fix: `rejection_reason` → `cancellation_reason` + `cancelled_at` no admin
+- [x] Admin pede motivo via `window.prompt()` ao rejeitar consulta
+- [x] Aviso de cancelamento tardio (<24h) no portal do paciente e WhatsApp
+- [x] Link de reagendamento ({link}) nos templates de cancelamento
+- [x] Detecção automática de no-show (30min após fim da consulta)
+- [x] Notificação WhatsApp de no-show para paciente e médico
+- [x] `no_show_count` no profiles com trigger auto-increment
+- [x] Badge de no-show na lista de pacientes e ficha
+- [x] Confirmação de presença via WhatsApp ("OK", "sim", "yes", "confirmo")
+- [x] `confirmed_by_patient_at` registrado na appointments
+
 ### Internacionalização
 - [x] Português (padrão)
 - [x] Inglês
@@ -513,7 +573,7 @@ EVOLUTION_API_KEY=sua-chave-evolution
 - [ ] Backup automático do banco
 
 ### Funcionalidades Futuras
-- [ ] Envio de lembretes por WhatsApp (Edge Function + Cron)
+- [x] Envio de lembretes por WhatsApp (webhook cron + notification_rules)
 - [x] Confirmação de consulta por WhatsApp
 - [x] Histórico de mensagens (message_logs)
 - [ ] Upload de documentos/exames

@@ -34,7 +34,13 @@ ssh clinica-vps "cd /root/Clinica/supabase && docker compose up -d"
 ssh clinica-vps "cd /root/Clinica/evolution && docker compose up -d"
 ```
 
-### 5. Build Frontend
+### 5. Subir Webhook (WhatsApp Bot)
+```bash
+scp webhook/.env.production clinica-vps:/root/Clinica/webhook/.env
+ssh clinica-vps "cd /root/Clinica/webhook && docker compose up -d --build"
+```
+
+### 6. Build Frontend
 ```bash
 ssh clinica-vps "cd /root/Clinica/frontend && npm install && npm run build"
 ssh clinica-vps "npm install -g serve"
@@ -100,18 +106,57 @@ Exemplo: localhost:8000 → 217.216.81.92:8000
 
 ---
 
-## Futuro: SSL + Domínio
+## Futuro: SSL + Domínio (Subdomínio)
 
-```bash
-# Quando tiver domínio configurado:
-apt install certbot python3-certbot-nginx -y
-certbot --nginx -d essencemedicalclinic.com
+O domínio `essencemedicalclinic.com` já está em uso pelo site institucional.
+Será criado um **subdomínio** para o sistema (aguardando resposta do cliente).
 
-# Atualizar .env com HTTPS
-SITE_URL=https://essencemedicalclinic.com
-API_EXTERNAL_URL=https://essencemedicalclinic.com
+### Opção recomendada: subdomínio único
 ```
+app.essencemedicalclinic.com → Nginx reverse proxy
+  /              → Frontend React (porta 3000)
+  /api/          → Supabase Kong (porta 8000)
+  /go/           → Webhook shortener (porta 3002)
+```
+
+### Opção alternativa: múltiplos subdomínios
+```
+app.essencemedicalclinic.com   → Frontend React
+api.essencemedicalclinic.com   → Supabase Kong
+wa.essencemedicalclinic.com    → Webhook server (shortener + bot)
+```
+
+### Configuração SSL
+```bash
+apt install certbot python3-certbot-nginx -y
+certbot --nginx -d app.essencemedicalclinic.com
+```
+
+### Variáveis de ambiente para produção (com subdomínio)
+
+**supabase/.env**
+```env
+SITE_URL=https://app.essencemedicalclinic.com
+API_EXTERNAL_URL=https://app.essencemedicalclinic.com
+SUPABASE_PUBLIC_URL=https://app.essencemedicalclinic.com
+```
+
+**frontend/.env**
+```env
+REACT_APP_SUPABASE_URL=https://app.essencemedicalclinic.com
+```
+
+**webhook/.env**
+```env
+PANEL_BASE_URL=https://app.essencemedicalclinic.com
+SUPABASE_PUBLIC_URL=https://app.essencemedicalclinic.com
+SHORTENER_BASE_URL=https://app.essencemedicalclinic.com
+```
+
+> Os links do WhatsApp ficarão como:
+> `https://app.essencemedicalclinic.com/go/LE_HcQ`
+> (clicáveis + preview automático no WhatsApp)
 
 ---
 
-*Atualizado: 05/02/2026*
+*Atualizado: 06/02/2026*

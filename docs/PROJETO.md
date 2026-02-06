@@ -12,11 +12,12 @@
 | # | Módulo | Status | Upwork To-do |
 |---|--------|--------|--------------|
 | 1 | Infraestrutura Docker (16 serviços) | ✅ Completo | ✅ Completed |
-| 2 | Database Schema (7 migrações) | ✅ Completo | ✅ Completed |
+| 2 | Database Schema (10 migrações) | ✅ Completo | ✅ Completed |
 | 3 | Portal do Paciente | ✅ Completo | ✅ Completed |
-| 4 | Painel Administrativo (8 páginas) | ✅ Completo | ✅ Completed |
+| 4 | Painel Admin + Portal Médico (10 páginas) | ✅ Completo | ✅ Completed |
 | 5 | WhatsApp - Notificações Bilíngues | ✅ Completo | ✅ Completed |
-| 6 | WhatsApp - Automation via Médico | 🔄 Em progresso | ⬜ Active |
+| 6 | WhatsApp - Automation via Médico | ✅ Completo | ⬜ Active |
+| 6b | WhatsApp - Automation via Paciente | 📋 Planejado | - |
 | 7 | Frontend - Expansão | 📋 Planejado | ⬜ Active |
 | 8 | IA/Chatbot WhatsApp | ❌ Pendente | - |
 | 9 | E-commerce (produtos) | ❌ Pendente | - |
@@ -34,7 +35,7 @@
 - VPS Contabo configurada e rodando (217.216.81.92)
 - Portainer para gerenciamento visual
 
-### 2. Banco de Dados (7 migrações)
+### 2. Banco de Dados (10 migrações)
 | Migração | Descrição |
 |----------|-----------|
 | 000 | Schema migrations (controle de versões) |
@@ -45,8 +46,10 @@
 | 005 | preferred_language (PT/EN) + templates inglês + índices |
 | 006 | Auto-confirmação de consultas + notificações para médicos |
 | 007 | provider_blocks (bloqueios de agenda) |
+| 008 | Admin pode gerenciar provider_schedules |
+| 009 | Múltiplos turnos por dia + RPC update_provider_schedules atômico |
 
-**Totais:** 7+ tabelas, 4 ENUMs, 6+ RPCs, RLS completo, triggers automáticos
+**Totais:** 8+ tabelas, 4 ENUMs, 8+ RPCs, RLS completo, triggers automáticos
 
 ### 3. Portal do Paciente (5 páginas)
 - **Login**: Email/senha + Google OAuth (auto-criação de perfil com idioma do navegador)
@@ -56,7 +59,7 @@
 - **Consultas**: Lista com filtros + detalhes + cancelamento com motivo
 - **i18n**: PT/EN com detecção automática e persistência no banco
 
-### 4. Painel Administrativo (8 páginas)
+### 4. Painel Administrativo + Portal do Médico (10 páginas)
 - **Dashboard**: 4 cards de stats + gráficos (Recharts: area, pie, bar) + lista pendentes + status WhatsApp
 - **Calendário**: react-big-calendar (mês/semana/dia/agenda) + cores por status + URL params + modal de detalhes
 - **Consultas**: Kanban com colunas por status + confirmar/rejeitar/cancelar + notificações WhatsApp
@@ -65,6 +68,8 @@
 - **Médicos**: CRUD + horários (provider_schedules) + bloqueios de agenda (provider_blocks) + ativar/desativar
 - **Admins**: CRUD completo
 - **WhatsApp**: Instâncias (criar/QR Code/conectar/desconectar/deletar) + histórico mensagens + status real-time
+- **Agenda Médicos**: Gestão de horários com múltiplos turnos por dia (manhã + tarde com pausa almoço) + bloqueios flexíveis (férias, reuniões, horários personalizados)
+- **Portal do Médico**: Ambiente separado (/doctor) com dashboard, calendário e consultas — médico acessa apenas seus dados
 
 ### 5. WhatsApp - Notificações Bilíngues
 - 12 templates de mensagem (6 tipos x 2 idiomas PT/EN):
@@ -130,6 +135,7 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 | `CLAUDE.md` | Documentação técnica completa (arquitetura, DB, rotas, padrões) |
 | `docs/requisitos-cliente.md` | Requisitos originais do cliente |
 | `docs/DEPLOY.md` | Guia de deploy passo a passo |
+| `docs/WHATSAPP.md` | Arquitetura WhatsApp completa (médico + paciente) |
 | `docs/PLANO_DE_TESTES.md` | 85 casos de teste organizados |
 | `Servidor/` | Espelho do estado de produção |
 
@@ -139,16 +145,16 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 | Métrica | Valor |
 |---------|-------|
-| Páginas frontend | 15 (5 portal + 9 admin + 1 login admin) |
-| Componentes React | 15+ |
-| Hooks customizados | 6 |
-| Migrações SQL | 7 |
+| Páginas frontend | 16 (5 portal + 10 admin + 1 login admin) |
+| Componentes React | 18+ |
+| Hooks customizados | 7 |
+| Migrações SQL | 10 |
 | Tabelas no banco | 7+ |
-| RPCs PostgreSQL | 6+ |
+| RPCs PostgreSQL | 8+ |
 | Templates WhatsApp | 12 (6 tipos x 2 idiomas) |
 | Serviços Docker | 16 |
 | Commits Git | 30+ |
 
 ---
 
-*Atualizado: 05/02/2026*
+*Atualizado: 06/02/2026*
