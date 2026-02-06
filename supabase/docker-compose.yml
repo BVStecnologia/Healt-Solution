@@ -5,7 +5,7 @@
 #   Destroy:            docker compose -f docker-compose.yml -f ./dev/docker-compose.dev.yml down -v --remove-orphans
 #   Reset everything:  ./reset.sh
 
-name: supabase
+name: clinica-supabase
 
 services:
 
@@ -550,3 +550,8 @@ services:
 
 volumes:
   db-config:
+    name: supabase_db-config
+
+networks:
+  default:
+    name: supabase_default

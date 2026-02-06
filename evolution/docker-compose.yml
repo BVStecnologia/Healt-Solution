@@ -5,6 +5,8 @@
 # Contém: Evolution API, Redis, PostgreSQL próprio
 # ===========================================
 
+name: clinica-evolution
+
 services:
   api:
     image: evoapicloud/evolution-api:v2.3.6
@@ -65,9 +67,13 @@ services:
 
 volumes:
   evolution_instances:
+    name: evolution_evolution_instances
   evolution_db_data:
+    name: evolution_evolution_db_data
   evolution_redis_data:
+    name: evolution_evolution_redis_data
 
 networks:
   evolution_network:
+    name: evolution_evolution_network
     driver: bridge
