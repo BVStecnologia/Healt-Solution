@@ -9,7 +9,7 @@ name: clinica-evolution
 
 services:
   api:
-    image: evoapicloud/evolution-api:v2.3.6
+    image: evoapicloud/evolution-api:v2.3.7
     container_name: evolution_api
     restart: unless-stopped
     ports:
