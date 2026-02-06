@@ -5,7 +5,7 @@ import { extractPhoneFromJid, phonesMatch } from './phoneUtils';
 
 let supabase: SupabaseClient;
 
-function getClient(): SupabaseClient {
+export function getClient(): SupabaseClient {
   if (!supabase) {
     supabase = createClient(config.supabaseUrl, config.supabaseServiceRoleKey);
   }

@@ -8,12 +8,25 @@ const COMMAND_MAP: Record<string, { type: CommandType; lang: Language }> = {
   'liberar': { type: 'unblock', lang: 'pt' },
   'pacientes': { type: 'patients', lang: 'pt' },
   'ajuda': { type: 'help', lang: 'pt' },
+  'comandos': { type: 'commands', lang: 'pt' },
   // EN
   'schedule': { type: 'schedule', lang: 'en' },
   'block': { type: 'block', lang: 'en' },
   'unblock': { type: 'unblock', lang: 'en' },
   'patients': { type: 'patients', lang: 'en' },
   'help': { type: 'help', lang: 'en' },
+  'commands': { type: 'commands', lang: 'en' },
+};
+
+// Numbered menu shortcuts (language determined from provider profile)
+const NUMBER_MAP: Record<string, { type: CommandType; tomorrow?: boolean; blockToday?: boolean; unblockToday?: boolean; blockTomorrow?: boolean }> = {
+  '1': { type: 'schedule' },
+  '2': { type: 'schedule', tomorrow: true },
+  '3': { type: 'patients' },
+  '4': { type: 'commands' },
+  '5': { type: 'block', blockToday: true },
+  '6': { type: 'unblock', unblockToday: true },
+  '7': { type: 'block', blockTomorrow: true },
 };
 
 // Period aliases
@@ -86,6 +99,35 @@ export function parseCommand(message: string): ParsedCommand {
   const parts = raw.toLowerCase().split(/\s+/);
   const firstWord = parts[0];
 
+  // Check numbered menu shortcuts first
+  if (parts.length === 1) {
+    const numCmd = NUMBER_MAP[firstWord];
+    if (numCmd) {
+      const result: ParsedCommand = {
+        type: numCmd.type,
+        language: 'pt', // default, overridden by provider language in index.ts
+        raw,
+      };
+
+      if (numCmd.tomorrow || numCmd.blockTomorrow) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        result.date = tomorrow;
+      }
+
+      if (numCmd.blockToday || numCmd.blockTomorrow) {
+        result.date = result.date || new Date();
+        result.period = 'full_day';
+      }
+
+      if (numCmd.unblockToday) {
+        result.date = new Date();
+      }
+
+      return result;
+    }
+  }
+
   const commandInfo = COMMAND_MAP[firstWord];
   if (!commandInfo) {
     return { type: 'unknown', language: 'pt', raw };
@@ -94,7 +136,7 @@ export function parseCommand(message: string): ParsedCommand {
   const { type, lang } = commandInfo;
   const result: ParsedCommand = { type, language: lang, raw };
 
-  if (type === 'help') {
+  if (type === 'help' || type === 'commands') {
     return result;
   }
 

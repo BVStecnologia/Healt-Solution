@@ -2,13 +2,18 @@ import express from 'express';
 import { config } from './config';
 import { EvolutionWebhookPayload } from './types';
 import { parseCommand } from './commandParser';
-import { identifyProvider, getSchedule, createBlock, removeBlocks, generateMagicLink } from './scheduleManager';
+import { getSchedule, createBlock, removeBlocks, generateMagicLink } from './scheduleManager';
+import { shortenUrl, resolveCode } from './urlShortener';
+import { identifyUser, toProviderInfo } from './userIdentifier';
+import { handlePatientMessage } from './patientHandler';
+import { startReminderScheduler } from './reminderScheduler';
 import {
   sendMessage,
   formatScheduleResponse,
   formatBlockResponse,
   formatUnblockResponse,
   formatHelpResponse,
+  formatCommandsResponse,
   formatDateRequiredResponse,
   formatPatientsResponse,
   appendLink,
@@ -28,6 +33,25 @@ app.use((req, _res, next) => {
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// URL Shortener redirect
+app.get('/go/:code', (req, res) => {
+  const fullUrl = resolveCode(req.params.code);
+  if (fullUrl) {
+    console.log(`[Shortener] Redirect: /go/${req.params.code}`);
+    return res.redirect(302, fullUrl);
+  }
+  res.status(404).send('Link expirado ou inválido. Solicite um novo pelo WhatsApp.');
+});
+
+/**
+ * Generates a magic link, shortens it, and returns the short URL.
+ */
+async function getShortLink(email: string, redirectPath: string): Promise<string | null> {
+  const fullLink = await generateMagicLink(email, redirectPath);
+  if (!fullLink) return null;
+  return shortenUrl(fullLink);
+}
 
 // Webhook endpoint for Evolution API
 app.post(config.webhookPath, async (req, res) => {
@@ -61,15 +85,31 @@ app.post(config.webhookPath, async (req, res) => {
       ? data.key.remoteJidAlt
       : rawJid;
 
-    // Identify provider by phone
-    const provider = await identifyProvider(remoteJid);
-    if (!provider) {
-      // Not a provider - ignore silently
+    // Identify user by phone (patient, provider, or admin)
+    const user = await identifyUser(remoteJid);
+    if (!user) {
+      // Unknown number - ignore silently
       return res.sendStatus(200);
     }
 
+    // Route patients to their own handler
+    if (user.role === 'patient') {
+      console.log(`[Webhook] Patient: ${user.firstName} ${user.lastName} | Message: "${text.trim()}"`);
+      await handlePatientMessage(instance, remoteJid, text, user);
+      return res.sendStatus(200);
+    }
+
+    // Provider/Admin flow (unchanged)
+    const provider = toProviderInfo(user);
+
     // Parse the command
     const command = parseCommand(text);
+
+    // For numbered menu selections, use the provider's language preference
+    if (/^\d+$/.test(text.trim())) {
+      command.language = provider.language;
+    }
+
     const lang = command.language;
 
     console.log(`[Webhook] Provider: ${provider.firstName} ${provider.lastName} | Command: ${command.type} | Raw: "${command.raw}"`);
@@ -79,7 +119,7 @@ app.post(config.webhookPath, async (req, res) => {
         const date = command.date || new Date();
         const { appointments, blocks } = await getSchedule(provider.providerId, date);
         let response = formatScheduleResponse(date, appointments, blocks, lang);
-        const link = await generateMagicLink(provider.email, '/admin/calendar');
+        const link = await getShortLink(provider.email, '/admin/calendar');
         response = appendLink(response, link, lang);
         await sendMessage(instance, remoteJid, response);
         break;
@@ -109,7 +149,7 @@ app.post(config.webhookPath, async (req, res) => {
           result.conflicts || [],
           lang
         );
-        const link = await generateMagicLink(provider.email, '/admin/calendar');
+        const link = await getShortLink(provider.email, '/admin/calendar');
         response = appendLink(response, link, lang);
         await sendMessage(instance, remoteJid, response);
         break;
@@ -123,15 +163,21 @@ app.post(config.webhookPath, async (req, res) => {
 
         const removedCount = await removeBlocks(provider.providerId, command.date);
         let response = formatUnblockResponse(command.date, removedCount, lang);
-        const link = await generateMagicLink(provider.email, '/admin/calendar');
+        const link = await getShortLink(provider.email, '/admin/calendar');
         response = appendLink(response, link, lang);
         await sendMessage(instance, remoteJid, response);
         break;
       }
 
       case 'patients': {
-        const link = await generateMagicLink(provider.email, '/admin/patients');
+        const link = await getShortLink(provider.email, '/admin/patients');
         const response = formatPatientsResponse(link, lang);
+        await sendMessage(instance, remoteJid, response);
+        break;
+      }
+
+      case 'commands': {
+        const response = formatCommandsResponse(lang);
         await sendMessage(instance, remoteJid, response);
         break;
       }
@@ -144,7 +190,7 @@ app.post(config.webhookPath, async (req, res) => {
 
       case 'unknown':
       default: {
-        // Unknown command -> send help
+        // Unknown command -> send quick menu
         const response = formatHelpResponse(lang);
         await sendMessage(instance, remoteJid, response);
         break;
@@ -216,9 +262,13 @@ async function setupEvolutionWebhooks(): Promise<void> {
 app.listen(config.port, async () => {
   console.log(`[Webhook Server] Running on port ${config.port}`);
   console.log(`[Webhook Server] Endpoint: ${config.webhookPath}`);
+  console.log(`[Webhook Server] Shortener: ${config.shortenerBaseUrl}/go/:code`);
 
   // Wait a bit for Evolution API to be ready, then configure webhooks
   setTimeout(() => {
     setupEvolutionWebhooks();
   }, 5000);
+
+  // Start reminder scheduler (cron every 5 minutes)
+  startReminderScheduler();
 });

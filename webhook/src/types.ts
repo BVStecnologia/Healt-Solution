@@ -22,7 +22,7 @@ export interface EvolutionWebhookPayload {
 }
 
 // Parsed command from WhatsApp message
-export type CommandType = 'schedule' | 'block' | 'unblock' | 'patients' | 'help' | 'unknown';
+export type CommandType = 'schedule' | 'block' | 'unblock' | 'patients' | 'help' | 'commands' | 'unknown';
 export type Language = 'pt' | 'en';
 export type BlockPeriod = 'full_day' | 'morning' | 'afternoon' | 'custom';
 
@@ -76,4 +76,47 @@ export interface ScheduleEntry {
   patientName: string;
   type: string;
   status: string;
+}
+
+// === Patient WhatsApp types ===
+
+export type PatientCommandType = 'appointments' | 'confirm' | 'cancel' | 'book' | 'contact' | 'help';
+
+export interface PatientAppointment {
+  id: string;
+  scheduled_at: string;
+  type: string;
+  status: string;
+  duration: number;
+  provider_name: string;
+}
+
+export interface TypeOption {
+  key: string;
+  label: string;
+  duration: number;
+}
+
+export interface ProviderOption {
+  id: string;
+  name: string;
+  specialty: string;
+}
+
+export interface DateOption {
+  date: Date;
+  slotCount: number;
+}
+
+export interface TimeSlotOption {
+  time: string;       // "09:00"
+  scheduledAt: string; // ISO datetime for create_appointment
+}
+
+export interface BookingSummary {
+  typeName: string;
+  providerName: string;
+  date: string;
+  time: string;
+  scheduledAt: string;
 }

@@ -59,7 +59,7 @@ export async function sendMessage(instanceName: string, remoteJid: string, text:
 }
 
 // Appointment type labels (short)
-const TYPE_LABELS: Record<string, Record<Language, string>> = {
+export const TYPE_LABELS: Record<string, Record<Language, string>> = {
   initial_consultation: { pt: 'Consulta Inicial', en: 'Initial Consultation' },
   follow_up: { pt: 'Retorno', en: 'Follow-up' },
   hormone_check: { pt: 'Av. Hormonal', en: 'Hormone Check' },
@@ -70,7 +70,7 @@ const TYPE_LABELS: Record<string, Record<Language, string>> = {
   personal_training: { pt: 'Personal', en: 'Personal Training' },
 };
 
-const STATUS_EMOJI: Record<string, string> = {
+export const STATUS_EMOJI: Record<string, string> = {
   pending: '⏳',
   confirmed: '✅',
   checked_in: '📋',
@@ -78,12 +78,12 @@ const STATUS_EMOJI: Record<string, string> = {
   completed: '✔️',
 };
 
-const WEEKDAY_SHORT: Record<Language, string[]> = {
+export const WEEKDAY_SHORT: Record<Language, string[]> = {
   pt: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
   en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
 
-function formatDateShort(date: Date, lang: Language): string {
+export function formatDateShort(date: Date, lang: Language): string {
   const d = date.getDate().toString().padStart(2, '0');
   const m = (date.getMonth() + 1).toString().padStart(2, '0');
   const weekday = WEEKDAY_SHORT[lang][date.getDay()];
@@ -92,7 +92,7 @@ function formatDateShort(date: Date, lang: Language): string {
   return `${m}/${d} (${weekday})`;
 }
 
-function getTypeLabel(type: string, lang: Language): string {
+export function getTypeLabel(type: string, lang: Language): string {
   return TYPE_LABELS[type]?.[lang] || type;
 }
 
@@ -265,38 +265,75 @@ export function formatUnblockResponse(date: Date, removedCount: number, lang: La
 }
 
 /**
- * Formats the help response.
+ * Formats the quick numbered menu (sent for "ajuda", "help", or unknown messages).
  */
 export function formatHelpResponse(lang: Language): string {
   if (lang === 'pt') {
-    return `📖 *Comandos*
+    return `🏥 *Essence Medical*
 
-agenda — Agenda de hoje
-agenda 15/02 — Agenda da data
-bloquear 15/02 — Bloquear dia
-bloquear 15/02 manhã — Bloquear manhã
-bloquear 15/02 tarde — Bloquear tarde
-bloquear 15/02 08:00-12:00 — Horário
-liberar 15/02 — Remover bloqueio
-pacientes — Painel de pacientes
-ajuda — Este menu
+1️⃣  Agenda de hoje
+2️⃣  Agenda de amanhã
+3️⃣  Pacientes
+4️⃣  Todos os comandos
+5️⃣  Bloquear hoje
+6️⃣  Liberar hoje
+7️⃣  Bloquear amanhã
 
-_Cada resposta inclui um link seguro para o painel._`;
+_Responda com o número ou envie um comando (ex: agenda 15/02)_`;
   }
 
-  return `📖 *Commands*
+  return `🏥 *Essence Medical*
 
-schedule — Today's schedule
-schedule 02/15 — Schedule for date
-block 02/15 — Block full day
-block 02/15 morning — Block morning
-block 02/15 afternoon — Block afternoon
-block 02/15 08:00-12:00 — Time range
-unblock 02/15 — Remove block
-patients — Patient panel
-help — This menu
+1️⃣  Today's schedule
+2️⃣  Tomorrow's schedule
+3️⃣  Patients
+4️⃣  All commands
+5️⃣  Block today
+6️⃣  Unblock today
+7️⃣  Block tomorrow
 
-_Each response includes a secure link to the panel._`;
+_Reply with the number or type a command (e.g. schedule 02/15)_`;
+}
+
+/**
+ * Formats the full commands list (sent for option "4" or "comandos").
+ */
+export function formatCommandsResponse(lang: Language): string {
+  if (lang === 'pt') {
+    return `📖 *Todos os comandos*
+
+*Atalhos rápidos:*
+1️⃣  Agenda de hoje
+2️⃣  Agenda de amanhã
+3️⃣  Pacientes
+5️⃣  Bloquear hoje
+6️⃣  Liberar hoje
+7️⃣  Bloquear amanhã
+
+*Para datas específicas:*
+📋  agenda _DD/MM_
+🔒  bloquear _DD/MM_
+🔒  bloquear _DD/MM_ manhã / tarde
+🔒  bloquear _DD/MM_ _HH:MM-HH:MM_
+🔓  liberar _DD/MM_`;
+  }
+
+  return `📖 *All commands*
+
+*Quick shortcuts:*
+1️⃣  Today's schedule
+2️⃣  Tomorrow's schedule
+3️⃣  Patients
+5️⃣  Block today
+6️⃣  Unblock today
+7️⃣  Block tomorrow
+
+*For specific dates:*
+📋  schedule _MM/DD_
+🔒  block _MM/DD_
+🔒  block _MM/DD_ morning / afternoon
+🔒  block _MM/DD_ _HH:MM-HH:MM_
+🔓  unblock _MM/DD_`;
 }
 
 /**

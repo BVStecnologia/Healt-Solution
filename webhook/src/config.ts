@@ -8,4 +8,6 @@ export const config = {
   // Public URLs (accessible from doctor's phone browser)
   panelBaseUrl: process.env.PANEL_BASE_URL || 'http://localhost:3000',
   supabasePublicUrl: process.env.SUPABASE_PUBLIC_URL || 'http://localhost:8000',
+  // URL shortener base (public URL of this webhook server)
+  shortenerBaseUrl: process.env.SHORTENER_BASE_URL || `http://localhost:${process.env.PORT || '3001'}`,
 };
