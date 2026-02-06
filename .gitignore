@@ -9,11 +9,11 @@ build/
 .next/
 out/
 
-# Environment (arquivo ativo com senhas reais)
+# Environment - TODOS os .env exceto .example
 .env
-
-# Templates de ambiente (podem ser commitados)
-# .env.local e .env.production são templates com placeholders
+.env.*
+!.env.example
+!.env.*.example
 
 # Logs
 logs
@@ -60,9 +60,7 @@ supabase/volumes/db/data/
 supabase/volumes/storage/
 supabase/volumes/functions/
 
-# Production environment files (contain real credentials)
-*.env.production
-.env.production
+# (Production env files já cobertos pelo padrão .env.* acima)
 
 # Claude Code
 .claude-images/
