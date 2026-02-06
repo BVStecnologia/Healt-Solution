@@ -67,6 +67,7 @@ supabase/volumes/functions/
 # Claude Code
 .claude-images/
 .claude/settings.local.json
+**/.claude/
 
 # Playwright MCP (screenshots + console logs de testes)
 .playwright-mcp/
