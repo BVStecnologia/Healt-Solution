@@ -25,6 +25,7 @@ services:
       - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
       - PANEL_BASE_URL=${PANEL_BASE_URL:-http://localhost:3000}
       - SUPABASE_PUBLIC_URL=${SUPABASE_PUBLIC_URL:-http://localhost:8000}
+      - SHORTENER_BASE_URL=${SHORTENER_BASE_URL:-http://localhost:3002}
     networks:
       - supabase_net
       - evolution_net
