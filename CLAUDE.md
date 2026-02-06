@@ -52,11 +52,19 @@ cd frontend && npm install && npm start   # Dev
 cd frontend && npm run build              # Build produção
 
 # ==================
-# DEPLOY VPS
+# BACKUP
+# ==================
+ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh manual"     # Backup manual
+ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh pre-deploy" # Backup pré-deploy
+ssh clinica-vps "ls -1th /root/backups/db-*.sql.gz"                     # Listar backups
+# Restaurar: gunzip < backup.sql.gz | docker exec -i supabase-db psql -U postgres -d postgres
+
+# ==================
+# DEPLOY VPS (usar skill /deploy para deploy assistido)
 # ==================
 git push                          # Envia código
 ssh clinica-vps "cd /root/Clinica && git pull"
-ssh clinica-vps "cd /root/Clinica && ./scripts/migrate.sh vps"
+ssh clinica-vps "cd /root/Clinica && ./scripts/migrate.sh vps"  # Backup automático + transações
 ssh clinica-vps "cd /root/Clinica && docker compose up -d"
 ```
 
@@ -567,11 +575,11 @@ EVOLUTION_API_KEY=sua-chave-evolution
 ## TODO / Pendências
 
 ### Crítico para Produção
-- [ ] Configurar Google OAuth no Supabase
-- [ ] Trigger para criar profile automático em novo usuário
-- [ ] Configurar HTTPS/SSL para produção
-- [ ] Variáveis de ambiente de produção
-- [ ] Backup automático do banco
+- [x] Configurar Google OAuth no Supabase (via nip.io — 217-216-81-92.nip.io)
+- [x] Trigger para criar profile automático em novo usuário (migration 013)
+- [ ] Configurar HTTPS/SSL para produção (precisa de domínio)
+- [x] Variáveis de ambiente de produção (configuradas na VPS)
+- [x] Backup pré-deploy (`scripts/backup.sh` + integrado no `migrate.sh`)
 
 ### Funcionalidades Futuras
 - [x] Envio de lembretes por WhatsApp (webhook cron + notification_rules)
@@ -796,6 +804,57 @@ ssh clinica-vps "cd /root/Clinica && git checkout HEAD~1"
 # Rebuild e restart
 ssh clinica-vps "cd /root/Clinica/supabase && docker compose down && docker compose up -d"
 ```
+
+---
+
+## Backup e Segurança de Dados
+
+### Estratégia de Backup
+| Camada | O que protege | Frequência |
+|--------|--------------|------------|
+| **Contabo VPS** | Disco inteiro (OS + Docker + tudo) | Snapshots nativos (7 dias) |
+| **scripts/backup.sh** | Banco PostgreSQL (pg_dump) | Antes de cada deploy |
+| **migrate.sh** | Banco antes de migrações | Automático (VPS) |
+
+### Scripts de Backup
+
+**Backup manual:**
+```bash
+ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh manual"
+```
+
+**Backup pré-deploy (automático na skill /deploy):**
+```bash
+ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh pre-deploy"
+```
+
+**Listar backups:**
+```bash
+ssh clinica-vps "ls -1th /root/backups/db-*.sql.gz"
+```
+
+**Restaurar backup:**
+```bash
+ssh clinica-vps "gunzip < /root/backups/db-<arquivo>.sql.gz | docker exec -i supabase-db psql -U postgres -d postgres"
+```
+
+### Segurança do Versionamento
+- `.gitignore` bloqueia todos `.env.*` (exceto `.env.example`)
+- Repositório público — NUNCA commitar secrets
+- `is_admin()` usa SECURITY DEFINER para evitar recursão RLS
+- Migration 013: trigger auto-cria profile para Google OAuth
+
+### Migrações Seguras
+- `migrate.sh` executa cada migração dentro de BEGIN/COMMIT (transação)
+- Flag `-v ON_ERROR_STOP=1` reverte automaticamente se houver erro
+- Backup automático antes de migrações (ambiente VPS)
+- Migrações são idempotentes (`ON CONFLICT DO NOTHING`, `IF EXISTS`)
+
+### NUNCA fazer em produção
+- `docker compose down -v` (deleta TODOS os volumes/dados!)
+- `DROP TABLE` sem backup
+- Commitar arquivos `.env` com secrets
+- Rodar migrações sem backup prévio
 
 ---
 
