@@ -48,6 +48,7 @@ import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
+import { getTreatmentLabel } from '../../constants/treatments';
 
 // ============================================
 // ANIMATIONS
@@ -1742,18 +1743,7 @@ const AdminAppointmentsPage: React.FC = () => {
     }
   };
 
-  const formatType = (type: string) => {
-    const types: Record<string, string> = {
-      initial_consultation: 'Consulta Inicial',
-      follow_up: 'Retorno',
-      hormone_check: 'Avaliação Hormonal',
-      lab_review: 'Revisão de Exames',
-      nutrition: 'Nutrição',
-      health_coaching: 'Health Coaching',
-      therapy: 'Terapia',
-    };
-    return types[type] || type;
-  };
+  const formatType = (type: string) => getTreatmentLabel(type);
 
   const formatStatus = (status: string) => {
     const statuses: Record<string, string> = {

@@ -11,16 +11,19 @@ export type Json =
 
 // Enums
 export type UserRole = 'patient' | 'provider' | 'admin';
-export type PatientType = 'new' | 'trt' | 'hormone' | 'general' | 'vip';
+export type PatientType =
+  | 'new' | 'wellness' | 'bhrt' | 'rejuvenation' | 'iv_therapy' | 'vip'
+  // Legacy (kept for backward compat)
+  | 'trt' | 'hormone' | 'general';
 export type AppointmentType =
-  | 'initial_consultation'
-  | 'follow_up'
-  | 'hormone_check'
-  | 'lab_review'
-  | 'nutrition'
-  | 'health_coaching'
-  | 'therapy'
-  | 'personal_training';
+  // Active types
+  | 'initial_consultation' | 'follow_up'
+  | 'functional_medicine' | 'bhrt' | 'male_hypertrophy' | 'female_hypertrophy'
+  | 'insulin_resistance' | 'chronic_inflammation' | 'thyroid_support'
+  | 'morpheus8' | 'botulinum_toxin' | 'fillers' | 'skin_boosters'
+  | 'iv_protocols' | 'customized_iv_nutrition' | 'nutrient_testing' | 'nad_therapy' | 'vitamin_injections'
+  // Legacy (kept for backward compat)
+  | 'hormone_check' | 'lab_review' | 'nutrition' | 'health_coaching' | 'therapy' | 'personal_training';
 export type AppointmentStatus =
   | 'pending'
   | 'confirmed'

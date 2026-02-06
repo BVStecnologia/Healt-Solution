@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { ArrowLeft, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Clock } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { theme } from '../../styles/GlobalStyle';
 import { useAppointments } from '../../hooks/useAppointments';
@@ -15,6 +15,7 @@ import ProviderSelect from '../../components/scheduling/ProviderSelect';
 import TimeSlotPicker from '../../components/scheduling/TimeSlotPicker';
 import EligibilityAlert from '../../components/scheduling/EligibilityAlert';
 import type { AppointmentType, Provider, TimeSlot } from '../../types/database';
+import { getTreatmentLabel, getTreatmentsByCategory, getTreatmentDuration } from '../../constants/treatments';
 
 const PageHeader = styled.div`
   display: flex;
@@ -186,14 +187,50 @@ const ErrorAlert = styled.div`
   }
 `;
 
-const appointmentTypes: { type: AppointmentType; name: string; description: string }[] = [
-  { type: 'initial_consultation', name: 'Consulta Inicial', description: 'Primeira consulta com o médico' },
-  { type: 'follow_up', name: 'Retorno', description: 'Acompanhamento de tratamento' },
-  { type: 'hormone_check', name: 'Avaliação Hormonal', description: 'Verificação de níveis hormonais' },
-  { type: 'lab_review', name: 'Revisão de Exames', description: 'Análise de resultados laboratoriais' },
-  { type: 'nutrition', name: 'Nutrição', description: 'Consulta com nutricionista' },
-  { type: 'health_coaching', name: 'Health Coaching', description: 'Sessão de coaching de saúde' },
-];
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  wellbeing: <Heart size={16} />,
+  personalized: <Brain size={16} />,
+  rejuvenation: <Sparkles size={16} />,
+  iv_therapy: <Droplets size={16} />,
+  general: <Stethoscope size={16} />,
+};
+
+const CategorySection = styled.div`
+  margin-bottom: ${theme.spacing.lg};
+`;
+
+const CategoryHeader = styled.div<{ $color: string }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: ${theme.spacing.sm};
+  padding-bottom: ${theme.spacing.xs};
+  border-bottom: 2px solid ${props => props.$color}20;
+
+  svg {
+    color: ${props => props.$color};
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 600;
+    color: ${props => props.$color};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+`;
+
+const DurationBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: ${theme.colors.textSecondary};
+  background: ${theme.colors.background};
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+`;
 
 const NewAppointmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -285,7 +322,7 @@ const NewAppointmentPage: React.FC = () => {
   };
 
   const getTypeName = () => {
-    return appointmentTypes.find(t => t.type === selectedType)?.name || '';
+    return selectedType ? getTreatmentLabel(selectedType) : '';
   };
 
   return (
@@ -324,19 +361,31 @@ const NewAppointmentPage: React.FC = () => {
               Selecione o tipo de consulta
             </h3>
 
-            <TypeGrid>
-              {appointmentTypes.map(({ type, name, description }) => (
-                <TypeCard
-                  key={type}
-                  $selected={selectedType === type}
-                  $disabled={false}
-                  onClick={() => handleTypeSelect(type)}
-                >
-                  <TypeName $selected={selectedType === type}>{name}</TypeName>
-                  <TypeDescription>{description}</TypeDescription>
-                </TypeCard>
-              ))}
-            </TypeGrid>
+            {getTreatmentsByCategory().map(({ category, treatments }) => (
+              <CategorySection key={category.key}>
+                <CategoryHeader $color={category.color}>
+                  {CATEGORY_ICONS[category.key]}
+                  <span>{category.label}</span>
+                </CategoryHeader>
+                <TypeGrid>
+                  {treatments.map(t => (
+                    <TypeCard
+                      key={t.key}
+                      $selected={selectedType === t.key}
+                      $disabled={false}
+                      onClick={() => handleTypeSelect(t.key as AppointmentType)}
+                    >
+                      <TypeName $selected={selectedType === t.key}>{t.label}</TypeName>
+                      <TypeDescription>{t.description}</TypeDescription>
+                      <DurationBadge>
+                        <Clock size={10} />
+                        {t.duration} min
+                      </DurationBadge>
+                    </TypeCard>
+                  ))}
+                </TypeGrid>
+              </CategorySection>
+            ))}
 
             {selectedType && (
               <div style={{ marginTop: theme.spacing.lg }}>

@@ -4,8 +4,26 @@ import { TYPE_LABELS } from './whatsappResponder';
 
 // Appointment type durations (minutes)
 const TYPE_DURATIONS: Record<string, number> = {
+  // Active types
   initial_consultation: 60,
   follow_up: 30,
+  functional_medicine: 60,
+  bhrt: 45,
+  male_hypertrophy: 45,
+  female_hypertrophy: 45,
+  insulin_resistance: 45,
+  chronic_inflammation: 45,
+  thyroid_support: 45,
+  morpheus8: 60,
+  botulinum_toxin: 30,
+  fillers: 45,
+  skin_boosters: 30,
+  iv_protocols: 60,
+  customized_iv_nutrition: 60,
+  nutrient_testing: 30,
+  nad_therapy: 90,
+  vitamin_injections: 20,
+  // Legacy types (for existing records)
   hormone_check: 45,
   lab_review: 20,
   nutrition: 45,

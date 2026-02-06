@@ -30,6 +30,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import HelpTip from '../../components/ui/HelpTip';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
+import { ACTIVE_TREATMENTS, getTreatmentLabel, getTreatmentShortLabel, getTreatmentDuration } from '../../constants/treatments';
 
 // Animações
 const fadeIn = keyframes`
@@ -1410,16 +1411,11 @@ interface Patient {
   email: string;
 }
 
-const APPOINTMENT_TYPES: { value: AppointmentType; label: string; duration: number }[] = [
-  { value: 'initial_consultation', label: 'Consulta Inicial', duration: 60 },
-  { value: 'follow_up', label: 'Retorno', duration: 30 },
-  { value: 'hormone_check', label: 'Avaliação Hormonal', duration: 45 },
-  { value: 'lab_review', label: 'Revisão de Exames', duration: 20 },
-  { value: 'nutrition', label: 'Nutrição', duration: 45 },
-  { value: 'health_coaching', label: 'Health Coaching', duration: 30 },
-  { value: 'therapy', label: 'Terapia', duration: 50 },
-  { value: 'personal_training', label: 'Personal Training', duration: 60 },
-];
+const APPOINTMENT_TYPES = ACTIVE_TREATMENTS.map(t => ({
+  value: t.key as AppointmentType,
+  label: t.label,
+  duration: t.duration,
+}));
 
 const messages = {
   today: 'Hoje',
@@ -1436,20 +1432,7 @@ const messages = {
   showMore: (total: number) => `+ ${total} mais`,
 };
 
-// Helper para formatar tipo de consulta
-const formatTypeShort = (type: string): string => {
-  const types: Record<string, string> = {
-    initial_consultation: 'Inicial',
-    follow_up: 'Retorno',
-    hormone_check: 'Hormonal',
-    lab_review: 'Exames',
-    nutrition: 'Nutrição',
-    health_coaching: 'Coaching',
-    therapy: 'Terapia',
-    personal_training: 'Personal',
-  };
-  return types[type] || type;
-};
+const formatTypeShort = (type: string): string => getTreatmentShortLabel(type);
 
 // Helper para formatar status
 const formatStatusShort = (status: string): string => {
@@ -1974,19 +1957,7 @@ const CalendarPage: React.FC = () => {
     }
   };
 
-  const formatAppointmentType = (type: string) => {
-    const types: Record<string, string> = {
-      initial_consultation: 'Consulta Inicial',
-      follow_up: 'Retorno',
-      hormone_check: 'Avaliação Hormonal',
-      lab_review: 'Revisão de Exames',
-      nutrition: 'Nutrição',
-      health_coaching: 'Health Coaching',
-      therapy: 'Terapia',
-      personal_training: 'Personal Training',
-    };
-    return types[type] || type;
-  };
+  const formatAppointmentType = (type: string) => getTreatmentLabel(type);
 
   const formatStatus = (status: string) => {
     const statuses: Record<string, string> = {

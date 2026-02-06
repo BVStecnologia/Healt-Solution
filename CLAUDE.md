@@ -10,6 +10,15 @@ Este arquivo documenta toda a arquitetura, funcionalidades e padrões do sistema
 - Integração WhatsApp (Evolution API)
 - Autenticação via Supabase (email/senha + Google OAuth)
 
+### Informações da Clínica
+- **Nome:** Essence Medical Clinic
+- **Endereço:** 2000 NE 44th ST, Suite 101B, Fort Lauderdale, FL 33308
+- **Telefone:** +1 (954) 756-2565
+- **Email:** info@essencemedicalclinic.com
+- **Horário:** Mon-Fri 9am-5pm
+- **Site:** https://essencemedicalclinic.com
+- **Lead Provider:** Dr. Rosane Nunes
+
 ### Identidade Visual
 - **Cor Primária:** #92563E (Marrom terracota)
 - **Cor Secundária:** #8C8B8B (Cinza)
@@ -106,6 +115,8 @@ frontend/src/
 │   ├── LoadingSpinner.tsx
 │   ├── Layout.tsx
 │   └── ProtectedRoute.tsx
+├── constants/
+│   └── treatments.ts       # Source of truth: tipos de tratamento, categorias, patient types, clinic info
 ├── context/
 │   ├── AuthContext.tsx     # Autenticação Supabase + roles
 │   ├── LanguageContext.tsx # i18n (PT/EN/ES)
@@ -215,7 +226,7 @@ role              user_role         -- 'patient' | 'provider' | 'admin'
 first_name        TEXT NOT NULL
 last_name         TEXT NOT NULL
 phone             TEXT
-patient_type      patient_type      -- 'new' | 'trt' | 'hormone' | 'general' | 'vip'
+patient_type      patient_type      -- 'new' | 'wellness' | 'bhrt' | 'rejuvenation' | 'iv_therapy' | 'vip' (+ legados)
 last_visit_at     TIMESTAMPTZ       -- Atualizado automaticamente quando consulta = completed
 labs_completed_at TIMESTAMPTZ       -- Data dos últimos exames
 created_at        TIMESTAMPTZ
@@ -260,6 +271,21 @@ created_at          TIMESTAMPTZ
 updated_at          TIMESTAMPTZ
 ```
 
+#### `treatment_types` (Referência de Tratamentos)
+```sql
+key               TEXT PRIMARY KEY      -- ex: 'morpheus8', 'bhrt'
+label_pt          TEXT NOT NULL         -- "Morpheus8"
+label_en          TEXT NOT NULL         -- "Morpheus8"
+short_label_pt    TEXT NOT NULL         -- "Morpheus8" (abreviado)
+short_label_en    TEXT NOT NULL
+description_pt    TEXT
+description_en    TEXT
+category          TEXT NOT NULL         -- 'general' | 'wellbeing' | 'personalized' | 'rejuvenation' | 'iv_therapy'
+duration_minutes  INTEGER NOT NULL      -- Duração real (usada pelo RPC create_appointment)
+is_active         BOOLEAN DEFAULT true  -- false para tipos legados
+sort_order        INTEGER DEFAULT 0
+```
+
 ### ENUMs
 
 #### `user_role`
@@ -268,23 +294,42 @@ updated_at          TIMESTAMPTZ
 - `admin` - Administrador
 
 #### `patient_type`
-- `new` - Novo paciente (verde)
-- `general` - Paciente geral (marrom)
-- `trt` - Paciente TRT (roxo)
-- `hormone` - Paciente hormonal (rosa)
-- `vip` - Paciente VIP (dourado)
+**Ativos:**
+- `new` - Novo Paciente (#10B981 verde)
+- `wellness` - Bem-estar (#14B8A6 teal)
+- `bhrt` - BHRT (#8B5CF6 roxo)
+- `rejuvenation` - Rejuvenescimento (#EC4899 rosa)
+- `iv_therapy` - Terapia IV (#3B82F6 azul)
+- `vip` - VIP (#D4AF37 dourado)
 
-#### `appointment_type`
-| Tipo | Descrição | Duração |
-|------|-----------|---------|
-| `initial_consultation` | Consulta Inicial | 60 min |
-| `follow_up` | Retorno | 30 min |
-| `hormone_check` | Avaliação Hormonal | 45 min |
-| `lab_review` | Revisão de Exames | 20 min |
-| `nutrition` | Nutrição | 45 min |
-| `health_coaching` | Health Coaching | 30 min |
-| `therapy` | Terapia | 50 min |
-| `personal_training` | Personal Training | 60 min |
+**Legados (ocultos na UI):** `trt`, `hormone`, `general`
+
+#### `appointment_type` (18 ativos + 6 legados)
+
+Tipos organizados por categoria. Duração correta é buscada da tabela `treatment_types` pelo RPC `create_appointment`.
+
+| Categoria | Tipo | Descrição | Duração |
+|-----------|------|-----------|---------|
+| **General** | `initial_consultation` | Consulta Inicial | 60 min |
+| **General** | `follow_up` | Retorno | 30 min |
+| **Well-being** | `functional_medicine` | Medicina Funcional | 60 min |
+| **Well-being** | `bhrt` | BHRT | 45 min |
+| **Well-being** | `male_hypertrophy` | Hipertrofia Masculina | 45 min |
+| **Well-being** | `female_hypertrophy` | Hipertrofia Feminina | 45 min |
+| **Personalized** | `insulin_resistance` | Resistência à Insulina | 45 min |
+| **Personalized** | `chronic_inflammation` | Inflamação Crônica | 45 min |
+| **Personalized** | `thyroid_support` | Suporte de Tireoide | 45 min |
+| **Rejuvenation** | `morpheus8` | Morpheus8 | 60 min |
+| **Rejuvenation** | `botulinum_toxin` | Toxina Botulínica | 30 min |
+| **Rejuvenation** | `fillers` | Preenchimento | 45 min |
+| **Rejuvenation** | `skin_boosters` | Skin Boosters | 30 min |
+| **IV Therapy** | `iv_protocols` | Protocolos IV | 60 min |
+| **IV Therapy** | `customized_iv_nutrition` | Nutrição IV Personalizada | 60 min |
+| **IV Therapy** | `nutrient_testing` | Teste de Nutrientes | 30 min |
+| **IV Therapy** | `nad_therapy` | Terapia NAD+ | 90 min |
+| **IV Therapy** | `vitamin_injections` | Injeções de Vitaminas | 20 min |
+
+**Legados (is_active=false):** `hormone_check`, `lab_review`, `nutrition`, `health_coaching`, `therapy`, `personal_training`
 
 #### `appointment_status`
 ```
@@ -345,6 +390,8 @@ CREATE TABLE schema_migrations (
 | 012 | no_show_system | no_show_count, confirmed_by_patient_at, trigger auto-increment, templates no_show_patient/provider |
 | 013 | auto_create_profile | Trigger on auth.users para auto-criar profile (Google OAuth + email/senha) |
 | 014 | message_retry | retry_count e last_retry_at no message_logs + índice para retry |
+| 015 | add_enum_values | Novos valores nos ENUMs appointment_type (16) e patient_type (4) |
+| 016 | treatment_types | Tabela treatment_types + fix duração no create_appointment + elegibilidade novos patient_types |
 
 ### Aplicar Migrações
 
@@ -384,9 +431,9 @@ Criar script manual `XXX_nome_down.sql` com os DROPs necessários.
 
 | Tipo de Paciente | Regras |
 |------------------|--------|
-| `new` | Só pode agendar `initial_consultation` |
-| `trt` / `hormone` | Requer exames (labs) nos últimos 6 meses + visita médica nos últimos 6 meses |
-| `general` / `vip` | Sem restrições |
+| `new` | Só pode agendar `initial_consultation` ou `functional_medicine` |
+| `bhrt` / `trt` / `hormone` | Requer exames (labs) nos últimos 6 meses para tratamentos hormonais (bhrt, male/female_hypertrophy, thyroid_support) |
+| `wellness` / `rejuvenation` / `iv_therapy` / `vip` / `general` | Sem restrições |
 
 ### Validações de Agendamento
 - Mínimo 24h de antecedência
@@ -429,6 +476,29 @@ API Key: configurada em .env (EVOLUTION_API_KEY)
 ---
 
 ## Padrões de Código
+
+### Tipos de Tratamento (Source of Truth)
+```typescript
+// SEMPRE importar de constants/treatments.ts — NUNCA criar mapas locais
+import { getTreatmentLabel, getTreatmentShortLabel, getTreatmentDuration } from '../constants/treatments';
+import { getPatientTypeLabel, getPatientTypeColor } from '../constants/treatments';
+import { getTreatmentsByCategory, ACTIVE_TREATMENTS, CLINIC_INFO } from '../constants/treatments';
+
+// Labels
+getTreatmentLabel('morpheus8')       // "Morpheus8"
+getTreatmentLabel('bhrt', 'en')      // "BHRT"
+getTreatmentShortLabel('botulinum_toxin') // "Botox"
+
+// Duração
+getTreatmentDuration('nad_therapy')  // 90
+
+// Categorias (para UI agrupada)
+getTreatmentsByCategory()  // [{ category: CategoryInfo, treatments: TreatmentType[] }, ...]
+
+// Patient types
+getPatientTypeLabel('wellness')  // "Bem-estar"
+getPatientTypeColor('bhrt')      // "#8B5CF6"
+```
 
 ### Custom Hooks
 ```typescript

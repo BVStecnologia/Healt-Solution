@@ -62,10 +62,28 @@ export async function sendMessage(instanceName: string, remoteJid: string, text:
   }
 }
 
-// Appointment type labels (short)
+// Appointment type labels (short) - bilingual
 export const TYPE_LABELS: Record<string, Record<Language, string>> = {
+  // Active types
   initial_consultation: { pt: 'Consulta Inicial', en: 'Initial Consultation' },
   follow_up: { pt: 'Retorno', en: 'Follow-up' },
+  functional_medicine: { pt: 'Medicina Funcional', en: 'Functional Medicine' },
+  bhrt: { pt: 'BHRT', en: 'BHRT' },
+  male_hypertrophy: { pt: 'Hipertrofia Masc.', en: 'Male Hypertrophy' },
+  female_hypertrophy: { pt: 'Hipertrofia Fem.', en: 'Female Hypertrophy' },
+  insulin_resistance: { pt: 'Resist. Insulina', en: 'Insulin Resistance' },
+  chronic_inflammation: { pt: 'Inflam. Crônica', en: 'Chronic Inflammation' },
+  thyroid_support: { pt: 'Tireoide', en: 'Thyroid Support' },
+  morpheus8: { pt: 'Morpheus8', en: 'Morpheus8' },
+  botulinum_toxin: { pt: 'Botox', en: 'Botulinum Toxin' },
+  fillers: { pt: 'Preenchimento', en: 'Fillers' },
+  skin_boosters: { pt: 'Skin Boosters', en: 'Skin Boosters' },
+  iv_protocols: { pt: 'Protocolos IV', en: 'IV Protocols' },
+  customized_iv_nutrition: { pt: 'IV Nutrição', en: 'IV Nutrition' },
+  nutrient_testing: { pt: 'Teste Nutrientes', en: 'Nutrient Testing' },
+  nad_therapy: { pt: 'NAD+', en: 'NAD+ Therapy' },
+  vitamin_injections: { pt: 'Vitaminas', en: 'Vitamin Injections' },
+  // Legacy types (for existing records)
   hormone_check: { pt: 'Av. Hormonal', en: 'Hormone Check' },
   lab_review: { pt: 'Rev. Exames', en: 'Lab Review' },
   nutrition: { pt: 'Nutrição', en: 'Nutrition' },

@@ -23,11 +23,21 @@ import {
   X,
   Save,
   Shield,
+  Crown,
+  Droplets,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile, Appointment, PatientType, AppointmentStatus } from '../../types/database';
+import {
+  getTreatmentLabel,
+  getPatientTypeLabel,
+  getPatientTypeColor,
+  getPatientTypeBgColor,
+  getPatientTypeIcon,
+  ACTIVE_PATIENT_TYPES,
+} from '../../constants/treatments';
 
 // Animations
 const fadeInUp = keyframes`
@@ -113,13 +123,8 @@ const ProfileHeader = styled.div<{ $type: PatientType | null }>`
     right: 0;
     height: 6px;
     background: ${props => {
-      switch (props.$type) {
-        case 'vip': return 'linear-gradient(90deg, #D4AF37, #FFD700, #D4AF37)';
-        case 'trt': return 'linear-gradient(90deg, #7C3AED, #A78BFA, #7C3AED)';
-        case 'hormone': return 'linear-gradient(90deg, #EC4899, #F472B6, #EC4899)';
-        case 'new': return 'linear-gradient(90deg, #10B981, #34D399, #10B981)';
-        default: return `linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight}, ${theme.colors.primary})`;
-      }
+      const c = getPatientTypeColor(props.$type || 'general');
+      return `linear-gradient(90deg, ${c}, ${c}CC, ${c})`;
     }};
     background-size: 200% 100%;
     animation: ${shimmer} 3s linear infinite;
@@ -161,13 +166,8 @@ const Avatar = styled.div<{ $type: PatientType | null }>`
   height: 140px;
   border-radius: 50%;
   background: ${props => {
-    switch (props.$type) {
-      case 'vip': return 'linear-gradient(135deg, #D4AF37, #B8860B)';
-      case 'trt': return 'linear-gradient(135deg, #7C3AED, #5B21B6)';
-      case 'hormone': return 'linear-gradient(135deg, #EC4899, #BE185D)';
-      case 'new': return 'linear-gradient(135deg, #10B981, #047857)';
-      default: return `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`;
-    }
+    const c = getPatientTypeColor(props.$type || 'general');
+    return `linear-gradient(135deg, ${c}, ${c}CC)`;
   }};
   display: flex;
   align-items: center;
@@ -201,15 +201,7 @@ const TypeBadgeFloat = styled.div<{ $type: PatientType | null }>`
   svg {
     width: 20px;
     height: 20px;
-    color: ${props => {
-      switch (props.$type) {
-        case 'vip': return '#D4AF37';
-        case 'trt': return '#7C3AED';
-        case 'hormone': return '#EC4899';
-        case 'new': return '#10B981';
-        default: return theme.colors.primary;
-      }
-    }};
+    color: ${props => getPatientTypeColor(props.$type || 'general')};
   }
 `;
 
@@ -248,24 +240,8 @@ const TypeBadge = styled.span<{ $type: PatientType | null }>`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  background: ${props => {
-    switch (props.$type) {
-      case 'vip': return 'linear-gradient(135deg, #FEF3C7, #FDE68A)';
-      case 'trt': return 'linear-gradient(135deg, #EDE9FE, #DDD6FE)';
-      case 'hormone': return 'linear-gradient(135deg, #FCE7F3, #FBCFE8)';
-      case 'new': return 'linear-gradient(135deg, #D1FAE5, #A7F3D0)';
-      default: return `linear-gradient(135deg, ${theme.colors.primarySoft}, #E8D5CC)`;
-    }
-  }};
-  color: ${props => {
-    switch (props.$type) {
-      case 'vip': return '#92400E';
-      case 'trt': return '#5B21B6';
-      case 'hormone': return '#BE185D';
-      case 'new': return '#047857';
-      default: return theme.colors.primaryHover;
-    }
-  }};
+  background: ${props => getPatientTypeBgColor(props.$type || 'general')};
+  color: ${props => getPatientTypeColor(props.$type || 'general')};
 
   svg {
     width: 14px;
@@ -960,24 +936,19 @@ const LoadingState = styled.div`
 `;
 
 // Helper functions
-const getPatientTypeLabel = (type: PatientType | null): string => {
-  switch (type) {
-    case 'vip': return 'VIP';
-    case 'trt': return 'TRT';
-    case 'hormone': return 'Hormonal';
-    case 'new': return 'Novo';
-    default: return 'Geral';
-  }
+const ICON_MAP: Record<string, React.ReactNode> = {
+  Star: <Star />,
+  Activity: <Activity />,
+  Heart: <Heart />,
+  Sparkles: <Sparkles />,
+  User: <User />,
+  Crown: <Crown />,
+  Droplets: <Droplets />,
 };
 
-const getPatientTypeIcon = (type: PatientType | null) => {
-  switch (type) {
-    case 'vip': return <Star />;
-    case 'trt': return <Activity />;
-    case 'hormone': return <Heart />;
-    case 'new': return <Sparkles />;
-    default: return <User />;
-  }
+const renderPatientTypeIcon = (type: PatientType | null): React.ReactNode => {
+  const iconName = getPatientTypeIcon(type || 'general');
+  return ICON_MAP[iconName] || <User />;
 };
 
 const getStatusIcon = (status: AppointmentStatus) => {
@@ -1004,19 +975,7 @@ const getStatusLabel = (status: AppointmentStatus): string => {
   }
 };
 
-const getAppointmentTypeLabel = (type: string): string => {
-  const types: Record<string, string> = {
-    initial_consultation: 'Consulta Inicial',
-    follow_up: 'Retorno',
-    hormone_check: 'Avaliação Hormonal',
-    lab_review: 'Revisão de Exames',
-    nutrition: 'Nutrição',
-    health_coaching: 'Health Coaching',
-    therapy: 'Terapia',
-    personal_training: 'Personal Training',
-  };
-  return types[type] || type;
-};
+const getAppointmentTypeLabel = (type: string): string => getTreatmentLabel(type);
 
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return '-';
@@ -1046,13 +1005,10 @@ interface AppointmentWithProvider extends Omit<Appointment, 'provider'> {
   };
 }
 
-const PATIENT_TYPES: { value: PatientType; label: string }[] = [
-  { value: 'new', label: 'Novo Paciente' },
-  { value: 'general', label: 'Geral' },
-  { value: 'trt', label: 'TRT' },
-  { value: 'hormone', label: 'Hormonal' },
-  { value: 'vip', label: 'VIP' }
-];
+const PATIENT_TYPE_OPTIONS: { value: PatientType; label: string }[] = ACTIVE_PATIENT_TYPES.map(t => ({
+  value: t.key as PatientType,
+  label: t.label,
+}));
 
 const PatientProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -1255,7 +1211,7 @@ const PatientProfilePage: React.FC = () => {
                 {getInitials(patient.first_name, patient.last_name)}
               </Avatar>
               <TypeBadgeFloat $type={patient.patient_type}>
-                {getPatientTypeIcon(patient.patient_type)}
+                {renderPatientTypeIcon(patient.patient_type)}
               </TypeBadgeFloat>
             </AvatarContainer>
 
@@ -1264,8 +1220,8 @@ const PatientProfilePage: React.FC = () => {
 
               <PatientMeta>
                 <TypeBadge $type={patient.patient_type}>
-                  {getPatientTypeIcon(patient.patient_type)}
-                  {getPatientTypeLabel(patient.patient_type)}
+                  {renderPatientTypeIcon(patient.patient_type)}
+                  {getPatientTypeLabel(patient.patient_type || 'general')}
                 </TypeBadge>
                 <MetaItem>
                   <Clock />
@@ -1338,7 +1294,7 @@ const PatientProfilePage: React.FC = () => {
               </InfoItem>
               <InfoItem>
                 <InfoLabel>Tipo de Paciente</InfoLabel>
-                <InfoValue>{getPatientTypeLabel(patient.patient_type)}</InfoValue>
+                <InfoValue>{getPatientTypeLabel(patient.patient_type || 'general')}</InfoValue>
               </InfoItem>
               <InfoItem>
                 <InfoLabel>Idioma Preferido</InfoLabel>
@@ -1528,7 +1484,7 @@ const PatientProfilePage: React.FC = () => {
                     value={editForm.patient_type}
                     onChange={e => setEditForm(prev => ({ ...prev, patient_type: e.target.value as PatientType }))}
                   >
-                    {PATIENT_TYPES.map(type => (
+                    {PATIENT_TYPE_OPTIONS.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </FormSelect>

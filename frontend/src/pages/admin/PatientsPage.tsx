@@ -4,12 +4,18 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Users, UserPlus, Search, Edit2, Check, AlertCircle, Eye,
   Crown, Activity, Phone, Mail, ChevronLeft, ChevronRight, X,
-  Sparkles, AlertTriangle
+  Sparkles, AlertTriangle, Heart, Droplets
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile, PatientType, PreferredLanguage } from '../../types/database';
+import {
+  ACTIVE_PATIENT_TYPES,
+  getPatientTypeLabel as getPatientTypeLabelFromConstants,
+  getPatientTypeColor,
+  getPatientTypeIcon
+} from '../../constants/treatments';
 
 // ============================================
 // ANIMATIONS
@@ -346,13 +352,8 @@ const PatientAvatar = styled.div<{ $type: PatientType | null }>`
   height: 56px;
   border-radius: 14px;
   background: ${props => {
-    switch (props.$type) {
-      case 'vip': return `linear-gradient(135deg, ${luxuryTheme.vip}, ${luxuryTheme.goldLight})`;
-      case 'trt': return `linear-gradient(135deg, ${luxuryTheme.trt}, ${luxuryTheme.primaryLight})`;
-      case 'hormone': return `linear-gradient(135deg, ${luxuryTheme.hormone}, #E8A0B0)`;
-      case 'new': return `linear-gradient(135deg, ${luxuryTheme.newPatient}, #10B981)`;
-      default: return `linear-gradient(135deg, ${luxuryTheme.general}, ${luxuryTheme.textSecondary})`;
-    }
+    const color = getPatientTypeColor(props.$type || 'general');
+    return `linear-gradient(135deg, ${color}, ${color}BB)`;
   }};
   display: flex;
   align-items: center;
@@ -362,15 +363,7 @@ const PatientAvatar = styled.div<{ $type: PatientType | null }>`
   font-size: 18px;
   font-family: 'Cormorant Garamond', serif;
   letter-spacing: 1px;
-  box-shadow: 0 4px 12px ${props => {
-    switch (props.$type) {
-      case 'vip': return `${luxuryTheme.vip}40`;
-      case 'trt': return `${luxuryTheme.trt}40`;
-      case 'hormone': return `${luxuryTheme.hormone}40`;
-      case 'new': return `${luxuryTheme.newPatient}40`;
-      default: return `${luxuryTheme.general}40`;
-    }
-  }};
+  box-shadow: 0 4px 12px ${props => `${getPatientTypeColor(props.$type || 'general')}40`};
   transition: all 0.3s ease;
 
   ${PatientCard}:hover & {
@@ -435,33 +428,9 @@ const PatientBadge = styled.span<{ $type: PatientType | null }>`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: ${props => {
-    switch (props.$type) {
-      case 'vip': return `${luxuryTheme.vip}18`;
-      case 'trt': return `${luxuryTheme.trt}15`;
-      case 'hormone': return `${luxuryTheme.hormone}18`;
-      case 'new': return `${luxuryTheme.newPatient}15`;
-      default: return `${luxuryTheme.general}15`;
-    }
-  }};
-  color: ${props => {
-    switch (props.$type) {
-      case 'vip': return luxuryTheme.vip;
-      case 'trt': return luxuryTheme.trt;
-      case 'hormone': return luxuryTheme.hormone;
-      case 'new': return luxuryTheme.newPatient;
-      default: return luxuryTheme.general;
-    }
-  }};
-  border: 1px solid ${props => {
-    switch (props.$type) {
-      case 'vip': return `${luxuryTheme.vip}30`;
-      case 'trt': return `${luxuryTheme.trt}25`;
-      case 'hormone': return `${luxuryTheme.hormone}30`;
-      case 'new': return `${luxuryTheme.newPatient}25`;
-      default: return `${luxuryTheme.general}25`;
-    }
-  }};
+  background: ${props => `${getPatientTypeColor(props.$type || 'general')}18`};
+  color: ${props => getPatientTypeColor(props.$type || 'general')};
+  border: 1px solid ${props => `${getPatientTypeColor(props.$type || 'general')}30`};
   transition: all 0.3s ease;
 
   ${PatientCard}:hover & {
@@ -866,13 +835,7 @@ const Alert = styled.div<{ $variant: 'error' | 'success' }>`
 // ============================================
 // CONSTANTS
 // ============================================
-const PATIENT_TYPES: { value: PatientType; label: string }[] = [
-  { value: 'new', label: 'Novo Paciente' },
-  { value: 'general', label: 'Geral' },
-  { value: 'trt', label: 'TRT' },
-  { value: 'hormone', label: 'Hormonal' },
-  { value: 'vip', label: 'VIP' }
-];
+const PATIENT_TYPE_OPTIONS = ACTIVE_PATIENT_TYPES.map(t => ({ value: t.key as PatientType, label: t.label }));
 
 const ITEMS_PER_PAGE = 8;
 
@@ -1142,16 +1105,18 @@ const PatientsPage: React.FC = () => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
-  const getPatientTypeLabel = (type: PatientType | null) => {
-    const found = PATIENT_TYPES.find(t => t.value === type);
-    return found ? found.label : 'Geral';
+  const getLabel = (type: PatientType | null) => {
+    return getPatientTypeLabelFromConstants(type || 'general');
   };
 
   const getBadgeIcon = (type: PatientType | null) => {
-    switch (type) {
-      case 'vip': return <Crown size={12} />;
-      case 'trt': return <Activity size={12} />;
-      case 'new': return <Sparkles size={12} />;
+    const iconName = getPatientTypeIcon(type || 'general');
+    switch (iconName) {
+      case 'Crown': return <Crown size={12} />;
+      case 'Activity': return <Activity size={12} />;
+      case 'Sparkles': return <Sparkles size={12} />;
+      case 'Heart': return <Heart size={12} />;
+      case 'Droplets': return <Droplets size={12} />;
       default: return null;
     }
   };
@@ -1226,7 +1191,7 @@ const PatientsPage: React.FC = () => {
             onChange={(e) => setTypeFilter(e.target.value)}
           >
             <option value="all">Todos os tipos</option>
-            {PATIENT_TYPES.map(type => (
+            {PATIENT_TYPE_OPTIONS.map(type => (
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
           </FilterSelect>
@@ -1299,7 +1264,7 @@ const PatientsPage: React.FC = () => {
 
                   <PatientBadge $type={patient.patient_type}>
                     {getBadgeIcon(patient.patient_type)}
-                    {getPatientTypeLabel(patient.patient_type)}
+                    {getLabel(patient.patient_type)}
                   </PatientBadge>
 
                   <PatientActions>
@@ -1433,7 +1398,7 @@ const PatientsPage: React.FC = () => {
                     value={formData.patient_type}
                     onChange={(e) => setFormData({ ...formData, patient_type: e.target.value as PatientType })}
                   >
-                    {PATIENT_TYPES.map(type => (
+                    {PATIENT_TYPE_OPTIONS.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
                     ))}
                   </FormSelect>

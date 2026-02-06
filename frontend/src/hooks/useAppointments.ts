@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, callRPC } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { whatsappService } from '../lib/whatsappService';
+import { getTreatmentLabel } from '../constants/treatments';
 import type { Appointment, AppointmentStatus, CreateAppointmentDTO } from '../types/database';
 
 interface UseAppointmentsReturn {
@@ -110,16 +111,6 @@ export const useAppointments = (): UseAppointmentsReturn => {
             ? `${profile.first_name} ${profile.last_name}`
             : '';
 
-          const appointmentTypeNames: Record<string, string> = {
-            initial_consultation: 'Consulta Inicial',
-            follow_up: 'Retorno',
-            hormone_check: 'Avaliação Hormonal',
-            lab_review: 'Revisão de Exames',
-            nutrition: 'Nutrição',
-            health_coaching: 'Health Coaching',
-            therapy: 'Terapia',
-            personal_training: 'Personal Training',
-          };
 
           whatsappService.notifyBothNewAppointment({
             patientName,
@@ -128,7 +119,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
             providerName: `Dr(a). ${providerProfile.first_name} ${providerProfile.last_name}`,
             providerPhone: providerProfile.phone || '',
             providerUserId: providerProfile.id,
-            appointmentType: appointmentTypeNames[data.type] || data.type,
+            appointmentType: getTreatmentLabel(data.type),
             appointmentDate: `${String(schedDate.getUTCDate()).padStart(2, '0')}/${String(schedDate.getUTCMonth() + 1).padStart(2, '0')}/${schedDate.getUTCFullYear()}`,
             appointmentTime: `${String(schedDate.getUTCHours()).padStart(2, '0')}:${String(schedDate.getUTCMinutes()).padStart(2, '0')}`,
             appointmentId: result.id,

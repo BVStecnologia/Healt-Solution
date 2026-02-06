@@ -7,6 +7,7 @@ import { theme } from '../../styles/GlobalStyle';
 import Card from '../ui/Card';
 import Badge, { getAppointmentStatusBadge } from '../ui/Badge';
 import type { Appointment } from '../../types/database';
+import { getTreatmentLabel } from '../../constants/treatments';
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -82,16 +83,6 @@ const ActionButton = styled.button<{ $variant?: 'danger' }>`
   }
 `;
 
-const appointmentTypeLabels: Record<string, string> = {
-  initial_consultation: 'Consulta Inicial',
-  follow_up: 'Retorno',
-  hormone_check: 'Avaliação Hormonal',
-  lab_review: 'Revisão de Exames',
-  nutrition: 'Nutrição',
-  health_coaching: 'Health Coaching',
-  therapy: 'Terapia',
-  personal_training: 'Personal Training',
-};
 
 const AppointmentCard: React.FC<AppointmentCardProps> = ({
   appointment,
@@ -111,7 +102,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       <Header>
         <div>
           <TypeLabel>
-            {appointmentTypeLabels[appointment.type] || appointment.type}
+            {getTreatmentLabel(appointment.type)}
           </TypeLabel>
         </div>
         <Badge variant={variant}>{label}</Badge>

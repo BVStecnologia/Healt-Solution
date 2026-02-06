@@ -7,6 +7,7 @@ import { ArrowLeft, Calendar, Clock, User, MapPin, FileText } from 'lucide-react
 import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { useAppointments } from '../../hooks/useAppointments';
+import { getTreatmentLabel } from '../../constants/treatments';
 import Layout from '../../components/Layout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -146,16 +147,6 @@ const CancelledReason = styled.div`
   color: ${theme.colors.text};
 `;
 
-const appointmentTypeLabels: Record<string, string> = {
-  initial_consultation: 'Consulta Inicial',
-  follow_up: 'Retorno',
-  hormone_check: 'Avaliação Hormonal',
-  lab_review: 'Revisão de Exames',
-  nutrition: 'Nutrição',
-  health_coaching: 'Health Coaching',
-  therapy: 'Terapia',
-  personal_training: 'Personal Training',
-};
 
 const AppointmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -264,7 +255,7 @@ const AppointmentDetailPage: React.FC = () => {
       <DetailCard>
         <DetailHeader>
           <TypeLabel>
-            {appointmentTypeLabels[appointment.type] || appointment.type}
+            {getTreatmentLabel(appointment.type)}
           </TypeLabel>
         </DetailHeader>
 
