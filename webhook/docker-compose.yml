@@ -1,0 +1,38 @@
+# ===========================================
+# STACK: WEBHOOK SERVER
+# ===========================================
+# Gestão de agenda via WhatsApp
+# Conecta às stacks: supabase (DB/API) + evolution (WhatsApp)
+# ===========================================
+# Uso:
+#   cd webhook && docker compose up -d
+#   docker compose logs -f
+#   docker compose down
+# ===========================================
+
+services:
+  server:
+    container_name: webhook-server
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${WEBHOOK_PORT:-3002}:3001"
+    environment:
+      - PORT=3001
+      - SUPABASE_URL=http://supabase-kong:8000
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - EVOLUTION_API_URL=http://evolution_api:8080
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+      - PANEL_BASE_URL=${PANEL_BASE_URL:-http://localhost:3000}
+      - SUPABASE_PUBLIC_URL=${SUPABASE_PUBLIC_URL:-http://localhost:8000}
+    networks:
+      - supabase_net
+      - evolution_net
+
+networks:
+  supabase_net:
+    name: supabase_default
+    external: true
+  evolution_net:
+    name: evolution_evolution_network
+    external: true

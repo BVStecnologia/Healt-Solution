@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -10,6 +10,9 @@ import {
   MessageCircle,
   LogOut,
   Shield,
+  Clock,
+  ChevronDown,
+  User,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
@@ -23,7 +26,7 @@ const subtleGlow = keyframes`
   }
 `;
 
-const Sidebar = styled.aside`
+const Sidebar = styled.aside<{ $open: boolean }>`
   width: 270px;
   background:
     linear-gradient(180deg, #2D2420 0%, #3D322B 50%, #4A3C33 100%);
@@ -35,6 +38,7 @@ const Sidebar = styled.aside`
   bottom: 0;
   z-index: 100;
   overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
   &::before {
     content: '';
@@ -65,7 +69,7 @@ const Sidebar = styled.aside`
   }
 
   @media (max-width: 768px) {
-    display: none;
+    transform: translateX(${props => (props.$open ? '0' : '-100%')});
   }
 `;
 
@@ -132,6 +136,121 @@ const LogoIcon = styled.div`
   }
 `;
 
+// ============================================
+// ENVIRONMENT SWITCHER
+// ============================================
+const SwitcherWrapper = styled.div`
+  padding: 12px 12px 0;
+  position: relative;
+`;
+
+const SwitcherButton = styled.button<{ $open?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .env-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    svg {
+      width: 16px;
+      height: 16px;
+      color: white;
+    }
+  }
+
+  .env-label {
+    flex: 1;
+    text-align: left;
+  }
+
+  .env-chevron {
+    transition: transform 0.2s ease;
+    transform: rotate(${props => props.$open ? '180deg' : '0deg'});
+    opacity: 0.5;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+`;
+
+const SwitcherDropdown = styled.div<{ $open: boolean }>`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 12px;
+  right: 12px;
+  background: #3D322B;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 10;
+  opacity: ${props => props.$open ? 1 : 0};
+  transform: translateY(${props => props.$open ? '0' : '-8px'});
+  pointer-events: ${props => props.$open ? 'auto' : 'none'};
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+`;
+
+const SwitcherOption = styled.button<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: ${props => props.$active ? 'rgba(146, 86, 62, 0.2)' : 'transparent'};
+  border: none;
+  color: ${props => props.$active ? 'white' : 'rgba(255, 255, 255, 0.6)'};
+  font-size: 13px;
+  font-weight: ${props => props.$active ? '600' : '500'};
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${props => props.$active ? 'rgba(146, 86, 62, 0.25)' : 'rgba(255, 255, 255, 0.06)'};
+    color: white;
+  }
+
+  .env-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+`;
+
+// ============================================
+// NAV
+// ============================================
 const Nav = styled.nav`
   flex: 1;
   padding: 20px 12px;
@@ -215,6 +334,9 @@ const NavLink = styled(Link)<{ $active: boolean }>`
   }
 `;
 
+// ============================================
+// USER SECTION
+// ============================================
 const UserSection = styled.div`
   padding: 16px;
   position: relative;
@@ -322,47 +444,160 @@ const LogoutButton = styled.button`
   }
 `;
 
-const navItems = [
-  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, section: 'principal' },
-  { path: '/admin/calendar', label: 'Calendário', icon: Calendar, section: 'principal' },
-  { path: '/admin/appointments', label: 'Consultas', icon: Stethoscope, section: 'principal' },
-  { path: '/admin/patients', label: 'Pacientes', icon: Users, section: 'gestao' },
-  { path: '/admin/providers', label: 'Médicos', icon: UserCog, section: 'gestao' },
-  { path: '/admin/admins', label: 'Admins', icon: Shield, section: 'gestao' },
-  { path: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle, section: 'config' },
+// ============================================
+// ENVIRONMENT CONFIG
+// ============================================
+type Environment = 'admin' | 'doctor' | 'patient';
+
+const environments: { key: Environment; label: string; icon: React.FC<any>; path: string; bgColor: string }[] = [
+  { key: 'admin', label: 'Administrador', icon: Shield, path: '/admin', bgColor: 'rgba(146, 86, 62, 0.4)' },
+  { key: 'doctor', label: 'Médico', icon: Stethoscope, path: '/doctor', bgColor: 'rgba(16, 185, 129, 0.3)' },
+  { key: 'patient', label: 'Paciente', icon: User, path: '/', bgColor: 'rgba(99, 102, 241, 0.3)' },
 ];
 
-const AdminSidebar: React.FC = () => {
+const allNavItems = [
+  { subpath: '', label: 'Dashboard', icon: LayoutDashboard, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
+  { subpath: '/calendar', label: 'Calendário', icon: Calendar, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
+  { subpath: '/appointments', label: 'Consultas', icon: Stethoscope, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
+  { subpath: '/my-schedule', label: 'Minha Agenda', icon: Clock, section: 'principal', envs: ['doctor'] as Environment[] },
+  { subpath: '/my-schedule', label: 'Agenda Médicos', icon: Clock, section: 'gestao', envs: ['admin'] as Environment[] },
+  { subpath: '/patients', label: 'Pacientes', icon: Users, section: 'gestao', envs: ['admin'] as Environment[] },
+  { subpath: '/providers', label: 'Médicos', icon: UserCog, section: 'gestao', envs: ['admin'] as Environment[] },
+  { subpath: '/admins', label: 'Admins', icon: Shield, section: 'gestao', envs: ['admin'] as Environment[] },
+  { subpath: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
+];
+
+// ============================================
+// COMPONENT
+// ============================================
+interface AdminSidebarProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+  const switcherRef = useRef<HTMLDivElement>(null);
+
+  const isAdmin = profile?.role === 'admin';
+  const isProvider = profile?.role === 'provider';
+
+  // Detectar ambiente atual pela URL
+  const currentEnv: Environment = location.pathname.startsWith('/doctor')
+    ? 'doctor'
+    : location.pathname.startsWith('/admin')
+      ? 'admin'
+      : 'patient';
+
+  const basePath = currentEnv === 'doctor' ? '/doctor' : '/admin';
+
+  // Admin vê todos os ambientes, provider só vê o seu
+  const hasMultipleEnvs = isAdmin;
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/admin/login');
+    navigate(currentEnv === 'doctor' ? '/doctor/login' : '/admin/login');
   };
+
+  const handleSwitchEnv = (env: Environment) => {
+    setSwitcherOpen(false);
+    const target = environments.find(e => e.key === env);
+    if (target) {
+      navigate(target.path);
+    }
+  };
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setSwitcherOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const initials = profile
     ? `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase()
     : 'AD';
 
-  const sections = [
+  // Filtrar nav items pelo ambiente atual e gerar paths
+  const navItems = allNavItems
+    .filter(item => item.envs.includes(currentEnv))
+    .map(item => ({ ...item, path: basePath + item.subpath }));
+
+  // Seções visíveis
+  const allSections = [
     { key: 'principal', title: 'Principal' },
     { key: 'gestao', title: 'Gestão' },
     { key: 'config', title: 'Configurações' },
   ];
+  const sections = allSections.filter(section =>
+    navItems.some(item => item.section === section.key)
+  );
+
+  const currentEnvConfig = environments.find(e => e.key === currentEnv)!;
+  const EnvIcon = currentEnvConfig.icon;
+
+  const displayName = profile
+    ? (currentEnv === 'doctor' || isProvider)
+      ? `Dr(a). ${profile.first_name}`
+      : `${profile.first_name} ${profile.last_name}`
+    : 'Admin';
+
+  const roleLabel = currentEnv === 'doctor' ? 'Médico' : isProvider ? 'Médico' : 'Administrador';
+  const badgeLabel = currentEnv === 'doctor' ? 'Médico' : isProvider ? 'Médico' : 'Admin';
+
+  const logoIcon = currentEnv === 'doctor' ? <Stethoscope /> : <Shield />;
 
   return (
-    <Sidebar>
+    <Sidebar $open={open}>
       <Logo>
         <LogoIcon>
-          <Shield />
+          {logoIcon}
         </LogoIcon>
         <div>
           <h1>Essence</h1>
         </div>
-        <span className="badge">Admin</span>
+        <span className="badge">{badgeLabel}</span>
       </Logo>
+
+      {/* Environment Switcher - só aparece se tem mais de 1 ambiente */}
+      {hasMultipleEnvs && (
+        <SwitcherWrapper ref={switcherRef}>
+          <SwitcherButton
+            onClick={() => setSwitcherOpen(!switcherOpen)}
+            $open={switcherOpen}
+          >
+            <div className="env-icon" style={{ background: currentEnvConfig.bgColor }}>
+              <EnvIcon />
+            </div>
+            <span className="env-label">{currentEnvConfig.label}</span>
+            <div className="env-chevron">
+              <ChevronDown />
+            </div>
+          </SwitcherButton>
+
+          <SwitcherDropdown $open={switcherOpen}>
+            {environments.map(env => (
+              <SwitcherOption
+                key={env.key}
+                $active={env.key === currentEnv}
+                onClick={() => handleSwitchEnv(env.key)}
+              >
+                <div className="env-icon" style={{ background: env.bgColor }}>
+                  <env.icon />
+                </div>
+                {env.label}
+              </SwitcherOption>
+            ))}
+          </SwitcherDropdown>
+        </SwitcherWrapper>
+      )}
 
       <Nav>
         {sections.map(section => (
@@ -371,9 +606,7 @@ const AdminSidebar: React.FC = () => {
             {navItems
               .filter(item => item.section === section.key)
               .map(item => {
-                // Para /admin (dashboard), verifica igualdade exata
-                // Para outras rotas, verifica se começa com o path (inclui sub-rotas)
-                const isActive = item.path === '/admin'
+                const isActive = item.subpath === ''
                   ? location.pathname === item.path
                   : location.pathname.startsWith(item.path);
 
@@ -382,6 +615,7 @@ const AdminSidebar: React.FC = () => {
                     key={item.path}
                     to={item.path}
                     $active={isActive}
+                    onClick={onClose}
                   >
                     <item.icon />
                     {item.label}
@@ -402,10 +636,8 @@ const AdminSidebar: React.FC = () => {
             )}
           </Avatar>
           <UserDetails>
-            <UserName>
-              {profile ? `${profile.first_name} ${profile.last_name}` : 'Admin'}
-            </UserName>
-            <UserRole>Administrador</UserRole>
+            <UserName>{displayName}</UserName>
+            <UserRole>{roleLabel}</UserRole>
           </UserDetails>
         </UserInfo>
         <LogoutButton onClick={handleLogout}>

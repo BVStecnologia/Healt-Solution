@@ -20,12 +20,15 @@ import {
   FileText,
   AlertCircle,
   Save,
+  Lock,
+  Trash2,
 } from 'lucide-react';
-import { AppointmentType } from '../../types/database';
+import { AppointmentType, ProviderBlock } from '../../types/database';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
+import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 
 // Animações
 const fadeIn = keyframes`
@@ -1338,6 +1341,8 @@ interface CalendarEvent {
   patientName: string;
   providerName: string;
   type: string;
+  isBlock?: boolean;
+  blockReason?: string;
 }
 
 interface Provider {
@@ -1431,12 +1436,51 @@ const CustomAgendaEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
   );
 };
 
+// Provider filter styled for calendar
+const ProviderFilterWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+`;
+
+const ProviderFilterSelect = styled.select`
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.borderRadius.lg};
+  font-size: 13px;
+  font-weight: 500;
+  background: ${theme.colors.surface};
+  color: ${theme.colors.text};
+  cursor: pointer;
+  min-width: 180px;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238C8B8B' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 36px;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+`;
+
+interface ProviderOption {
+  id: string;
+  name: string;
+}
+
 const CalendarPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { providerId, isProvider, isAdmin } = useCurrentProvider();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [providerFilter, setProviderFilter] = useState<string>('all');
+  const [providerOptions, setProviderOptions] = useState<ProviderOption[]>([]);
 
   // New appointment modal state
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
@@ -1454,6 +1498,20 @@ const CalendarPage: React.FC = () => {
   const [savingAppointment, setSavingAppointment] = useState(false);
   const [appointmentSuccess, setAppointmentSuccess] = useState(false);
   const [appointmentError, setAppointmentError] = useState('');
+
+  // Block modal state
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [blockForm, setBlockForm] = useState({
+    provider_id: '',
+    block_date: format(new Date(), 'yyyy-MM-dd'),
+    period: 'full_day' as 'full_day' | 'morning' | 'afternoon' | 'custom',
+    start_time: '08:00',
+    end_time: '18:00',
+    reason: '',
+  });
+  const [savingBlock, setSavingBlock] = useState(false);
+  const [blockSuccess, setBlockSuccess] = useState(false);
+  const [blockError, setBlockError] = useState('');
 
   // Ler view da URL ou usar 'month' como padrão
   const viewFromUrl = searchParams.get('view') as View | null;
@@ -1487,12 +1545,40 @@ const CalendarPage: React.FC = () => {
     updateUrl(view, newDate);
   }, [view, updateUrl]);
 
+  // Determinar provider_id ativo para filtro
+  const activeProviderId = isProvider ? providerId : (providerFilter !== 'all' ? providerFilter : null);
+
+  // Carregar lista de médicos para dropdown (admin only)
+  useEffect(() => {
+    if (!isAdmin) return;
+    const loadProviderOptions = async () => {
+      try {
+        const { data } = await supabase
+          .from('providers')
+          .select('id, profile:profiles(first_name, last_name)')
+          .eq('is_active', true);
+
+        const options = (data || []).map((p: any) => {
+          const prof = Array.isArray(p.profile) ? p.profile[0] : p.profile;
+          return {
+            id: p.id,
+            name: prof ? `Dr(a). ${prof.first_name} ${prof.last_name}` : p.id,
+          };
+        });
+        setProviderOptions(options);
+      } catch (err) {
+        console.error('Error loading providers:', err);
+      }
+    };
+    loadProviderOptions();
+  }, [isAdmin]);
+
   const loadAppointments = useCallback(async () => {
     try {
       const start = startOfMonth(subDays(date, 7));
       const end = endOfMonth(addDays(date, 7));
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select(`
           id,
@@ -1509,6 +1595,12 @@ const CalendarPage: React.FC = () => {
         .gte('scheduled_at', start.toISOString())
         .lte('scheduled_at', end.toISOString())
         .order('scheduled_at', { ascending: true });
+
+      if (activeProviderId) {
+        query = query.eq('provider_id', activeProviderId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -1531,11 +1623,69 @@ const CalendarPage: React.FC = () => {
         };
       });
 
-      setEvents(calendarEvents);
+      // Load provider blocks
+      let blockQuery = supabase
+        .from('provider_blocks')
+        .select(`
+          id,
+          provider_id,
+          block_date,
+          start_time,
+          end_time,
+          reason,
+          created_via,
+          provider:providers!provider_blocks_provider_id_fkey(
+            profile:profiles(first_name, last_name)
+          )
+        `)
+        .gte('block_date', format(start, 'yyyy-MM-dd'))
+        .lte('block_date', format(end, 'yyyy-MM-dd'));
+
+      if (activeProviderId) {
+        blockQuery = blockQuery.eq('provider_id', activeProviderId);
+      }
+
+      const { data: blocksData } = await blockQuery;
+
+      const blockEvents: CalendarEvent[] = (blocksData || []).map((block: any) => {
+        const providerName = block.provider?.profile
+          ? `Dr(a). ${block.provider.profile.first_name}`
+          : '';
+
+        let blockStart: Date;
+        let blockEnd: Date;
+
+        if (!block.start_time) {
+          // Full day block
+          blockStart = new Date(`${block.block_date}T08:00:00`);
+          blockEnd = new Date(`${block.block_date}T18:00:00`);
+        } else {
+          blockStart = new Date(`${block.block_date}T${block.start_time}`);
+          blockEnd = new Date(`${block.block_date}T${block.end_time}`);
+        }
+
+        const label = block.reason || (!block.start_time ? 'Dia bloqueado' : 'Bloqueado');
+
+        return {
+          id: `block-${block.id}`,
+          title: `🔒 ${label}${providerName ? ` - ${providerName}` : ''}`,
+          start: blockStart,
+          end: blockEnd,
+          status: 'blocked',
+          patientId: '',
+          patientName: '',
+          providerName,
+          type: 'block',
+          isBlock: true,
+          blockReason: block.reason,
+        };
+      });
+
+      setEvents([...calendarEvents, ...blockEvents]);
     } catch (error) {
       console.error('Error loading appointments:', error);
     }
-  }, [date]);
+  }, [date, activeProviderId]);
 
   useEffect(() => {
     loadAppointments();
@@ -1617,6 +1767,38 @@ const CalendarPage: React.FC = () => {
   }, [pendingPatientId, patients]);
 
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
+    // Block events style
+    if (event.isBlock) {
+      if (view === 'agenda') {
+        return {
+          style: {
+            backgroundColor: 'transparent',
+            border: 'none',
+            color: '#991B1B',
+            fontWeight: 600,
+            fontSize: '14px',
+            padding: 0,
+            boxShadow: 'none',
+          },
+        };
+      }
+      return {
+        style: {
+          backgroundColor: '#FEE2E2',
+          borderLeft: '4px solid #DC2626',
+          borderRadius: '6px',
+          color: '#991B1B',
+          fontWeight: 600,
+          fontSize: '12px',
+          padding: '4px 8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          opacity: 0.9,
+          display: 'block',
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(220,38,38,0.05) 5px, rgba(220,38,38,0.05) 10px)',
+        },
+      };
+    }
+
     // Na view Agenda, usar estilo minimal
     if (view === 'agenda') {
       return {
@@ -1691,6 +1873,7 @@ const CalendarPage: React.FC = () => {
   }, [view]);
 
   const handleSelectEvent = (event: CalendarEvent) => {
+    if (event.isBlock) return; // Don't open detail modal for blocks
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
@@ -1796,7 +1979,7 @@ const CalendarPage: React.FC = () => {
   const openNewAppointmentModal = () => {
     setNewAppointmentForm({
       patient_id: '',
-      provider_id: '',
+      provider_id: isProvider && providerId ? providerId : '',
       type: 'follow_up',
       scheduled_date: format(new Date(), 'yyyy-MM-dd'),
       scheduled_time: '09:00',
@@ -1863,6 +2046,77 @@ const CalendarPage: React.FC = () => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
+  // Block modal handlers
+  const openBlockModal = () => {
+    setBlockForm({
+      provider_id: isProvider && providerId ? providerId : '',
+      block_date: format(new Date(), 'yyyy-MM-dd'),
+      period: 'full_day',
+      start_time: '08:00',
+      end_time: '18:00',
+      reason: '',
+    });
+    setBlockSuccess(false);
+    setBlockError('');
+    setIsBlockModalOpen(true);
+  };
+
+  const closeBlockModal = () => {
+    setIsBlockModalOpen(false);
+    setBlockSuccess(false);
+    setBlockError('');
+  };
+
+  const handleCreateBlock = async () => {
+    if (!blockForm.provider_id) {
+      setBlockError('Selecione o médico');
+      return;
+    }
+
+    setSavingBlock(true);
+    setBlockError('');
+
+    try {
+      let startTime: string | null = null;
+      let endTime: string | null = null;
+
+      if (blockForm.period === 'morning') {
+        startTime = '08:00';
+        endTime = '12:00';
+      } else if (blockForm.period === 'afternoon') {
+        startTime = '12:00';
+        endTime = '18:00';
+      } else if (blockForm.period === 'custom') {
+        startTime = blockForm.start_time;
+        endTime = blockForm.end_time;
+      }
+      // full_day: startTime and endTime stay null
+
+      const { error } = await supabase.rpc('create_provider_block', {
+        p_provider_id: blockForm.provider_id,
+        p_block_date: blockForm.block_date,
+        p_start_time: startTime,
+        p_end_time: endTime,
+        p_reason: blockForm.reason || null,
+        p_created_via: 'panel',
+      });
+
+      if (error) throw error;
+
+      setBlockSuccess(true);
+      loadAppointments();
+
+      setTimeout(() => {
+        closeBlockModal();
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error creating block:', error);
+      setBlockError(error.message || 'Erro ao criar bloqueio');
+    } finally {
+      setSavingBlock(false);
+    }
+  };
+
   // Contagem de eventos do dia atual
   const todayEvents = useMemo(() => {
     const today = new Date();
@@ -1878,9 +2132,22 @@ const CalendarPage: React.FC = () => {
           <span className="calendar-icon">
             <CalendarIcon />
           </span>
-          Calendário
+          {isProvider ? 'Minha Agenda' : 'Calendário'}
         </h1>
         <HeaderActions>
+          {isAdmin && providerOptions.length > 0 && (
+            <ProviderFilterWrapper>
+              <ProviderFilterSelect
+                value={providerFilter}
+                onChange={(e) => setProviderFilter(e.target.value)}
+              >
+                <option value="all">Todos os médicos</option>
+                {providerOptions.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </ProviderFilterSelect>
+            </ProviderFilterWrapper>
+          )}
           <TodayInfo onClick={goToToday}>
             <div className="date-display">
               <span className="day">{format(new Date(), 'd')}</span>
@@ -1893,6 +2160,12 @@ const CalendarPage: React.FC = () => {
               <span className="event-count">{todayEvents.length} consulta{todayEvents.length > 1 ? 's' : ''}</span>
             )}
           </TodayInfo>
+          {isAdmin && (
+            <Button $variant="secondary" onClick={openBlockModal}>
+              <Lock />
+              Bloquear Data
+            </Button>
+          )}
           <Button $variant="primary" onClick={openNewAppointmentModal}>
             <Plus />
             Nova Consulta
@@ -1947,6 +2220,11 @@ const CalendarPage: React.FC = () => {
           </LegendItem>
           <LegendItem>
             <span className="status-badge cancelled">Cancelada</span>
+          </LegendItem>
+          <LegendItem>
+            <span className="status-badge cancelled" style={{ background: '#FEE2E2', borderColor: '#DC2626', color: '#991B1B' }}>
+              🔒 Bloqueado
+            </span>
           </LegendItem>
         </Legend>
       </CalendarWrapper>
@@ -2187,6 +2465,129 @@ const CalendarPage: React.FC = () => {
                   <>
                     <Save />
                     Agendar Consulta
+                  </>
+                )}
+              </ModalButton>
+            </NewAppointmentFooter>
+          </NewAppointmentModal>
+        </>
+      )}
+      {/* Block Modal */}
+      {isBlockModalOpen && (
+        <>
+          <ModalOverlay onClick={closeBlockModal} />
+          <NewAppointmentModal onClick={e => e.stopPropagation()}>
+            <NewAppointmentHeader>
+              <h2>
+                <Lock />
+                Bloquear Data
+              </h2>
+              <CloseButton onClick={closeBlockModal}>
+                <X />
+              </CloseButton>
+            </NewAppointmentHeader>
+
+            <NewAppointmentBody>
+              {blockSuccess && (
+                <SuccessMessage>
+                  <CheckCircle />
+                  Bloqueio criado com sucesso!
+                </SuccessMessage>
+              )}
+
+              {blockError && (
+                <ErrorMessage>
+                  <AlertCircle />
+                  {blockError}
+                </ErrorMessage>
+              )}
+
+              <FormGrid>
+                <FormGroup $fullWidth>
+                  <FormLabel>Médico</FormLabel>
+                  <FormSelect
+                    value={blockForm.provider_id}
+                    onChange={e => setBlockForm(prev => ({ ...prev, provider_id: e.target.value }))}
+                  >
+                    <option value="">Selecione o médico</option>
+                    {providers.map(provider => (
+                      <option key={provider.id} value={provider.id}>
+                        Dr(a). {provider.profile?.first_name} {provider.profile?.last_name} - {provider.specialty}
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Data</FormLabel>
+                  <FormInput
+                    type="date"
+                    value={blockForm.block_date}
+                    onChange={e => setBlockForm(prev => ({ ...prev, block_date: e.target.value }))}
+                    min={format(new Date(), 'yyyy-MM-dd')}
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Período</FormLabel>
+                  <FormSelect
+                    value={blockForm.period}
+                    onChange={e => setBlockForm(prev => ({ ...prev, period: e.target.value as any }))}
+                  >
+                    <option value="full_day">Dia Inteiro</option>
+                    <option value="morning">Manhã (08:00-12:00)</option>
+                    <option value="afternoon">Tarde (12:00-18:00)</option>
+                    <option value="custom">Horário Personalizado</option>
+                  </FormSelect>
+                </FormGroup>
+
+                {blockForm.period === 'custom' && (
+                  <>
+                    <FormGroup>
+                      <FormLabel>Início</FormLabel>
+                      <FormInput
+                        type="time"
+                        value={blockForm.start_time}
+                        onChange={e => setBlockForm(prev => ({ ...prev, start_time: e.target.value }))}
+                      />
+                    </FormGroup>
+                    <FormGroup>
+                      <FormLabel>Fim</FormLabel>
+                      <FormInput
+                        type="time"
+                        value={blockForm.end_time}
+                        onChange={e => setBlockForm(prev => ({ ...prev, end_time: e.target.value }))}
+                      />
+                    </FormGroup>
+                  </>
+                )}
+
+                <FormGroup $fullWidth>
+                  <FormLabel>Motivo (opcional)</FormLabel>
+                  <FormTextarea
+                    value={blockForm.reason}
+                    onChange={e => setBlockForm(prev => ({ ...prev, reason: e.target.value }))}
+                    placeholder="Ex: Férias, compromisso pessoal, congresso..."
+                  />
+                </FormGroup>
+              </FormGrid>
+            </NewAppointmentBody>
+
+            <NewAppointmentFooter>
+              <ModalButton $variant="secondary" onClick={closeBlockModal}>
+                Cancelar
+              </ModalButton>
+              <ModalButton
+                $variant="danger"
+                onClick={handleCreateBlock}
+                disabled={savingBlock || !blockForm.provider_id}
+              >
+                {savingBlock ? (
+                  <>Salvando...</>
+                ) : (
+                  <>
+                    <Lock />
+                    Bloquear
                   </>
                 )}
               </ModalButton>

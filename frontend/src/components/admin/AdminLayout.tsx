@@ -1,5 +1,6 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import styled from 'styled-components';
+import { Menu, Shield } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminSidebar from './AdminSidebar';
 
@@ -25,8 +26,8 @@ const Main = styled.main`
 
 const Content = styled.div`
   padding: ${theme.spacing.xl};
-  padding-right: 80px; /* Espaço para o seletor de idioma fixo */
-  overflow-x: hidden; /* Previne overflow horizontal */
+  padding-right: 80px;
+  overflow-x: hidden;
 
   @media (max-width: 768px) {
     padding: ${theme.spacing.md};
@@ -34,11 +35,81 @@ const Content = styled.div`
   }
 `;
 
+const MobileHeader = styled.header`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #2D2420 0%, #3D322B 100%);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+`;
+
+const MobileMenuButton = styled.button`
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+`;
+
+const MobileTitle = styled.h1`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 18px;
+  color: white;
+  margin: 0;
+  font-weight: 800;
+`;
+
+const Overlay = styled.div<{ $open: boolean }>`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: ${props => (props.$open ? 'block' : 'none')};
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+`;
+
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <Container>
-      <AdminSidebar />
+      <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Overlay $open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
       <Main>
+        <MobileHeader>
+          <MobileMenuButton onClick={() => setSidebarOpen(true)}>
+            <Menu />
+          </MobileMenuButton>
+          <Shield size={20} color="rgba(146, 86, 62, 0.8)" />
+          <MobileTitle>Essence</MobileTitle>
+        </MobileHeader>
         <Content>{children}</Content>
       </Main>
     </Container>

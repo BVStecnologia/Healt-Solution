@@ -370,6 +370,30 @@ services:
     networks:
       - clinica-network
 
+  # ===========================================
+  # WEBHOOK SERVER - WhatsApp Commands
+  # ===========================================
+
+  webhook-server:
+    container_name: webhook-server
+    build: ./webhook
+    restart: unless-stopped
+    ports:
+      - "${WEBHOOK_PORT:-3002}:3001"
+    environment:
+      - PORT=3001
+      - SUPABASE_URL=http://kong:8000
+      - SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
+      - EVOLUTION_API_URL=http://evolution-api:8080
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      evolution-api:
+        condition: service_started
+    networks:
+      - clinica-network
+
 # ===========================================
 # VOLUMES
 # ===========================================

@@ -31,10 +31,12 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { useLocation } from 'react-router-dom';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
+import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 
 // ============================================
 // ANIMATIONS
@@ -828,6 +830,14 @@ const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_
 // COMPONENT
 // ============================================
 const AdminDashboard: React.FC = () => {
+  const location = useLocation();
+  const { providerId, isProvider: isProviderRole, isAdmin: isAdminRole } = useCurrentProvider();
+
+  // Detectar ambiente pela URL (environment switcher)
+  const isDoctorEnv = location.pathname.startsWith('/doctor');
+  // Para layout/labels: usar ambiente da URL
+  const isProvider = isDoctorEnv || isProviderRole;
+  const isAdmin = !isDoctorEnv && isAdminRole;
   const [stats, setStats] = useState<Stats>({
     totalPatients: 0,
     totalProviders: 0,
@@ -891,41 +901,83 @@ const AdminDashboard: React.FC = () => {
     loadTodayAppointments();
     loadWeeklyData();
     loadTypeDistribution();
-    checkWhatsAppStatus();
-    const interval = setInterval(checkWhatsAppStatus, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    if (isAdmin) {
+      checkWhatsAppStatus();
+      const interval = setInterval(checkWhatsAppStatus, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [providerId, isDoctorEnv]);
 
   const loadStats = async () => {
     try {
-      const { count: patientsCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'patient');
+      // Ambiente doctor: stats filtradas pelo provider
+      if (isDoctorEnv && providerId) {
+        const { count: pendingCount } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending')
+          .eq('provider_id', providerId);
 
-      const { count: providersCount } = await supabase
-        .from('providers')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        const today = new Date().toISOString().split('T')[0];
+        const { count: todayCount } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('provider_id', providerId)
+          .gte('scheduled_at', `${today}T00:00:00`)
+          .lt('scheduled_at', `${today}T23:59:59`);
 
-      const { count: pendingCount } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
+        const { data: myPatients } = await supabase
+          .from('appointments')
+          .select('patient_id')
+          .eq('provider_id', providerId);
 
-      const today = new Date().toISOString().split('T')[0];
-      const { count: todayCount } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .gte('scheduled_at', `${today}T00:00:00`)
-        .lt('scheduled_at', `${today}T23:59:59`);
+        const uniquePatients = new Set((myPatients || []).map((a: any) => a.patient_id));
 
-      setStats({
-        totalPatients: patientsCount || 0,
-        totalProviders: providersCount || 0,
-        pendingAppointments: pendingCount || 0,
-        todayAppointments: todayCount || 0,
-      });
+        const { count: totalAppointments } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('provider_id', providerId);
+
+        setStats({
+          totalPatients: uniquePatients.size,
+          totalProviders: totalAppointments || 0,
+          pendingAppointments: pendingCount || 0,
+          todayAppointments: todayCount || 0,
+        });
+      } else if (isDoctorEnv && !providerId) {
+        // Admin visualizando ambiente doctor sem provider record
+        setStats({ totalPatients: 0, totalProviders: 0, pendingAppointments: 0, todayAppointments: 0 });
+      } else {
+        // Admin: stats globais
+        const { count: patientsCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'patient');
+
+        const { count: providersCount } = await supabase
+          .from('providers')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+
+        const { count: pendingCount } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending');
+
+        const today = new Date().toISOString().split('T')[0];
+        const { count: todayCount } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .gte('scheduled_at', `${today}T00:00:00`)
+          .lt('scheduled_at', `${today}T23:59:59`);
+
+        setStats({
+          totalPatients: patientsCount || 0,
+          totalProviders: providersCount || 0,
+          pendingAppointments: pendingCount || 0,
+          todayAppointments: todayCount || 0,
+        });
+      }
     } catch (error) {
       console.error('Error loading stats:', error);
     }
@@ -933,7 +985,10 @@ const AdminDashboard: React.FC = () => {
 
   const loadPendingAppointments = async () => {
     try {
-      const { data, error } = await supabase
+      // Admin visualizando doctor env sem provider record
+      if (isDoctorEnv && !providerId) { setPendingAppointments([]); return; }
+
+      let query = supabase
         .from('appointments')
         .select(`
           id,
@@ -948,6 +1003,12 @@ const AdminDashboard: React.FC = () => {
         .eq('status', 'pending')
         .order('scheduled_at', { ascending: true })
         .limit(5);
+
+      if (isDoctorEnv && providerId) {
+        query = query.eq('provider_id', providerId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -969,8 +1030,10 @@ const AdminDashboard: React.FC = () => {
 
   const loadTodayAppointments = async () => {
     try {
+      if (isDoctorEnv && !providerId) { setTodayAppointments([]); return; }
+
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select(`
           id,
@@ -983,6 +1046,12 @@ const AdminDashboard: React.FC = () => {
         .lt('scheduled_at', `${today}T23:59:59`)
         .order('scheduled_at', { ascending: true })
         .limit(10);
+
+      if (isDoctorEnv && providerId) {
+        query = query.eq('provider_id', providerId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -1002,6 +1071,8 @@ const AdminDashboard: React.FC = () => {
 
   const loadWeeklyData = async () => {
     try {
+      if (isDoctorEnv && !providerId) { setWeeklyData([]); return; }
+
       const days = [];
       const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -1010,11 +1081,17 @@ const AdminDashboard: React.FC = () => {
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
 
-        const { count } = await supabase
+        let query = supabase
           .from('appointments')
           .select('*', { count: 'exact', head: true })
           .gte('scheduled_at', `${dateStr}T00:00:00`)
           .lt('scheduled_at', `${dateStr}T23:59:59`);
+
+        if (isDoctorEnv && providerId) {
+          query = query.eq('provider_id', providerId);
+        }
+
+        const { count } = await query;
 
         days.push({
           day: dayNames[date.getDay()],
@@ -1030,9 +1107,17 @@ const AdminDashboard: React.FC = () => {
 
   const loadTypeDistribution = async () => {
     try {
-      const { data, error } = await supabase
+      if (isDoctorEnv && !providerId) { setTypeDistribution([]); return; }
+
+      let query = supabase
         .from('appointments')
         .select('type');
+
+      if (isDoctorEnv && providerId) {
+        query = query.eq('provider_id', providerId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -1188,19 +1273,19 @@ const AdminDashboard: React.FC = () => {
     <AdminLayout>
       <PageWrapper>
         <Header>
-          <h1>Dashboard</h1>
-          <p>Visão geral do sistema da clínica</p>
+          <h1>{isProvider ? 'Meu Painel' : 'Dashboard'}</h1>
+          <p>{isProvider ? 'Visão geral das suas consultas' : 'Visão geral do sistema da clínica'}</p>
         </Header>
 
         <StatsGrid>
           <StatCard $delay={0} $accentColor={luxuryColors.primary}>
             <StatCardContent>
               <StatInfo>
-                <StatLabel>Pacientes</StatLabel>
+                <StatLabel>{isProvider ? 'Meus Pacientes' : 'Pacientes'}</StatLabel>
                 <StatValue>{stats.totalPatients}</StatValue>
                 <StatTrend $positive>
                   <TrendingUp />
-                  <span>Ativos</span>
+                  <span>{isProvider ? 'Atendidos' : 'Ativos'}</span>
                 </StatTrend>
               </StatInfo>
               <StatIcon $color={luxuryColors.primary}>
@@ -1212,15 +1297,15 @@ const AdminDashboard: React.FC = () => {
           <StatCard $delay={100} $accentColor={luxuryColors.primaryLight}>
             <StatCardContent>
               <StatInfo>
-                <StatLabel>Médicos</StatLabel>
+                <StatLabel>{isProvider ? 'Total Consultas' : 'Médicos'}</StatLabel>
                 <StatValue>{stats.totalProviders}</StatValue>
                 <StatTrend $positive>
                   <Activity />
-                  <span>Disponíveis</span>
+                  <span>{isProvider ? 'Realizadas' : 'Disponíveis'}</span>
                 </StatTrend>
               </StatInfo>
               <StatIcon $color={luxuryColors.primaryLight}>
-                <Stethoscope />
+                {isProvider ? <Calendar /> : <Stethoscope />}
               </StatIcon>
             </StatCardContent>
           </StatCard>
@@ -1437,7 +1522,8 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </SectionGrid>
 
-        {/* WhatsApp Status - Compact */}
+        {/* WhatsApp Status - Compact (Admin only) */}
+        {isAdmin && (
         <div style={{ marginTop: '24px' }}>
           <WhatsAppCard $delay={550}>
             <CardHeader>
@@ -1475,6 +1561,7 @@ const AdminDashboard: React.FC = () => {
             )}
           </WhatsAppCard>
         </div>
+        )}
       </PageWrapper>
     </AdminLayout>
   );

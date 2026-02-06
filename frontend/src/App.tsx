@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
+import DoctorProtectedRoute from './components/doctor/DoctorProtectedRoute';
 import LoadingSpinner from './components/LoadingSpinner';
 import LanguageSwitcher from './components/LanguageSwitcher';
 
@@ -24,6 +25,7 @@ const PatientsPage = lazy(() => import('./pages/admin/PatientsPage'));
 const PatientProfilePage = lazy(() => import('./pages/admin/PatientProfilePage'));
 const ProvidersPage = lazy(() => import('./pages/admin/ProvidersPage'));
 const AdminsPage = lazy(() => import('./pages/admin/AdminsPage'));
+const MySchedulePage = lazy(() => import('./pages/admin/MySchedulePage'));
 
 const App: React.FC = () => {
   const { loading } = useAuth();
@@ -116,6 +118,40 @@ const App: React.FC = () => {
           <AdminProtectedRoute>
             <AdminsPage />
           </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/my-schedule" element={
+          <AdminProtectedRoute>
+            <MySchedulePage />
+          </AdminProtectedRoute>
+        } />
+
+        {/* Rotas Médico - Públicas */}
+        <Route path="/doctor/login" element={<AdminLoginPage />} />
+
+        {/* Rotas Médico - Protegidas */}
+        <Route path="/doctor" element={
+          <DoctorProtectedRoute>
+            <AdminDashboard />
+          </DoctorProtectedRoute>
+        } />
+
+        <Route path="/doctor/calendar" element={
+          <DoctorProtectedRoute>
+            <CalendarPage />
+          </DoctorProtectedRoute>
+        } />
+
+        <Route path="/doctor/appointments" element={
+          <DoctorProtectedRoute>
+            <AdminAppointmentsPage />
+          </DoctorProtectedRoute>
+        } />
+
+        <Route path="/doctor/my-schedule" element={
+          <DoctorProtectedRoute>
+            <MySchedulePage />
+          </DoctorProtectedRoute>
         } />
 
         {/* Fallback */}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay, isBefore, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
@@ -67,35 +67,36 @@ const DaysGrid = styled.div`
   gap: ${theme.spacing.xs};
 `;
 
-const DayButton = styled.button<{ $selected: boolean; $today: boolean }>`
+const DayButton = styled.button<{ $selected: boolean; $today: boolean; $disabled: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: ${theme.spacing.sm};
   border: 2px solid ${props =>
-    props.$selected ? theme.colors.primary : props.$today ? theme.colors.primary + '40' : 'transparent'
+    props.$disabled ? 'transparent' : props.$selected ? theme.colors.primary : props.$today ? theme.colors.primary + '40' : 'transparent'
   };
   border-radius: ${theme.borderRadius.md};
-  background: ${props => props.$selected ? theme.colors.primary : 'transparent'};
-  cursor: pointer;
+  background: ${props => props.$disabled ? 'transparent' : props.$selected ? theme.colors.primary : 'transparent'};
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.$disabled ? 0.4 : 1};
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.$selected ? theme.colors.primary : theme.colors.border};
+    background: ${props => props.$disabled ? 'transparent' : props.$selected ? theme.colors.primary : theme.colors.border};
   }
 `;
 
-const DayName = styled.span<{ $selected: boolean }>`
+const DayName = styled.span<{ $selected: boolean; $disabled: boolean }>`
   font-size: 11px;
   text-transform: uppercase;
-  color: ${props => props.$selected ? 'white' : theme.colors.textSecondary};
+  color: ${props => props.$disabled ? theme.colors.textSecondary : props.$selected ? 'white' : theme.colors.textSecondary};
   margin-bottom: 2px;
 `;
 
-const DayNumber = styled.span<{ $selected: boolean }>`
+const DayNumber = styled.span<{ $selected: boolean; $disabled: boolean }>`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.$selected ? 'white' : theme.colors.text};
+  color: ${props => props.$disabled ? theme.colors.textSecondary : props.$selected ? 'white' : theme.colors.text};
 `;
 
 const SlotsContainer = styled.div`
@@ -169,7 +170,8 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   const [currentWeekStart, setCurrentWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Iniciar com amanhã (regra de 24h mínimas de antecedência)
+  const [selectedDate, setSelectedDate] = useState<Date>(() => addDays(startOfDay(new Date()), 1));
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
 
@@ -208,19 +210,24 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
         {weekDays.map(day => {
           const isSelected = isSameDay(day, selectedDate);
           const isToday = isSameDay(day, new Date());
+          // Bloquear datas passadas e hoje (regra de 24h mínimas)
+          const tomorrow = addDays(startOfDay(new Date()), 1);
+          const isPast = isBefore(day, tomorrow);
 
           return (
             <DayButton
               key={day.toISOString()}
-              $selected={isSelected}
+              $selected={isSelected && !isPast}
               $today={isToday}
-              onClick={() => handleDayClick(day)}
+              $disabled={isPast}
+              onClick={() => !isPast && handleDayClick(day)}
               type="button"
+              disabled={isPast}
             >
-              <DayName $selected={isSelected}>
+              <DayName $selected={isSelected && !isPast} $disabled={isPast}>
                 {format(day, 'EEE', { locale: ptBR })}
               </DayName>
-              <DayNumber $selected={isSelected}>
+              <DayNumber $selected={isSelected && !isPast} $disabled={isPast}>
                 {format(day, 'd')}
               </DayNumber>
             </DayButton>
@@ -242,7 +249,9 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
           <SlotsGrid>
             {slots.map(slot => {
               const isSelected = slot.start === selectedSlot;
-              const time = format(new Date(slot.start), 'HH:mm');
+              // Use UTC hours since DB stores local clinic times as UTC
+              const d = new Date(slot.start);
+              const time = `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
 
               return (
                 <SlotButton

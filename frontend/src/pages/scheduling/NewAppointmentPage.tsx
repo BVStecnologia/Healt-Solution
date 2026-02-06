@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { ArrowLeft, Check } from 'lucide-react';
-import { format } from 'date-fns';
+import { ArrowLeft, Check, AlertTriangle } from 'lucide-react';
+import { format, addDays, startOfDay } from 'date-fns';
 import { theme } from '../../styles/GlobalStyle';
 import { useAppointments } from '../../hooks/useAppointments';
 import { useProviders } from '../../hooks/useProviders';
@@ -168,6 +168,24 @@ const Actions = styled.div`
   justify-content: flex-end;
 `;
 
+const ErrorAlert = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.md};
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: ${theme.borderRadius.md};
+  color: #991B1B;
+  font-size: 14px;
+  margin-bottom: ${theme.spacing.md};
+
+  svg {
+    flex-shrink: 0;
+    color: #DC2626;
+  }
+`;
+
 const appointmentTypes: { type: AppointmentType; name: string; description: string }[] = [
   { type: 'initial_consultation', name: 'Consulta Inicial', description: 'Primeira consulta com o médico' },
   { type: 'follow_up', name: 'Retorno', description: 'Acompanhamento de tratamento' },
@@ -188,8 +206,10 @@ const NewAppointmentPage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<AppointmentType | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  // Iniciar com amanhã (regra de 24h mínimas, sincronizado com TimeSlotPicker)
+  const [selectedDate, setSelectedDate] = useState<Date>(() => addDays(startOfDay(new Date()), 1));
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Verificar elegibilidade quando tipo é selecionado
   useEffect(() => {
@@ -231,14 +251,25 @@ const NewAppointmentPage: React.FC = () => {
 
     try {
       setSubmitting(true);
+      setSubmitError(null);
       await createAppointment({
         provider_id: selectedProvider.id,
         type: selectedType,
         scheduled_at: selectedSlot.start,
       });
       navigate('/appointments');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating appointment:', error);
+      const msg = error?.message || error?.details || '';
+      if (msg.includes('24')) {
+        setSubmitError('Agendamentos devem ser feitos com pelo menos 24 horas de antecedência.');
+      } else if (msg.includes('conflict') || msg.includes('já existe') || msg.includes('already')) {
+        setSubmitError('Já existe uma consulta agendada neste horário.');
+      } else if (msg.includes('slot') || msg.includes('disponível') || msg.includes('available')) {
+        setSubmitError('Este horário não está mais disponível. Selecione outro.');
+      } else {
+        setSubmitError('Não foi possível agendar a consulta. Tente novamente.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -401,19 +432,32 @@ const NewAppointmentPage: React.FC = () => {
               <SummaryRow>
                 <SummaryLabel>Data</SummaryLabel>
                 <SummaryValue>
-                  {selectedSlot && format(new Date(selectedSlot.start), 'dd/MM/yyyy')}
+                  {selectedSlot && (() => {
+                    const d = new Date(selectedSlot.start);
+                    return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+                  })()}
                 </SummaryValue>
               </SummaryRow>
               <SummaryRow>
                 <SummaryLabel>Horário</SummaryLabel>
                 <SummaryValue>
-                  {selectedSlot && format(new Date(selectedSlot.start), 'HH:mm')}
+                  {selectedSlot && (() => {
+                    const d = new Date(selectedSlot.start);
+                    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+                  })()}
                 </SummaryValue>
               </SummaryRow>
             </Summary>
 
+            {submitError && (
+              <ErrorAlert>
+                <AlertTriangle size={18} />
+                {submitError}
+              </ErrorAlert>
+            )}
+
             <Actions>
-              <Button variant="ghost" onClick={() => setStep(3)}>
+              <Button variant="ghost" onClick={() => { setSubmitError(null); setStep(3); }}>
                 Voltar
               </Button>
               <Button

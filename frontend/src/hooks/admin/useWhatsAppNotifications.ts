@@ -20,6 +20,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { whatsappService, AppointmentNotificationData, SendMessageResult } from '../../lib/whatsappService';
 
+interface CancellationResult {
+  patient?: SendMessageResult;
+  provider?: SendMessageResult;
+}
+
+interface DualNotificationResult {
+  patient: SendMessageResult;
+  provider: SendMessageResult;
+}
+
 interface UseWhatsAppNotificationsReturn {
   // Status
   isConnected: boolean;
@@ -34,6 +44,13 @@ interface UseWhatsAppNotificationsReturn {
   sendCancellation: (data: AppointmentNotificationData & { reason: string }) => Promise<SendMessageResult>;
   sendReminder: (data: AppointmentNotificationData, type: '24h' | '1h') => Promise<SendMessageResult>;
   sendCustomMessage: (phone: string, message: string, appointmentId?: string) => Promise<SendMessageResult>;
+
+  // Notificações duplas (paciente + médico)
+  sendBothNewAppointment: (data: AppointmentNotificationData) => Promise<DualNotificationResult>;
+  sendCancellationCrossNotify: (
+    data: AppointmentNotificationData & { reason: string },
+    cancelledBy: 'patient' | 'provider' | 'admin'
+  ) => Promise<CancellationResult>;
 }
 
 export function useWhatsAppNotifications(): UseWhatsAppNotificationsReturn {
@@ -134,6 +151,38 @@ export function useWhatsAppNotifications(): UseWhatsAppNotificationsReturn {
     return whatsappService.sendReminder(data, type);
   }, [isConnected, checkConnection]);
 
+  // Notificação dupla: paciente + médico (nova consulta)
+  const sendBothNewAppointment = useCallback(async (data: AppointmentNotificationData): Promise<DualNotificationResult> => {
+    console.log('[useWhatsAppNotifications] Enviando notificação dupla:', data);
+
+    if (!isConnected) {
+      const connected = await checkConnection();
+      if (!connected) {
+        const err = { success: false as const, error: 'WhatsApp não conectado' };
+        return { patient: err, provider: err };
+      }
+    }
+
+    return whatsappService.notifyBothNewAppointment(data);
+  }, [isConnected, checkConnection]);
+
+  // Cancelamento com notificação cruzada
+  const sendCancellationCrossNotify = useCallback(async (
+    data: AppointmentNotificationData & { reason: string },
+    cancelledBy: 'patient' | 'provider' | 'admin'
+  ): Promise<CancellationResult> => {
+    console.log(`[useWhatsAppNotifications] Cancelamento por ${cancelledBy}:`, data);
+
+    if (!isConnected) {
+      const connected = await checkConnection();
+      if (!connected) {
+        return {};
+      }
+    }
+
+    return whatsappService.notifyCancellation(data, cancelledBy);
+  }, [isConnected, checkConnection]);
+
   // Enviar mensagem customizada
   const sendCustomMessage = useCallback(async (
     phone: string,
@@ -163,6 +212,8 @@ export function useWhatsAppNotifications(): UseWhatsAppNotificationsReturn {
     sendCancellation,
     sendReminder,
     sendCustomMessage,
+    sendBothNewAppointment,
+    sendCancellationCrossNotify,
   };
 }
 

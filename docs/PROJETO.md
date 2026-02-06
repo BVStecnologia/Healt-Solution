@@ -1,52 +1,80 @@
 # Essence Medical Clinic - Projeto
 
-**Cliente:** Essence Medical Clinic
+**Cliente:** Shapeup Health Solutions (Essence Medical Clinic)
+**Contrato:** Upwork - Workflow Automation Expert for Wellness Clinic
 **Início:** 04/02/2026
-**Stack:** React + Supabase + Evolution API + Docker
+**Stack:** React 18 + TypeScript + Supabase Self-hosted + Evolution API + Docker
 
 ---
 
 ## Status Atual
 
-| Módulo | Status |
-|--------|--------|
-| Infraestrutura Docker | ✅ Completo |
-| Portal do Paciente | ✅ Completo |
-| Painel Admin | ✅ Completo |
-| WhatsApp (Evolution) | ✅ Completo |
-| Deploy VPS | ✅ Completo |
-| IA/Chatbot | ❌ Pendente |
-| E-commerce | ❌ Pendente |
-| Integrações externas | ❌ Pendente |
+| # | Módulo | Status | Upwork To-do |
+|---|--------|--------|--------------|
+| 1 | Infraestrutura Docker (16 serviços) | ✅ Completo | ✅ Completed |
+| 2 | Database Schema (7 migrações) | ✅ Completo | ✅ Completed |
+| 3 | Portal do Paciente | ✅ Completo | ✅ Completed |
+| 4 | Painel Administrativo (8 páginas) | ✅ Completo | ✅ Completed |
+| 5 | WhatsApp - Notificações Bilíngues | ✅ Completo | ✅ Completed |
+| 6 | WhatsApp - Automation via Médico | 🔄 Em progresso | ⬜ Active |
+| 7 | Frontend - Expansão | 📋 Planejado | ⬜ Active |
+| 8 | IA/Chatbot WhatsApp | ❌ Pendente | - |
+| 9 | E-commerce (produtos) | ❌ Pendente | - |
+| 10 | Integrações externas (OptiMantra) | ❌ Pendente | - |
 
 ---
 
 ## O Que Foi Entregue
 
-### Infraestrutura
-- Supabase self-hosted (13 containers)
-- Evolution API (3 containers)
-- Portainer + Glances no VPS
-- Deploy em 217.216.81.92
+### 1. Infraestrutura (16 containers Docker)
+- **Supabase** (13 containers): PostgreSQL 15, PostgREST, GoTrue Auth, Kong Gateway, Realtime WebSockets, Storage, Studio, Edge Functions, Analytics, Meta, Imgproxy, Supavisor
+- **Evolution API** (3 containers): API v2.3.6 + PostgreSQL + Redis
+- **Webhook Server**: Node.js para receber eventos da Evolution API
+- Scripts: migrate.sh, deploy.sh, setup.sh, deploy-update.sh, snapshot-versions.sh
+- VPS Contabo configurada e rodando (217.216.81.92)
+- Portainer para gerenciamento visual
 
-### Portal do Paciente
-- Login/Registro (email + Google OAuth)
-- Agendamento com regras de elegibilidade
-- Histórico de consultas
-- Seletor de idioma (PT/EN/ES)
+### 2. Banco de Dados (7 migrações)
+| Migração | Descrição |
+|----------|-----------|
+| 000 | Schema migrations (controle de versões) |
+| 001 | Tabelas core: profiles, providers, provider_schedules, appointments + ENUMs + RPCs + RLS |
+| 002 | WhatsApp: whatsapp_instances, message_templates, message_logs |
+| 003 | RLS policies para admin (CRUD completo) |
+| 004 | avatar_url em profiles (Google OAuth) |
+| 005 | preferred_language (PT/EN) + templates inglês + índices |
+| 006 | Auto-confirmação de consultas + notificações para médicos |
+| 007 | provider_blocks (bloqueios de agenda) |
 
-### Painel Admin
-- Dashboard com estatísticas
-- Calendário (mês/semana/dia)
-- CRUD de pacientes, médicos, admins
-- Ficha completa do paciente
-- Aprovação/rejeição de consultas
-- Status WhatsApp em tempo real
+**Totais:** 7+ tabelas, 4 ENUMs, 6+ RPCs, RLS completo, triggers automáticos
 
-### WhatsApp
-- Conexão via QR Code
-- Notificações automáticas (confirmação/rejeição)
-- Templates de mensagem
+### 3. Portal do Paciente (5 páginas)
+- **Login**: Email/senha + Google OAuth (auto-criação de perfil com idioma do navegador)
+- **Registro**: Validação de senha, criação de profile tipo "new"
+- **Dashboard**: Estatísticas + próximas consultas + CTA agendamento
+- **Agendamento multi-step**: Tipo → Elegibilidade → Médico → Data/Hora → Confirmação
+- **Consultas**: Lista com filtros + detalhes + cancelamento com motivo
+- **i18n**: PT/EN com detecção automática e persistência no banco
+
+### 4. Painel Administrativo (8 páginas)
+- **Dashboard**: 4 cards de stats + gráficos (Recharts: area, pie, bar) + lista pendentes + status WhatsApp
+- **Calendário**: react-big-calendar (mês/semana/dia/agenda) + cores por status + URL params + modal de detalhes
+- **Consultas**: Kanban com colunas por status + confirmar/rejeitar/cancelar + notificações WhatsApp
+- **Pacientes**: Grid com filtros + criação de paciente pelo admin (preservação de sessão) + ficha completa
+- **Ficha Paciente**: Avatar colorido + dados pessoais/médicos + estatísticas + histórico + próximas consultas
+- **Médicos**: CRUD + horários (provider_schedules) + bloqueios de agenda (provider_blocks) + ativar/desativar
+- **Admins**: CRUD completo
+- **WhatsApp**: Instâncias (criar/QR Code/conectar/desconectar/deletar) + histórico mensagens + status real-time
+
+### 5. WhatsApp - Notificações Bilíngues
+- 12 templates de mensagem (6 tipos x 2 idiomas PT/EN):
+  - appointment_confirmed, appointment_rejected, appointment_cancelled
+  - reminder_24h, reminder_1h, new_appointment_clinic
+- Notificações automáticas ao confirmar/rejeitar/cancelar
+- Notificações cruzadas (paciente + médico)
+- Idioma baseado na preferência do paciente (profiles.preferred_language)
+- Logging completo em message_logs com status tracking
+- Status da conexão em tempo real (polling 10s)
 
 ---
 
@@ -59,7 +87,6 @@
 | Supabase Studio | http://217.216.81.92:3001 |
 | Evolution API | http://217.216.81.92:8082 |
 | Portainer | http://217.216.81.92:9000 |
-| Glances | http://217.216.81.92:61208 |
 
 ---
 
@@ -78,16 +105,21 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 ---
 
-## Pendente (Fase 2)
+## Pendente (Fase 2+)
 
-| Feature | Estimativa |
-|---------|------------|
-| Lembretes automáticos (cron) | ~20h |
-| Chatbot IA WhatsApp | ~50h |
-| E-commerce (produtos) | ~60h |
-| Sistema de pagamentos | ~40h |
-| Integração OptiMantra | ~50h |
-| Memberships | ~30h |
+| # | Feature | Prioridade |
+|---|---------|------------|
+| 1 | WhatsApp Automation - Agenda via médico | 🔴 Alta |
+| 2 | Lembretes automáticos (cron 24h/1h) | 🔴 Alta |
+| 3 | Upload de documentos/exames | 🟡 Média |
+| 4 | Relatórios e analytics | 🟡 Média |
+| 5 | Chatbot IA WhatsApp | 🟡 Média |
+| 6 | Notificações push | 🟢 Baixa |
+| 7 | E-commerce (produtos/suplementos) | 🟢 Baixa |
+| 8 | Sistema de pagamentos/depósitos | 🟢 Baixa |
+| 9 | Integração OptiMantra (EMR) | 🟢 Baixa |
+| 10 | Memberships/assinaturas | 🟢 Baixa |
+| 11 | Testes automatizados + CI/CD | 🟢 Baixa |
 
 ---
 
@@ -95,10 +127,27 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 | Arquivo | Função |
 |---------|--------|
-| `CLAUDE.md` | Documentação técnica completa |
-| `frontend/.env` | Variáveis do frontend |
-| `supabase/.env` | Variáveis do Supabase |
-| `evolution/.env` | Variáveis da Evolution API |
+| `CLAUDE.md` | Documentação técnica completa (arquitetura, DB, rotas, padrões) |
+| `docs/requisitos-cliente.md` | Requisitos originais do cliente |
+| `docs/DEPLOY.md` | Guia de deploy passo a passo |
+| `docs/PLANO_DE_TESTES.md` | 85 casos de teste organizados |
+| `Servidor/` | Espelho do estado de produção |
+
+---
+
+## Números do Projeto
+
+| Métrica | Valor |
+|---------|-------|
+| Páginas frontend | 15 (5 portal + 9 admin + 1 login admin) |
+| Componentes React | 15+ |
+| Hooks customizados | 6 |
+| Migrações SQL | 7 |
+| Tabelas no banco | 7+ |
+| RPCs PostgreSQL | 6+ |
+| Templates WhatsApp | 12 (6 tipos x 2 idiomas) |
+| Serviços Docker | 16 |
+| Commits Git | 30+ |
 
 ---
 

@@ -46,6 +46,7 @@ import { CSS } from '@dnd-kit/utilities';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
+import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 
 // ============================================
 // ANIMATIONS
@@ -320,6 +321,11 @@ const KanbanWrapper = styled.div`
   width: 100%;
   min-width: 0;
   max-width: calc(100vw - 270px - 80px); /* viewport - sidebar - paddings */
+
+  @media (max-width: 768px) {
+    max-width: calc(100vw - 32px);
+    gap: 4px;
+  }
 `;
 
 // Animação de brilho percorrendo o botão
@@ -578,6 +584,10 @@ const ScrollNavButton = styled.button<{ $visible: boolean; $direction?: 'left' |
       }
     `}
   }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const KanbanContainer = styled.div`
@@ -609,6 +619,13 @@ const KanbanContainer = styled.div`
     &:hover {
       background: linear-gradient(180deg, ${luxuryColors.primary}, ${luxuryColors.primaryDark});
     }
+  }
+
+  @media (max-width: 768px) {
+    gap: 12px;
+    min-height: 450px;
+    padding: 4px 4px 16px;
+    -webkit-overflow-scrolling: touch;
   }
 `;
 
@@ -650,6 +667,20 @@ const KanbanColumn = styled.div<{ $color?: string }>`
     pointer-events: none;
     z-index: 1;
   }
+
+  @media (max-width: 768px) {
+    flex: 0 0 260px;
+    min-width: 260px;
+    border-radius: 12px;
+    max-height: calc(100vh - 220px);
+
+    &::before {
+      border-radius: 12px 12px 0 0;
+    }
+    &::after {
+      border-radius: 0 0 12px 12px;
+    }
+  }
 `;
 
 const ColumnHeader = styled.div`
@@ -682,6 +713,15 @@ const ColumnHeader = styled.div`
     font-size: 12px;
     font-weight: 600;
   }
+
+  @media (max-width: 768px) {
+    padding: 12px 14px;
+
+    .title {
+      font-size: 13px;
+      gap: 6px;
+    }
+  }
 `;
 
 const ColumnContentWrapper = styled.div`
@@ -704,6 +744,12 @@ const ColumnContent = styled.div`
   /* Scrollbar vertical */
   &::-webkit-scrollbar {
     width: 0;
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px;
+    padding-right: 4px;
+    gap: 10px;
   }
 `;
 
@@ -774,6 +820,11 @@ const KanbanCard = styled.div<{ $isDragging?: boolean; $patientType?: string }>`
   border-radius: 14px;
   padding: 18px;
   cursor: grab;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    border-radius: 10px;
+  }
   transition: all 0.2s ease;
   border: 1px solid rgba(146, 86, 62, 0.08);
   position: relative;
@@ -1069,8 +1120,10 @@ interface Appointment {
   };
   provider: {
     profile: {
+      id: string;
       first_name: string;
       last_name: string;
+      phone: string | null;
     };
   };
 }
@@ -1305,8 +1358,38 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({ id, children, totalIt
 // ============================================
 // COMPONENT
 // ============================================
+// Provider filter dropdown for admin
+interface ProviderOption {
+  id: string;
+  name: string;
+}
+
+const ProviderFilterSelect = styled.select`
+  padding: 14px 16px;
+  border: 1px solid rgba(146, 86, 62, 0.12);
+  border-radius: 14px;
+  font-size: 14px;
+  background: ${luxuryColors.warmWhite};
+  color: ${luxuryColors.textDark};
+  cursor: pointer;
+  min-width: 200px;
+  transition: all 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238B7355' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+
+  &:focus {
+    outline: none;
+    border-color: ${luxuryColors.primary};
+    box-shadow: 0 0 0 3px ${luxuryColors.primary}15;
+  }
+`;
+
 const AdminAppointmentsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { providerId, isProvider, isAdmin } = useCurrentProvider();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -1314,13 +1397,20 @@ const AdminAppointmentsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [providerFilter, setProviderFilter] = useState<string>('all');
+  const [providerOptions, setProviderOptions] = useState<ProviderOption[]>([]);
 
   // Navegação horizontal do Kanban
   const kanbanContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const { sendConfirmation, sendRejection, isConnected: whatsappReady } = useWhatsAppNotifications();
+  const {
+    sendConfirmation,
+    sendRejection,
+    sendCancellationCrossNotify,
+    isConnected: whatsappReady,
+  } = useWhatsAppNotifications();
 
   // Verificar se pode scrollar horizontalmente
   const updateScrollButtons = useCallback(() => {
@@ -1450,15 +1540,43 @@ const AdminAppointmentsPage: React.FC = () => {
     return filtered;
   };
 
+  // Carregar lista de médicos para dropdown (admin only)
+  useEffect(() => {
+    if (!isAdmin) return;
+    const loadProviders = async () => {
+      try {
+        const { data } = await supabase
+          .from('providers')
+          .select('id, profile:profiles(first_name, last_name)')
+          .eq('is_active', true);
+
+        const options = (data || []).map((p: any) => {
+          const prof = Array.isArray(p.profile) ? p.profile[0] : p.profile;
+          return {
+            id: p.id,
+            name: prof ? `Dr(a). ${prof.first_name} ${prof.last_name}` : p.id,
+          };
+        });
+        setProviderOptions(options);
+      } catch (err) {
+        console.error('Error loading providers:', err);
+      }
+    };
+    loadProviders();
+  }, [isAdmin]);
+
+  // Determinar qual provider_id usar para filtrar
+  const activeProviderId = isProvider ? providerId : (providerFilter !== 'all' ? providerFilter : null);
+
   useEffect(() => {
     loadAppointments();
     loadStatusCounts();
-  }, []);
+  }, [activeProviderId]);
 
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select(`
           id,
@@ -1470,10 +1588,17 @@ const AdminAppointmentsPage: React.FC = () => {
           notes,
           patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone),
           provider:providers!appointments_provider_id_fkey(
-            profile:profiles(first_name, last_name)
+            profile:profiles(id, first_name, last_name, phone)
           )
         `)
         .order('scheduled_at', { ascending: false });
+
+      // Filtrar por provider se necessário
+      if (activeProviderId) {
+        query = query.eq('provider_id', activeProviderId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -1500,9 +1625,15 @@ const AdminAppointmentsPage: React.FC = () => {
 
   const loadStatusCounts = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select('status');
+
+      if (activeProviderId) {
+        query = query.eq('provider_id', activeProviderId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -1561,18 +1692,23 @@ const AdminAppointmentsPage: React.FC = () => {
 
       if (error) throw error;
 
-      if (apt.patient?.phone && whatsappReady) {
-        await sendRejection({
-          patientName: `${apt.patient.first_name} ${apt.patient.last_name}`,
-          patientPhone: apt.patient.phone,
+      // Notificação cruzada: admin cancelou → notifica paciente + médico
+      if (whatsappReady) {
+        const date = new Date(apt.scheduled_at);
+        const providerProfile = apt.provider?.profile;
+        await sendCancellationCrossNotify({
+          patientName: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : '',
+          patientPhone: apt.patient?.phone || '',
           patientId: apt.patient_id,
-          providerName: apt.provider?.profile ? `Dr(a). ${apt.provider.profile.first_name}` : 'N/A',
+          providerName: providerProfile ? `Dr(a). ${providerProfile.first_name} ${providerProfile.last_name}` : 'N/A',
+          providerPhone: providerProfile?.phone || '',
+          providerUserId: providerProfile?.id,
           appointmentType: formatType(apt.type),
-          appointmentDate: '',
-          appointmentTime: '',
+          appointmentDate: `${String(date.getUTCDate()).padStart(2, '0')}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${date.getUTCFullYear()}`,
+          appointmentTime: `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`,
           appointmentId: apt.id,
           reason: 'Horário não disponível',
-        });
+        }, 'admin');
       }
 
       loadAppointments();
@@ -1683,8 +1819,8 @@ const AdminAppointmentsPage: React.FC = () => {
     <AdminLayout>
       <PageWrapper>
         <Header>
-          <h1>Consultas</h1>
-          <p>Gerencie todas as consultas da clínica</p>
+          <h1>{isProvider ? 'Minhas Consultas' : 'Consultas'}</h1>
+          <p>{isProvider ? 'Gerencie suas consultas agendadas' : 'Gerencie todas as consultas da clínica'}</p>
         </Header>
 
         <StatsBar>
@@ -1710,6 +1846,17 @@ const AdminAppointmentsPage: React.FC = () => {
             />
             <Search />
           </SearchBox>
+          {isAdmin && providerOptions.length > 0 && (
+            <ProviderFilterSelect
+              value={providerFilter}
+              onChange={(e) => setProviderFilter(e.target.value)}
+            >
+              <option value="all">Todos os médicos</option>
+              {providerOptions.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </ProviderFilterSelect>
+          )}
         </ControlsBar>
 
         {loading ? (

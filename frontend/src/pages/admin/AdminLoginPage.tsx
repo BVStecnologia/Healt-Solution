@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
-import { Mail, Lock, Eye, EyeOff, Shield, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Shield, Stethoscope, ArrowRight } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -453,6 +453,9 @@ const AdminLoginPage: React.FC = () => {
 
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isDoctorLogin = location.pathname.startsWith('/doctor');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -481,14 +484,15 @@ const AdminLoginPage: React.FC = () => {
         .eq('id', user.id)
         .single();
 
-      if (!profile || profile.role !== 'admin') {
+      if (!profile || (profile.role !== 'admin' && profile.role !== 'provider')) {
         await supabase.auth.signOut();
-        setError('Acesso negado. Apenas administradores podem acessar este painel.');
+        setError('Acesso negado. Apenas administradores e médicos podem acessar este painel.');
         setLoading(false);
         return;
       }
 
-      navigate('/admin');
+      // Smart redirect: provider → /doctor, admin → /admin
+      navigate(profile.role === 'provider' ? '/doctor' : '/admin');
     } catch (err) {
       setError('Erro ao fazer login');
     } finally {
@@ -519,11 +523,11 @@ const AdminLoginPage: React.FC = () => {
         <Logo>
           <div className="icon-wrapper">
             <div className="icon">
-              <Shield />
+              {isDoctorLogin ? <Stethoscope /> : <Shield />}
             </div>
           </div>
-          <h1>Essence Admin</h1>
-          <p>Painel Administrativo</p>
+          <h1>Essence Clinic</h1>
+          <p>{isDoctorLogin ? 'Portal do Médico' : 'Painel Administrativo'}</p>
         </Logo>
 
         <Form onSubmit={handleSubmit}>

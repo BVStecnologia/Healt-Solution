@@ -483,11 +483,13 @@ export interface AppointmentNotificationData {
   patientPhone: string;
   patientId?: string;
   providerName: string;
+  providerPhone?: string;
+  providerUserId?: string;
   appointmentType: string;
-  appointmentDate: string;  // formato: "10/02/2026" ou "02/10/2026" dependendo do idioma
-  appointmentTime: string;  // formato: "14:00" ou "2:00 PM"
+  appointmentDate: string;
+  appointmentTime: string;
   appointmentId?: string;
-  language?: SupportedLanguage;  // Idioma preferido do paciente
+  language?: SupportedLanguage;
 }
 
 /**
@@ -653,6 +655,268 @@ async function sendReminder(
 }
 
 // =============================================
+// FUNÇÕES DE NOTIFICAÇÃO PARA MÉDICOS
+// =============================================
+
+/**
+ * Busca telefone e idioma do médico via provider → profile
+ */
+async function getProviderContactInfo(
+  providerUserId: string
+): Promise<{ phone: string | null; language: SupportedLanguage }> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('phone, preferred_language')
+      .eq('id', providerUserId)
+      .single();
+
+    if (error || !data) {
+      logError('Dados de contato do médico não encontrados', error);
+      return { phone: null, language: DEFAULT_LANGUAGE };
+    }
+
+    return {
+      phone: data.phone || null,
+      language: (data.preferred_language as SupportedLanguage) || DEFAULT_LANGUAGE,
+    };
+  } catch (error) {
+    logError('Erro ao buscar contato do médico', error);
+    return { phone: null, language: DEFAULT_LANGUAGE };
+  }
+}
+
+/**
+ * Notifica médico sobre nova consulta agendada
+ */
+async function notifyProviderNewAppointment(
+  data: AppointmentNotificationData
+): Promise<SendMessageResult> {
+  const providerPhone = data.providerPhone;
+  const providerUserId = data.providerUserId;
+
+  if (!providerPhone && !providerUserId) {
+    log('Sem telefone ou userId do médico, notificação não enviada');
+    return { success: false, error: 'Telefone do médico não disponível' };
+  }
+
+  let phone = providerPhone || '';
+  let language: SupportedLanguage = DEFAULT_LANGUAGE;
+
+  if (providerUserId) {
+    const contact = await getProviderContactInfo(providerUserId);
+    if (!phone && contact.phone) phone = contact.phone;
+    language = contact.language;
+  }
+
+  if (!phone) {
+    log('Médico sem telefone cadastrado');
+    return { success: false, error: 'Médico sem telefone cadastrado' };
+  }
+
+  log(`Notificando médico sobre nova consulta (${language}):`, data);
+
+  const instance = await getConnectedInstance();
+  if (!instance) {
+    logError('Nenhuma instância WhatsApp conectada');
+    return { success: false, error: 'WhatsApp não conectado' };
+  }
+
+  return sendFromTemplate(
+    instance.name,
+    phone,
+    'new_appointment_provider',
+    {
+      medico: data.providerName,
+      paciente: data.patientName,
+      tipo: data.appointmentType,
+      data: data.appointmentDate,
+      hora: data.appointmentTime,
+    },
+    language,
+    {
+      appointmentId: data.appointmentId,
+      patientId: data.patientId,
+    }
+  );
+}
+
+/**
+ * Notifica médico quando paciente cancela consulta
+ */
+async function notifyProviderCancellation(
+  data: AppointmentNotificationData & { reason: string }
+): Promise<SendMessageResult> {
+  const providerPhone = data.providerPhone;
+  const providerUserId = data.providerUserId;
+
+  if (!providerPhone && !providerUserId) {
+    return { success: false, error: 'Telefone do médico não disponível' };
+  }
+
+  let phone = providerPhone || '';
+  let language: SupportedLanguage = DEFAULT_LANGUAGE;
+
+  if (providerUserId) {
+    const contact = await getProviderContactInfo(providerUserId);
+    if (!phone && contact.phone) phone = contact.phone;
+    language = contact.language;
+  }
+
+  if (!phone) {
+    return { success: false, error: 'Médico sem telefone cadastrado' };
+  }
+
+  log(`Notificando médico sobre cancelamento (${language}):`, data);
+
+  const instance = await getConnectedInstance();
+  if (!instance) {
+    return { success: false, error: 'WhatsApp não conectado' };
+  }
+
+  return sendFromTemplate(
+    instance.name,
+    phone,
+    'appointment_cancelled_provider',
+    {
+      medico: data.providerName,
+      paciente: data.patientName,
+      tipo: data.appointmentType,
+      data: data.appointmentDate,
+      hora: data.appointmentTime,
+      motivo: data.reason,
+    },
+    language,
+    {
+      appointmentId: data.appointmentId,
+      patientId: data.patientId,
+    }
+  );
+}
+
+/**
+ * Notifica paciente quando médico/admin cancela consulta
+ */
+async function notifyPatientProviderCancellation(
+  data: AppointmentNotificationData & { reason: string }
+): Promise<SendMessageResult> {
+  let language = data.language || DEFAULT_LANGUAGE;
+  if (!data.language && data.patientId) {
+    language = await getPatientLanguage(data.patientId);
+  }
+
+  log(`Notificando paciente sobre cancelamento pelo médico (${language}):`, data);
+
+  const instance = await getConnectedInstance();
+  if (!instance) {
+    return { success: false, error: 'WhatsApp não conectado' };
+  }
+
+  return sendFromTemplate(
+    instance.name,
+    data.patientPhone,
+    'appointment_cancelled_by_provider',
+    {
+      nome: data.patientName,
+      medico: data.providerName,
+      data: data.appointmentDate,
+      hora: data.appointmentTime,
+      motivo: data.reason,
+    },
+    language,
+    {
+      appointmentId: data.appointmentId,
+      patientId: data.patientId,
+    }
+  );
+}
+
+/**
+ * Notifica paciente sobre confirmação automática de consulta
+ */
+async function notifyAppointmentAutoConfirmed(
+  data: AppointmentNotificationData
+): Promise<SendMessageResult> {
+  let language = data.language || DEFAULT_LANGUAGE;
+  if (!data.language && data.patientId) {
+    language = await getPatientLanguage(data.patientId);
+  }
+
+  log(`Notificando confirmação automática (${language}):`, data);
+
+  const instance = await getConnectedInstance();
+  if (!instance) {
+    return { success: false, error: 'WhatsApp não conectado' };
+  }
+
+  return sendFromTemplate(
+    instance.name,
+    data.patientPhone,
+    'appointment_auto_confirmed',
+    {
+      nome: data.patientName,
+      medico: data.providerName,
+      tipo: data.appointmentType,
+      data: data.appointmentDate,
+      hora: data.appointmentTime,
+    },
+    language,
+    {
+      appointmentId: data.appointmentId,
+      patientId: data.patientId,
+    }
+  );
+}
+
+/**
+ * Envia notificação dupla: paciente + médico (usado na criação de consulta)
+ */
+async function notifyBothNewAppointment(
+  data: AppointmentNotificationData
+): Promise<{ patient: SendMessageResult; provider: SendMessageResult }> {
+  log('Enviando notificação dupla (paciente + médico):', data);
+
+  const [patientResult, providerResult] = await Promise.all([
+    notifyAppointmentAutoConfirmed(data),
+    notifyProviderNewAppointment(data),
+  ]);
+
+  log('Resultado notificação dupla:', { patient: patientResult, provider: providerResult });
+
+  return {
+    patient: patientResult,
+    provider: providerResult,
+  };
+}
+
+/**
+ * Envia notificação cruzada de cancelamento (notifica a outra parte)
+ * cancelledBy: 'patient' | 'provider' | 'admin'
+ */
+async function notifyCancellation(
+  data: AppointmentNotificationData & { reason: string },
+  cancelledBy: 'patient' | 'provider' | 'admin'
+): Promise<{ patient?: SendMessageResult; provider?: SendMessageResult }> {
+  log(`Cancelamento por ${cancelledBy}, enviando notificações cruzadas:`, data);
+
+  const results: { patient?: SendMessageResult; provider?: SendMessageResult } = {};
+
+  if (cancelledBy === 'patient') {
+    // Paciente cancelou → notificar médico
+    results.provider = await notifyProviderCancellation(data);
+  } else {
+    // Médico ou admin cancelou → notificar paciente
+    results.patient = await notifyPatientProviderCancellation(data);
+    if (cancelledBy === 'admin') {
+      // Admin cancelou → notificar médico também
+      results.provider = await notifyProviderCancellation(data);
+    }
+  }
+
+  return results;
+}
+
+// =============================================
 // EXPORT
 // =============================================
 
@@ -664,15 +928,26 @@ export const whatsappService = {
   getTemplate,
   sendFromTemplate,
 
-  // Funções de conveniência
+  // Notificações para pacientes
   notifyAppointmentConfirmed,
   notifyAppointmentRejected,
   notifyAppointmentCancelled,
+  notifyAppointmentAutoConfirmed,
+  notifyPatientProviderCancellation,
   sendReminder,
+
+  // Notificações para médicos
+  notifyProviderNewAppointment,
+  notifyProviderCancellation,
+
+  // Notificações duplas (paciente + médico)
+  notifyBothNewAppointment,
+  notifyCancellation,
 
   // Utilitários
   logMessageToDatabase,
   getPatientLanguage,
+  getProviderContactInfo,
 };
 
 export default whatsappService;

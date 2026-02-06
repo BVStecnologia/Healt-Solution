@@ -24,13 +24,19 @@ export const useAvailability = (): UseAvailabilityReturn => {
       setLoading(true);
       setError(null);
 
-      const data = await callRPC<TimeSlot[]>('get_available_slots', {
+      const data = await callRPC<any[]>('get_available_slots', {
         p_provider_id: providerId,
         p_date: date,
         p_appointment_type: type,
       });
 
-      setSlots(data || []);
+      const mapped: TimeSlot[] = (data || []).map(slot => ({
+        start: slot.start_time || slot.start,
+        end: slot.end_time || slot.end,
+        available: slot.available,
+      }));
+
+      setSlots(mapped);
     } catch (err) {
       console.error('Error fetching availability:', err);
       setError(err as Error);

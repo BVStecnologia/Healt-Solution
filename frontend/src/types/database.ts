@@ -266,6 +266,18 @@ export interface EligibilityResult {
   };
 }
 
+export interface ProviderBlock {
+  id: string;
+  provider_id: string;
+  block_date: string;
+  start_time: string | null;
+  end_time: string | null;
+  reason: string | null;
+  created_via: 'panel' | 'whatsapp';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface CreateAppointmentDTO {
   provider_id: string;
   type: AppointmentType;

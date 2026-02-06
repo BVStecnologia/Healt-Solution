@@ -18,8 +18,13 @@ const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ children }) =
     return <Navigate to="/admin/login" replace />;
   }
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'provider')) {
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // Provider acessando /admin → redirecionar para /doctor
+  if (profile.role === 'provider') {
+    return <Navigate to="/doctor" replace />;
   }
 
   return <>{children}</>;

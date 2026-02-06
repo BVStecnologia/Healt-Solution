@@ -68,9 +68,14 @@ supabase/volumes/functions/
 .claude-images/
 .claude/settings.local.json
 
+# Playwright MCP (screenshots + console logs de testes)
+.playwright-mcp/
+frontend/.playwright-mcp/
+
 # Screenshots
 .clipshot/
 *.png
 !frontend/public/*.png
+!frontend/src/**/*.png
 
 # Local folders (removido Servidor/ para versionar)

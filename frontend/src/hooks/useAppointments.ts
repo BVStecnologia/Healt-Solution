@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, callRPC } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { whatsappService } from '../lib/whatsappService';
 import type { Appointment, AppointmentStatus, CreateAppointmentDTO } from '../types/database';
 
 interface UseAppointmentsReturn {
@@ -92,6 +93,55 @@ export const useAppointments = (): UseAppointmentsReturn => {
       // Atualizar lista local
       await fetchAppointments();
 
+      // Enviar notificação dupla (paciente + médico) via WhatsApp
+      // Fire-and-forget: não bloqueia o fluxo se falhar
+      try {
+        // Buscar dados do provider para notificação
+        const { data: providerData } = await supabase
+          .from('providers')
+          .select('*, profile:profiles(*)')
+          .eq('id', data.provider_id)
+          .single();
+
+        if (providerData?.profile) {
+          const schedDate = new Date(data.scheduled_at);
+          const providerProfile = providerData.profile as any;
+          const patientName = profile
+            ? `${profile.first_name} ${profile.last_name}`
+            : '';
+
+          const appointmentTypeNames: Record<string, string> = {
+            initial_consultation: 'Consulta Inicial',
+            follow_up: 'Retorno',
+            hormone_check: 'Avaliação Hormonal',
+            lab_review: 'Revisão de Exames',
+            nutrition: 'Nutrição',
+            health_coaching: 'Health Coaching',
+            therapy: 'Terapia',
+            personal_training: 'Personal Training',
+          };
+
+          whatsappService.notifyBothNewAppointment({
+            patientName,
+            patientPhone: profile?.phone || '',
+            patientId: user.id,
+            providerName: `Dr(a). ${providerProfile.first_name} ${providerProfile.last_name}`,
+            providerPhone: providerProfile.phone || '',
+            providerUserId: providerProfile.id,
+            appointmentType: appointmentTypeNames[data.type] || data.type,
+            appointmentDate: `${String(schedDate.getUTCDate()).padStart(2, '0')}/${String(schedDate.getUTCMonth() + 1).padStart(2, '0')}/${schedDate.getUTCFullYear()}`,
+            appointmentTime: `${String(schedDate.getUTCHours()).padStart(2, '0')}:${String(schedDate.getUTCMinutes()).padStart(2, '0')}`,
+            appointmentId: result.id,
+          }).then(results => {
+            console.log('[Appointments] Notificações enviadas:', results);
+          }).catch(err => {
+            console.error('[Appointments] Erro ao enviar notificações:', err);
+          });
+        }
+      } catch (notifErr) {
+        console.error('[Appointments] Erro ao preparar notificações:', notifErr);
+      }
+
       return result;
     } catch (err) {
       console.error('Error creating appointment:', err);
@@ -102,6 +152,9 @@ export const useAppointments = (): UseAppointmentsReturn => {
   // Cancelar agendamento
   const cancelAppointment = async (id: string, reason: string): Promise<void> => {
     try {
+      // Buscar dados da consulta antes de cancelar (para notificação)
+      const appointment = appointments.find(apt => apt.id === id);
+
       const { error: updateError } = await supabase
         .from('appointments')
         .update({
@@ -121,6 +174,40 @@ export const useAppointments = (): UseAppointmentsReturn => {
             : apt
         )
       );
+
+      // Notificação cruzada: determinar quem cancelou e notificar a outra parte
+      if (appointment) {
+        try {
+          const schedDate = new Date(appointment.scheduled_at);
+          const providerProfile = appointment.provider?.profile;
+          const cancelledBy = profile?.role === 'patient' ? 'patient' as const
+            : profile?.role === 'provider' ? 'provider' as const
+            : 'admin' as const;
+
+          whatsappService.notifyCancellation({
+            patientName: appointment.patient
+              ? `${appointment.patient.first_name} ${appointment.patient.last_name}`
+              : profile?.role === 'patient' ? `${profile.first_name} ${profile.last_name}` : '',
+            patientPhone: appointment.patient?.phone || profile?.phone || '',
+            patientId: appointment.patient_id,
+            providerName: providerProfile
+              ? `Dr(a). ${providerProfile.first_name} ${providerProfile.last_name}` : '',
+            providerPhone: providerProfile?.phone || '',
+            providerUserId: providerProfile?.id,
+            appointmentType: appointment.type,
+            appointmentDate: `${String(schedDate.getUTCDate()).padStart(2, '0')}/${String(schedDate.getUTCMonth() + 1).padStart(2, '0')}/${schedDate.getUTCFullYear()}`,
+            appointmentTime: `${String(schedDate.getUTCHours()).padStart(2, '0')}:${String(schedDate.getUTCMinutes()).padStart(2, '0')}`,
+            appointmentId: id,
+            reason,
+          }, cancelledBy).then(results => {
+            console.log('[Appointments] Notificações de cancelamento enviadas:', results);
+          }).catch(err => {
+            console.error('[Appointments] Erro ao enviar notificações de cancelamento:', err);
+          });
+        } catch (notifErr) {
+          console.error('[Appointments] Erro ao preparar notificação de cancelamento:', notifErr);
+        }
+      }
     } catch (err) {
       console.error('Error cancelling appointment:', err);
       throw err;

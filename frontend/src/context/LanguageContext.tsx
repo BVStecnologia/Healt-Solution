@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export type Language = 'pt' | 'en';
@@ -133,6 +133,9 @@ const translations: Record<Language, Record<string, string>> = {
 const STORAGE_KEY = 'essence-language';
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Flag para rastrear se o usuário mudou o idioma manualmente nesta sessão
+  const manuallyChanged = useRef(false);
+
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'pt' || stored === 'en') {
@@ -155,6 +158,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
    */
   const setLanguage = useCallback(async (lang: Language, syncToDatabase: boolean = false) => {
     setLanguageState(lang);
+    manuallyChanged.current = true;
 
     // Sincronizar com banco de dados se solicitado
     if (syncToDatabase) {
@@ -183,6 +187,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
    * Chamado após o login para aplicar a preferência do usuário
    */
   const syncFromDatabase = useCallback(async (userId: string) => {
+    // Se o usuário mudou o idioma manualmente nesta sessão, não sobrescrever
+    if (manuallyChanged.current) {
+      console.log('[Language] Idioma alterado manualmente, ignorando sync do banco');
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
