@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Leaf } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
@@ -593,24 +593,13 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { user, profile, signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const { t, syncFromDatabase } = useLanguage();
   const { syncFromDatabase: syncThemeFromDatabase } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = (location.state as any)?.from?.pathname || '/';
-
-  // Se já está logado, redirecionar para área correta
-  if (user && profile) {
-    if (profile.role === 'admin') {
-      return <Navigate to="/admin" replace />;
-    }
-    if (profile.role === 'provider') {
-      return <Navigate to="/doctor" replace />;
-    }
-    return <Navigate to="/" replace />;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
