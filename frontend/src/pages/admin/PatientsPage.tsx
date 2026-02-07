@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  Users, UserPlus, Search, Edit2, Check, AlertCircle, Eye,
+  Users, UserPlus, Search, Edit2, Check, AlertCircle,
   Crown, Activity, Phone, Mail, ChevronLeft, ChevronRight, X,
   Sparkles, AlertTriangle, Heart, Droplets
 } from 'lucide-react';
@@ -66,15 +66,11 @@ const luxuryTheme = {
   primary: '#92563E',
   primaryLight: '#B8956E',
   primaryDark: '#7A4832',
-  gold: '#D4AF37',
-  goldLight: '#E8C547',
   success: '#059669',
   error: '#DC2626',
-  trt: '#92563E',
-  hormone: '#C77D8E',
+  wellness: '#14B8A6',
   vip: '#D4AF37',
   newPatient: '#059669',
-  general: '#8B7355',
   // Theme-responsive colors (CSS variables - adapt to dark mode)
   cream: theme.colors.background,
   surface: theme.colors.surface,
@@ -88,9 +84,7 @@ const luxuryTheme = {
 // ============================================
 // STYLED COMPONENTS
 // ============================================
-const PageContainer = styled.div`
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
-`;
+const PageContainer = styled.div``;
 
 const Header = styled.div`
   display: flex;
@@ -100,7 +94,7 @@ const Header = styled.div`
   animation: ${fadeInUp} 0.6s ease-out;
 
   h1 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 42px;
     font-weight: 600;
     color: ${luxuryTheme.text};
@@ -148,8 +142,8 @@ const NewPatientButton = styled.button`
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: 14px;
+  margin-bottom: 28px;
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
@@ -160,78 +154,59 @@ const StatsGrid = styled.div`
   }
 `;
 
-const StatCard = styled.div<{ $delay: number; $accentColor: string }>`
+const StatCard = styled.div<{ $delay: number }>`
   background: ${luxuryTheme.surface};
-  border-radius: 16px;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
+  border-radius: 14px;
+  padding: 20px 22px;
   border: 1px solid ${luxuryTheme.border};
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: ${props => props.$delay}ms;
   animation-fill-mode: both;
-  transition: all 0.3s ease;
-  cursor: default;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, ${props => props.$accentColor}, ${props => props.$accentColor}88);
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, ${props => props.$accentColor}08 0%, transparent 70%);
-    pointer-events: none;
-  }
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px ${luxuryTheme.primary}15;
-    border-color: ${props => props.$accentColor}40;
+    border-color: ${luxuryTheme.primaryLight}60;
   }
 `;
 
-const StatIcon = styled.div<{ $color: string }>`
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, ${props => props.$color}15, ${props => props.$color}08);
+const StatIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: ${theme.colors.background};
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
-  color: ${props => props.$color};
-  transition: all 0.3s ease;
+  color: ${luxuryTheme.primaryLight};
+  flex-shrink: 0;
 
-  ${StatCard}:hover & {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, ${props => props.$color}25, ${props => props.$color}15);
+  svg {
+    width: 20px;
+    height: 20px;
   }
 `;
 
+const StatContent = styled.div`
+  min-width: 0;
+`;
+
 const StatValue = styled.div`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 36px;
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 26px;
   font-weight: 600;
   color: ${luxuryTheme.text};
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 `;
 
 const StatLabel = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   color: ${luxuryTheme.textSecondary};
   font-weight: 500;
+  letter-spacing: 0.2px;
 `;
 
 const FiltersSection = styled.div`
@@ -333,6 +308,7 @@ const PatientCard = styled.div<{ $index: number }>`
   animation: ${fadeInUp} 0.5s ease-out;
   animation-delay: ${props => 350 + props.$index * 50}ms;
   animation-fill-mode: both;
+  cursor: pointer;
 
   &:hover {
     border-color: ${luxuryTheme.primaryLight};
@@ -347,24 +323,28 @@ const PatientCard = styled.div<{ $index: number }>`
   }
 `;
 
-const PatientAvatar = styled.div<{ $type: PatientType | null }>`
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: ${props => {
-    const color = getPatientTypeColor(props.$type || 'general');
-    return `linear-gradient(135deg, ${color}, ${color}BB)`;
-  }};
+const PatientAvatar = styled.div<{ $hasImage?: boolean }>`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: ${props => props.$hasImage ? 'transparent' : '#E8E4E0'};
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: ${theme.colors.textSecondary};
   font-weight: 600;
-  font-size: 18px;
-  font-family: 'Cormorant Garamond', serif;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 12px ${props => `${getPatientTypeColor(props.$type || 'general')}40`};
+  font-size: 16px;
+  font-family: ${theme.typography.fontFamilyHeading};
+  letter-spacing: 0.5px;
+  overflow: hidden;
+  flex-shrink: 0;
   transition: all 0.3s ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
   ${PatientCard}:hover & {
     transform: scale(1.05);
@@ -376,7 +356,7 @@ const PatientInfo = styled.div`
 `;
 
 const PatientName = styled.div`
-  font-family: 'Cormorant Garamond', serif;
+  font-family: ${theme.typography.fontFamilyHeading};
   font-size: 20px;
   font-weight: 600;
   color: ${luxuryTheme.text};
@@ -526,9 +506,9 @@ const PageButton = styled.button<{ $active?: boolean }>`
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  border: 1px solid ${props => props.$active ? luxuryTheme.gold : luxuryTheme.border};
+  border: 1px solid ${props => props.$active ? luxuryTheme.primary : luxuryTheme.border};
   background: ${props => props.$active
-    ? `linear-gradient(135deg, ${luxuryTheme.gold}, ${luxuryTheme.goldLight})`
+    ? `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`
     : luxuryTheme.surface};
   color: ${props => props.$active ? 'white' : luxuryTheme.text};
   font-weight: ${props => props.$active ? '600' : '500'};
@@ -537,9 +517,9 @@ const PageButton = styled.button<{ $active?: boolean }>`
   transition: all 0.3s ease;
 
   &:hover:not(:disabled) {
-    border-color: ${luxuryTheme.gold};
+    border-color: ${luxuryTheme.primary};
     background: ${props => props.$active
-      ? `linear-gradient(135deg, ${luxuryTheme.gold}, ${luxuryTheme.goldLight})`
+      ? `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`
       : luxuryTheme.cream};
     transform: translateY(-2px);
   }
@@ -567,7 +547,7 @@ const EmptyState = styled.div`
   }
 
   h3 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 24px;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
@@ -673,7 +653,7 @@ const ModalHeader = styled.div`
   justify-content: space-between;
 
   h2 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 24px;
     font-weight: 600;
     color: white;
@@ -1124,7 +1104,7 @@ const PatientsPage: React.FC = () => {
   const stats = {
     total: patients.length,
     new: patients.filter(p => p.patient_type === 'new').length,
-    trt: patients.filter(p => p.patient_type === 'trt').length,
+    wellness: patients.filter(p => p.patient_type === 'wellness').length,
     vip: patients.filter(p => p.patient_type === 'vip').length
   };
 
@@ -1143,36 +1123,36 @@ const PatientsPage: React.FC = () => {
         </Header>
 
         <StatsGrid>
-          <StatCard $delay={0} $accentColor={luxuryTheme.primary}>
-            <StatIcon $color={luxuryTheme.primary}>
-              <Users size={24} />
-            </StatIcon>
-            <StatValue>{stats.total}</StatValue>
-            <StatLabel>Total de Pacientes</StatLabel>
+          <StatCard $delay={0}>
+            <StatIcon><Users size={20} /></StatIcon>
+            <StatContent>
+              <StatValue>{stats.total}</StatValue>
+              <StatLabel>Total de Pacientes</StatLabel>
+            </StatContent>
           </StatCard>
 
-          <StatCard $delay={50} $accentColor={luxuryTheme.newPatient}>
-            <StatIcon $color={luxuryTheme.newPatient}>
-              <UserPlus size={24} />
-            </StatIcon>
-            <StatValue>{stats.new}</StatValue>
-            <StatLabel>Novos Pacientes</StatLabel>
+          <StatCard $delay={50}>
+            <StatIcon><UserPlus size={20} /></StatIcon>
+            <StatContent>
+              <StatValue>{stats.new}</StatValue>
+              <StatLabel>Novos Pacientes</StatLabel>
+            </StatContent>
           </StatCard>
 
-          <StatCard $delay={100} $accentColor={luxuryTheme.trt}>
-            <StatIcon $color={luxuryTheme.trt}>
-              <Activity size={24} />
-            </StatIcon>
-            <StatValue>{stats.trt}</StatValue>
-            <StatLabel>Pacientes TRT</StatLabel>
+          <StatCard $delay={100}>
+            <StatIcon><Activity size={20} /></StatIcon>
+            <StatContent>
+              <StatValue>{stats.wellness}</StatValue>
+              <StatLabel>Bem-estar</StatLabel>
+            </StatContent>
           </StatCard>
 
-          <StatCard $delay={150} $accentColor={luxuryTheme.vip}>
-            <StatIcon $color={luxuryTheme.vip}>
-              <Crown size={24} />
-            </StatIcon>
-            <StatValue>{stats.vip}</StatValue>
-            <StatLabel>Pacientes VIP</StatLabel>
+          <StatCard $delay={150}>
+            <StatIcon><Crown size={20} /></StatIcon>
+            <StatContent>
+              <StatValue>{stats.vip}</StatValue>
+              <StatLabel>Pacientes VIP</StatLabel>
+            </StatContent>
           </StatCard>
         </StatsGrid>
 
@@ -1236,9 +1216,13 @@ const PatientsPage: React.FC = () => {
           <>
             <PatientsGrid>
               {paginatedPatients.map((patient, index) => (
-                <PatientCard key={patient.id} $index={index}>
-                  <PatientAvatar $type={patient.patient_type}>
-                    {getInitials(patient.first_name, patient.last_name)}
+                <PatientCard key={patient.id} $index={index} onClick={() => handleViewPatient(patient)}>
+                  <PatientAvatar $hasImage={!!patient.avatar_url}>
+                    {patient.avatar_url ? (
+                      <img src={patient.avatar_url} alt={`${patient.first_name} ${patient.last_name}`} />
+                    ) : (
+                      getInitials(patient.first_name, patient.last_name)
+                    )}
                   </PatientAvatar>
 
                   <PatientInfo>
@@ -1268,11 +1252,7 @@ const PatientsPage: React.FC = () => {
                   </PatientBadge>
 
                   <PatientActions>
-                    <ActionButton onClick={() => handleViewPatient(patient)}>
-                      <Eye size={16} />
-                      Ver
-                    </ActionButton>
-                    <ActionButton $variant="primary" onClick={() => handleOpenModal(patient)}>
+                    <ActionButton $variant="primary" onClick={(e) => { e.stopPropagation(); handleOpenModal(patient); }}>
                       <Edit2 size={16} />
                       Editar
                     </ActionButton>

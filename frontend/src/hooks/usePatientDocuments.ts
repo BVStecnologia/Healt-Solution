@@ -34,5 +34,19 @@ export function usePatientDocuments() {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  return { documents, loading, error, refetch: fetchDocuments };
+  const getSignedUrl = async (filePath: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('patient-documents')
+        .createSignedUrl(filePath, 60 * 60); // 1 hour
+
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (err: any) {
+      console.error('[Documents] Erro ao gerar URL:', err);
+      return null;
+    }
+  };
+
+  return { documents, loading, error, refetch: fetchDocuments, getSignedUrl };
 }

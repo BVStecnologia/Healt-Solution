@@ -99,8 +99,17 @@ const CLINICAL_TYPES = ['lab_result', 'prescription', 'other'];
 const ADMIN_TYPES = ['invoice', 'consent_form', 'intake_form'];
 
 const PatientDocumentsPage: React.FC = () => {
-  const { documents, loading } = usePatientDocuments();
+  const { documents, loading, getSignedUrl } = usePatientDocuments();
   const [activeTab, setActiveTab] = useState<TabType>('all');
+
+  const handleDownload = async (filePath: string) => {
+    const url = await getSignedUrl(filePath);
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      alert('Erro ao gerar link de download.');
+    }
+  };
 
   const filteredDocs = activeTab === 'all'
     ? documents
@@ -140,7 +149,7 @@ const PatientDocumentsPage: React.FC = () => {
       {filteredDocs.length > 0 ? (
         <Grid>
           {filteredDocs.map(doc => (
-            <DocumentCard key={doc.id} document={doc} />
+            <DocumentCard key={doc.id} document={doc} onDownload={() => handleDownload(doc.file_url)} />
           ))}
         </Grid>
       ) : (

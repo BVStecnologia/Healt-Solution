@@ -133,26 +133,31 @@ const HeaderContent = styled.div`
   }
 `;
 
-const Avatar = styled.div<{ $color: string }>`
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  background: linear-gradient(145deg, ${props => props.$color} 0%, ${props => props.$color}CC 100%);
+const Avatar = styled.div<{ $hasImage?: boolean }>`
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: ${props => props.$hasImage ? 'transparent' : '#E8E4E0'};
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: ${theme.typography.fontFamilyHeading};
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
-  color: white;
+  color: ${theme.colors.textSecondary};
   flex-shrink: 0;
-  box-shadow: 0 4px 16px ${props => props.$color}40;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 
   @media (max-width: 768px) {
-    width: 64px;
-    height: 64px;
-    font-size: 22px;
-    border-radius: 16px;
+    width: 60px;
+    height: 60px;
+    font-size: 20px;
   }
 `;
 
@@ -1065,8 +1070,12 @@ const PatientProfilePage: React.FC = () => {
         {/* ===== HEADER ===== */}
         <ProfileHeader>
           <HeaderContent>
-            <Avatar $color={typeColor}>
-              {initials}
+            <Avatar $hasImage={!!patient.avatar_url}>
+              {patient.avatar_url ? (
+                <img src={patient.avatar_url} alt={`${patient.first_name} ${patient.last_name}`} />
+              ) : (
+                initials
+              )}
             </Avatar>
 
             <HeaderInfo>

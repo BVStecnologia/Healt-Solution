@@ -181,7 +181,9 @@ const FormSelect = styled.select`
   }
 `;
 
-const DropZone = styled.div<{ $isDragOver: boolean; $hasFile: boolean }>`
+const DropZone = styled.button<{ $isDragOver: boolean; $hasFile: boolean }>`
+  display: block;
+  width: 100%;
   border: 2px dashed ${props => props.$isDragOver ? theme.colors.primary : props.$hasFile ? '#10B981' : theme.colors.border};
   border-radius: 12px;
   padding: 24px;
@@ -189,10 +191,17 @@ const DropZone = styled.div<{ $isDragOver: boolean; $hasFile: boolean }>`
   cursor: pointer;
   transition: all 0.2s ease;
   background: ${props => props.$isDragOver ? theme.colors.primarySoft : props.$hasFile ? '#F0FDF4' : 'white'};
+  font-family: inherit;
 
   &:hover {
     border-color: ${theme.colors.primary};
     background: ${theme.colors.primarySoft};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
   }
 
   svg {
@@ -369,7 +378,17 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ onClose, onUp
 
           <FormGroup>
             <FormLabel>Arquivo</FormLabel>
+            <HiddenInput
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPTED_TYPES}
+              onChange={e => {
+                const f = e.target.files?.[0];
+                if (f) handleFileSelect(f);
+              }}
+            />
             <DropZone
+              type="button"
               $isDragOver={isDragOver}
               $hasFile={!!file}
               onClick={() => fileInputRef.current?.click()}
@@ -387,15 +406,6 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ onClose, onUp
                 </>
               )}
             </DropZone>
-            <HiddenInput
-              ref={fileInputRef}
-              type="file"
-              accept={ACCEPTED_TYPES}
-              onChange={e => {
-                const f = e.target.files?.[0];
-                if (f) handleFileSelect(f);
-              }}
-            />
           </FormGroup>
 
           <FormGroup>
