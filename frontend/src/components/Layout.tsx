@@ -8,6 +8,7 @@ import {
   Menu,
   User,
   Settings,
+  FileText,
 } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
@@ -105,81 +106,60 @@ const NavLink = styled(Link)<{ $active: boolean }>`
 `;
 
 const UserSection = styled.div`
-  padding: ${theme.spacing.md};
+  padding: 12px 16px;
   border-top: 1px solid ${theme.colors.border};
-`;
-
-const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.md};
-  padding: ${theme.spacing.md};
-  margin-bottom: ${theme.spacing.sm};
+  gap: 10px;
 `;
 
 const AvatarCircle = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${theme.colors.primary};
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(145deg, ${theme.colors.primary} 0%, #7A4833 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 12px;
+  font-family: ${theme.typography.fontFamilyHeading};
   flex-shrink: 0;
 `;
 
-const UserDetails = styled.div`
-  flex: 1;
-  overflow: hidden;
-`;
-
 const UserName = styled.div`
-  font-size: 14px;
-  font-weight: 500;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
   color: ${theme.colors.text};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 `;
 
-const UserEmail = styled.div`
-  font-size: 12px;
-  color: ${theme.colors.textSecondary};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const UserActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${theme.spacing.sm};
-`;
-
 const LogoutButton = styled.button`
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.md};
-  width: 100%;
-  padding: ${theme.spacing.md};
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: ${theme.borderRadius.md};
+  border-radius: 8px;
   background: transparent;
-  color: ${theme.colors.error};
-  font-size: 14px;
+  color: ${theme.colors.textMuted};
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 
   &:hover {
     background: ${theme.colors.errorA10};
+    color: ${theme.colors.error};
   }
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
   }
 `;
 
@@ -235,6 +215,8 @@ const MobileTitle = styled.h1`
 `;
 
 const Content = styled.div`
+  max-width: 1100px;
+  margin: 0 auto;
   padding: ${theme.spacing.xxl} ${theme.spacing.lg} ${theme.spacing.lg};
 
   @media (max-width: 768px) {
@@ -274,6 +256,7 @@ const navSections: NavSectionConfig[] = [
     items: [
       { path: '/', label: 'Dashboard', icon: LayoutDashboard },
       { path: '/appointments', label: 'Consultas', icon: Calendar },
+      { path: '/documents', label: 'Documentos', icon: FileText },
     ],
   },
   {
@@ -334,20 +317,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Nav>
 
         <UserSection>
-          <UserInfo>
-            <AvatarCircle>{initials}</AvatarCircle>
-            <UserDetails>
-              <UserName>
-                {profile ? `${profile.first_name} ${profile.last_name}` : 'Usuário'}
-              </UserName>
-              <UserEmail>{profile?.email}</UserEmail>
-            </UserDetails>
-            <UserActions>
-            </UserActions>
-          </UserInfo>
-          <LogoutButton onClick={handleLogout}>
+          <AvatarCircle>{initials}</AvatarCircle>
+          <UserName>
+            {profile ? `${profile.first_name} ${profile.last_name}` : 'Usuário'}
+          </UserName>
+          <LogoutButton onClick={handleLogout} title="Sair">
             <LogOut />
-            Sair
           </LogoutButton>
         </UserSection>
       </Sidebar>

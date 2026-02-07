@@ -20,7 +20,8 @@ Este arquivo documenta toda a arquitetura, funcionalidades e padrões do sistema
 - **Lead Provider:** Dr. Rosane Nunes
 
 ### Identidade Visual
-- **Manual da Marca:** WABOO Creative (Google Drive)
+- **Manual da Marca:** WABOO Creative — [Google Drive](https://drive.google.com/drive/folders/1s6mm7RaJIo8742CBAcGZV_RwXcV4eMfi)
+- **Material de Apoio (Design):** [Google Drive](https://drive.google.com/drive/folders/1hHPKdrL5EnxPosXNYAutslywFQ4Uwo09) — referência do Mateus para layout/UI
 - **Cor Primária:** #92563E (Marrom terracota)
 - **Cor Secundária:** #8C8B8B (Cinza)
 - **Background:** #FAF8F6 (Bege claro)
@@ -29,6 +30,8 @@ Este arquivo documenta toda a arquitetura, funcionalidades e padrões do sistema
 - **Componente:** `EssenceLogo` — variant (horizontal/vertical), color (dark/light), size (xs-xl)
 - **Slogans:** "Your health begins with your essence", "Balance is the new beauty"
 - **Tema:** Apenas claro (dark mode desabilitado, ThemeContext mantido para futuro)
+
+> **REGRA PARA /frontend-design:** Ao usar o plugin frontend-design neste projeto, SEMPRE seguir a identidade visual acima (Satoshi, terracota #92563E, background #FAF8F6). NÃO criar designs "bold" ou "inesperados" que fujam da marca. Consultar os links do Google Drive para referência visual. O estilo é: refinado, médico-editorial, clean, warm, premium wellness.
 
 ---
 

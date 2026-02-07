@@ -16,6 +16,7 @@ const NewAppointmentPage = lazy(() => import('./pages/scheduling/NewAppointmentP
 const AppointmentDetailPage = lazy(() => import('./pages/scheduling/AppointmentDetailPage'));
 const ProfilePage = lazy(() => import('./pages/patient/ProfilePage'));
 const SettingsPage = lazy(() => import('./pages/patient/SettingsPage'));
+const PatientDocumentsPage = lazy(() => import('./pages/patient/PatientDocumentsPage'));
 
 // Lazy loading das páginas - Painel Admin
 const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
@@ -86,6 +87,12 @@ const App: React.FC = () => {
         <Route path="/settings" element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/documents" element={
+          <ProtectedRoute>
+            <PatientDocumentsPage />
           </ProtectedRoute>
         } />
 

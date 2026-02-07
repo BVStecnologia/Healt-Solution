@@ -32,20 +32,9 @@ const glowPulse = keyframes`
   50% { opacity: 1; filter: blur(1px); }
 `;
 
-const float = keyframes`
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  33% { transform: translate(6px, -10px) rotate(1deg); }
-  66% { transform: translate(-4px, 6px) rotate(-1deg); }
-`;
-
 const shimmer = keyframes`
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
-`;
-
-const breathe = keyframes`
-  0%, 100% { transform: scale(1); opacity: 0.12; }
-  50% { transform: scale(1.08); opacity: 0.2; }
 `;
 
 const stagger = (i: number) => css`
@@ -196,30 +185,48 @@ const RightPanel = styled.div`
   }
 `;
 
-const Orb = styled.div<{ $size: number; $top: string; $right: string; $delay: number }>`
+const DecorativeLines = styled.div<{ $position: 'top' | 'bottom' }>`
   position: absolute;
-  width: ${p => p.$size}px;
-  height: ${p => p.$size}px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(146, 86, 62, 0.12) 0%,
-    transparent 70%
-  );
-  top: ${p => p.$top};
-  right: ${p => p.$right};
-  animation: ${breathe} ${p => 6 + p.$delay}s ease-in-out infinite;
-  animation-delay: ${p => p.$delay}s;
+  left: -10%;
+  right: -10%;
+  height: 260px;
   pointer-events: none;
   z-index: 0;
+  opacity: 0.35;
+  overflow: hidden;
+
+  ${p => p.$position === 'bottom' ? `
+    bottom: -40px;
+  ` : `
+    top: -60px;
+    transform: rotate(180deg);
+  `}
+
+  img {
+    width: 120%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
 `;
 
-const FloatingIcon = styled.div`
+const LeftDecorativeLines = styled.div`
   position: absolute;
-  color: rgba(146, 86, 62, 0.12);
-  animation: ${float} 12s ease-in-out infinite;
+  left: -5%;
+  right: -5%;
+  bottom: 0;
+  height: 300px;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
+  opacity: 0.25;
+  overflow: hidden;
+
+  img {
+    width: 120%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+  }
 `;
 
 const ContentWrapper = styled.div`
@@ -698,6 +705,9 @@ const AdminLoginPage: React.FC = () => {
     <Container>
       <LeftPanel>
         <LeftImage />
+        <LeftDecorativeLines>
+          <img src="/images/lines/lines3-bege.svg" alt="" />
+        </LeftDecorativeLines>
         <LeftOverlay>
           <AccentLine />
           <OverlayBrand>
@@ -712,18 +722,13 @@ const AdminLoginPage: React.FC = () => {
       </LeftPanel>
 
       <RightPanel>
-        {/* Decorative orbs */}
-        <Orb $size={280} $top="-80px" $right="-60px" $delay={0} />
-        <Orb $size={180} $top="60%" $right="70%" $delay={2} />
-        <Orb $size={120} $top="80%" $right="10%" $delay={4} />
-        <FloatingIcon style={{ top: '12%', right: '8%' }}>
-          {isDoctorLogin
-            ? <Stethoscope size={40} />
-            : <Shield size={40} />}
-        </FloatingIcon>
-        <FloatingIcon style={{ top: '75%', right: '85%', animationDelay: '3s' }}>
-          <Shield size={24} />
-        </FloatingIcon>
+        {/* Decorative brand lines */}
+        <DecorativeLines $position="top">
+          <img src="/images/lines/lines2-bege.svg" alt="" />
+        </DecorativeLines>
+        <DecorativeLines $position="bottom">
+          <img src="/images/lines/lines2-dourado.svg" alt="" />
+        </DecorativeLines>
 
         <ContentWrapper>
           <WelcomeSection>
