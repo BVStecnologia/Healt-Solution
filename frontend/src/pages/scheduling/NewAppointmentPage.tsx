@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { ArrowLeft, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Dna, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Dna, Clock, ChevronLeft } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { theme } from '../../styles/GlobalStyle';
 import { useAppointments } from '../../hooks/useAppointments';
@@ -50,41 +50,71 @@ const Title = styled.h1`
 
 const Steps = styled.div`
   display: flex;
-  gap: ${theme.spacing.md};
+  align-items: center;
+  justify-content: center;
   margin-bottom: ${theme.spacing.xl};
+  padding: 0 ${theme.spacing.md};
 `;
 
-const Step = styled.div<{ $active: boolean; $completed: boolean }>`
+const StepItem = styled.div<{ $active: boolean; $completed: boolean }>`
   display: flex;
   align-items: center;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.sm} ${theme.spacing.md};
-  border-radius: ${theme.borderRadius.full};
+  gap: 10px;
+`;
+
+const StepCircle = styled.div<{ $active: boolean; $completed: boolean }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
   background: ${props =>
     props.$completed
-      ? theme.colors.success
+      ? theme.colors.primary
       : props.$active
       ? theme.colors.primary
-      : theme.colors.border};
-  color: ${props => (props.$active || props.$completed ? 'white' : theme.colors.textSecondary)};
-  font-size: 13px;
-  font-weight: 500;
+      : 'transparent'};
+  color: ${props =>
+    props.$completed || props.$active
+      ? 'white'
+      : theme.colors.textSecondary};
+  border: 2px solid ${props =>
+    props.$completed || props.$active
+      ? theme.colors.primary
+      : '#D5CFC9'};
+`;
 
-  span {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: ${props => (props.$active || props.$completed ? 'white' : theme.colors.textSecondary)};
-    color: ${props =>
-      props.$completed
-        ? theme.colors.success
-        : props.$active
-        ? theme.colors.primary
-        : theme.colors.border};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
+const StepLabel = styled.span<{ $active: boolean; $completed: boolean }>`
+  font-size: 13px;
+  font-weight: ${props => props.$active ? 600 : 400};
+  color: ${props =>
+    props.$active
+      ? theme.colors.text
+      : props.$completed
+      ? theme.colors.primary
+      : theme.colors.textSecondary};
+  transition: all 0.3s ease;
+
+  @media (max-width: 600px) {
+    display: none;
+  }
+`;
+
+const StepConnector = styled.div<{ $completed: boolean }>`
+  width: 48px;
+  height: 2px;
+  margin: 0 4px;
+  border-radius: 1px;
+  background: ${props => props.$completed ? theme.colors.primary : '#D5CFC9'};
+  transition: background 0.3s ease;
+
+  @media (max-width: 600px) {
+    width: 24px;
   }
 `;
 
@@ -187,37 +217,114 @@ const ErrorAlert = styled.div`
   }
 `;
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  wellbeing: <Heart size={16} />,
-  personalized: <Brain size={16} />,
-  rejuvenation: <Sparkles size={16} />,
-  iv_therapy: <Droplets size={16} />,
-  peptide_therapy: <Dna size={16} />,
-  general: <Stethoscope size={16} />,
+const CATEGORY_ICONS_LARGE: Record<string, (size: number) => React.ReactNode> = {
+  wellbeing: (s) => <Heart size={s} />,
+  personalized: (s) => <Brain size={s} />,
+  rejuvenation: (s) => <Sparkles size={s} />,
+  iv_therapy: (s) => <Droplets size={s} />,
+  peptide_therapy: (s) => <Dna size={s} />,
+  general: (s) => <Stethoscope size={s} />,
 };
 
-const CategorySection = styled.div`
+const CategoryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: ${theme.spacing.md};
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const CategoryCard = styled.button<{ $color: string }>`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.md};
+  padding: ${theme.spacing.lg} ${theme.spacing.xl};
+  border: 2px solid ${theme.colors.border};
+  border-radius: ${theme.borderRadius.xl};
+  background: ${theme.colors.surface};
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.25s ease;
+
+  &:hover {
+    border-color: ${props => props.$color};
+    box-shadow: 0 4px 16px ${props => props.$color}18;
+    transform: translateY(-2px);
+  }
+`;
+
+const CategoryIconWrap = styled.div<{ $color: string }>`
+  width: 48px;
+  height: 48px;
+  border-radius: ${theme.borderRadius.lg};
+  background: ${props => props.$color}14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: ${props => props.$color};
+`;
+
+const CategoryCardInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const CategoryCardName = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  color: ${theme.colors.text};
+  margin-bottom: 2px;
+`;
+
+const CategoryCardCount = styled.div`
+  font-size: 13px;
+  color: ${theme.colors.textSecondary};
+`;
+
+const CategoryCardArrow = styled.div`
+  color: ${theme.colors.textSecondary};
+  flex-shrink: 0;
+`;
+
+const SubStepHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.sm};
   margin-bottom: ${theme.spacing.lg};
 `;
 
-const CategoryHeader = styled.div<{ $color: string }>`
+const SubStepBack = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.borderRadius.md};
+  background: ${theme.colors.surface};
+  cursor: pointer;
+  color: ${theme.colors.textSecondary};
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: ${theme.colors.border};
+    color: ${theme.colors.text};
+  }
+`;
+
+const SubStepTitle = styled.div<{ $color: string }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: ${theme.spacing.sm};
-  padding-bottom: ${theme.spacing.xs};
-  border-bottom: 2px solid ${props => props.$color}20;
+  font-size: 16px;
+  font-weight: 600;
+  color: ${props => props.$color};
 
   svg {
     color: ${props => props.$color};
-  }
-
-  span {
-    font-size: 14px;
-    font-weight: 600;
-    color: ${props => props.$color};
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 `;
 
@@ -241,6 +348,7 @@ const NewAppointmentPage: React.FC = () => {
   const { eligibility, loading: eligibilityLoading, checkEligibility } = useEligibility();
 
   const [step, setStep] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<AppointmentType | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -252,7 +360,7 @@ const NewAppointmentPage: React.FC = () => {
   // Verificar elegibilidade quando tipo é selecionado
   useEffect(() => {
     if (selectedType) {
-      checkEligibility(selectedType);
+      checkEligibility(selectedType).catch(() => {});
     }
   }, [selectedType, checkEligibility]);
 
@@ -336,75 +444,116 @@ const NewAppointmentPage: React.FC = () => {
       </PageHeader>
 
       <Steps>
-        <Step $active={step === 1} $completed={step > 1}>
-          <span>{step > 1 ? <Check size={12} /> : '1'}</span>
-          Tipo
-        </Step>
-        <Step $active={step === 2} $completed={step > 2}>
-          <span>{step > 2 ? <Check size={12} /> : '2'}</span>
-          Médico
-        </Step>
-        <Step $active={step === 3} $completed={step > 3}>
-          <span>{step > 3 ? <Check size={12} /> : '3'}</span>
-          Horário
-        </Step>
-        <Step $active={step === 4} $completed={false}>
-          <span>4</span>
-          Confirmar
-        </Step>
+        {[
+          { num: 1, label: 'Tipo' },
+          { num: 2, label: 'Médico' },
+          { num: 3, label: 'Horário' },
+          { num: 4, label: 'Confirmar' },
+        ].map((s, i) => (
+          <React.Fragment key={s.num}>
+            <StepItem $active={step === s.num} $completed={step > s.num}>
+              <StepCircle $active={step === s.num} $completed={step > s.num}>
+                {step > s.num ? <Check size={16} /> : s.num}
+              </StepCircle>
+              <StepLabel $active={step === s.num} $completed={step > s.num}>
+                {s.label}
+              </StepLabel>
+            </StepItem>
+            {i < 3 && <StepConnector $completed={step > s.num} />}
+          </React.Fragment>
+        ))}
       </Steps>
 
-      {/* Step 1: Tipo de Consulta */}
-      {step === 1 && (
+      {/* Step 1: Tipo de Consulta (2 sub-steps: category → treatment) */}
+      {step === 1 && !selectedCategory && (
         <StepContent>
           <Card padding="large">
             <h3 style={{ margin: `0 0 ${theme.spacing.lg}` }}>
-              Selecione o tipo de consulta
+              Qual tipo de cuidado você procura?
             </h3>
 
-            {getTreatmentsByCategory().map(({ category, treatments }) => (
-              <CategorySection key={category.key}>
-                <CategoryHeader $color={category.color}>
-                  {CATEGORY_ICONS[category.key]}
-                  <span>{category.label}</span>
-                </CategoryHeader>
-                <TypeGrid>
-                  {treatments.map(t => (
-                    <TypeCard
-                      key={t.key}
-                      $selected={selectedType === t.key}
-                      $disabled={false}
-                      onClick={() => handleTypeSelect(t.key as AppointmentType)}
+            <CategoryGrid>
+              {getTreatmentsByCategory().map(({ category, treatments }) => (
+                <CategoryCard
+                  key={category.key}
+                  $color={category.color}
+                  onClick={() => setSelectedCategory(category.key)}
+                >
+                  <CategoryIconWrap $color={category.color}>
+                    {CATEGORY_ICONS_LARGE[category.key]?.(24)}
+                  </CategoryIconWrap>
+                  <CategoryCardInfo>
+                    <CategoryCardName>{category.label}</CategoryCardName>
+                    <CategoryCardCount>
+                      {treatments.length} {treatments.length === 1 ? 'tratamento' : 'tratamentos'}
+                    </CategoryCardCount>
+                  </CategoryCardInfo>
+                  <CategoryCardArrow>
+                    <ArrowRight size={18} />
+                  </CategoryCardArrow>
+                </CategoryCard>
+              ))}
+            </CategoryGrid>
+          </Card>
+        </StepContent>
+      )}
+
+      {step === 1 && selectedCategory && (
+        <StepContent>
+          <Card padding="large">
+            {(() => {
+              const group = getTreatmentsByCategory().find(g => g.category.key === selectedCategory);
+              if (!group) return null;
+              return (
+                <>
+                  <SubStepHeader>
+                    <SubStepBack onClick={() => { setSelectedCategory(null); setSelectedType(null); }}>
+                      <ChevronLeft size={18} />
+                    </SubStepBack>
+                    <SubStepTitle $color={group.category.color}>
+                      {CATEGORY_ICONS_LARGE[group.category.key]?.(20)}
+                      {group.category.label}
+                    </SubStepTitle>
+                  </SubStepHeader>
+
+                  <TypeGrid>
+                    {group.treatments.map(t => (
+                      <TypeCard
+                        key={t.key}
+                        $selected={selectedType === t.key}
+                        $disabled={false}
+                        onClick={() => handleTypeSelect(t.key as AppointmentType)}
+                      >
+                        <TypeName $selected={selectedType === t.key}>{t.label}</TypeName>
+                        <TypeDescription>{t.description}</TypeDescription>
+                        <DurationBadge>
+                          <Clock size={10} />
+                          {t.duration} min
+                        </DurationBadge>
+                      </TypeCard>
+                    ))}
+                  </TypeGrid>
+
+                  {selectedType && (
+                    <div style={{ marginTop: theme.spacing.lg }}>
+                      <EligibilityAlert
+                        eligibility={eligibility}
+                        loading={eligibilityLoading}
+                      />
+                    </div>
+                  )}
+
+                  <Actions style={{ marginTop: theme.spacing.xl }}>
+                    <Button
+                      onClick={() => setStep(2)}
+                      disabled={!canProceedStep1}
                     >
-                      <TypeName $selected={selectedType === t.key}>{t.label}</TypeName>
-                      <TypeDescription>{t.description}</TypeDescription>
-                      <DurationBadge>
-                        <Clock size={10} />
-                        {t.duration} min
-                      </DurationBadge>
-                    </TypeCard>
-                  ))}
-                </TypeGrid>
-              </CategorySection>
-            ))}
-
-            {selectedType && (
-              <div style={{ marginTop: theme.spacing.lg }}>
-                <EligibilityAlert
-                  eligibility={eligibility}
-                  loading={eligibilityLoading}
-                />
-              </div>
-            )}
-
-            <Actions style={{ marginTop: theme.spacing.xl }}>
-              <Button
-                onClick={() => setStep(2)}
-                disabled={!canProceedStep1}
-              >
-                Continuar
-              </Button>
-            </Actions>
+                      Continuar
+                    </Button>
+                  </Actions>
+                </>
+              );
+            })()}
           </Card>
         </StepContent>
       )}
