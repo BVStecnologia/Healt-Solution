@@ -368,9 +368,9 @@ const LogoutButton = styled.button`
 type Environment = 'admin' | 'doctor' | 'patient';
 
 const environments: { key: Environment; label: string; icon: React.FC<any>; path: string; bgColor: string }[] = [
-  { key: 'admin', label: 'Administrador', icon: Shield, path: '/admin', bgColor: 'rgba(146, 86, 62, 0.4)' },
-  { key: 'doctor', label: 'Médico', icon: Stethoscope, path: '/doctor', bgColor: 'rgba(16, 185, 129, 0.3)' },
-  { key: 'patient', label: 'Paciente', icon: User, path: '/', bgColor: 'rgba(99, 102, 241, 0.3)' },
+  { key: 'admin', label: 'Administrador', icon: Shield, path: '/admin', bgColor: 'rgba(146, 86, 62, 0.45)' },
+  { key: 'doctor', label: 'Médico', icon: Stethoscope, path: '/doctor', bgColor: 'rgba(180, 143, 122, 0.45)' },
+  { key: 'patient', label: 'Paciente', icon: User, path: '/', bgColor: 'rgba(140, 139, 139, 0.35)' },
 ];
 
 const allNavItems = [

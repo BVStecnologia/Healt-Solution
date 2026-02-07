@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Users, UserPlus, Search, Edit2, Check, AlertCircle,
   Crown, Activity, Phone, Mail, ChevronLeft, ChevronRight, X,
-  Sparkles, AlertTriangle, Heart, Droplets
+  Sparkles, AlertTriangle, Heart, Droplets, ChevronDown
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { theme } from '../../styles/GlobalStyle';
@@ -66,11 +66,8 @@ const luxuryTheme = {
   primary: '#92563E',
   primaryLight: '#B8956E',
   primaryDark: '#7A4832',
-  success: '#059669',
-  error: '#DC2626',
-  wellness: '#14B8A6',
-  vip: '#D4AF37',
-  newPatient: '#059669',
+  success: '#6B8E6B',
+  error: '#C4836A',
   // Theme-responsive colors (CSS variables - adapt to dark mode)
   cream: theme.colors.background,
   surface: theme.colors.surface,
@@ -95,11 +92,11 @@ const Header = styled.div`
 
   h1 {
     font-family: ${theme.typography.fontFamilyHeading};
-    font-size: 42px;
-    font-weight: 600;
+    font-size: 32px;
+    font-weight: 400;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
-    letter-spacing: -0.5px;
+    letter-spacing: 0.5px;
   }
 
   p {
@@ -139,74 +136,42 @@ const NewPatientButton = styled.button`
   }
 `;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+const StatsRow = styled.div`
+  display: flex;
+  gap: 12px;
   margin-bottom: 28px;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-  }
+  flex-wrap: wrap;
+  animation: ${fadeInUp} 0.5s ease-out;
 `;
 
-const StatCard = styled.div<{ $delay: number }>`
+const StatPill = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
   background: ${luxuryTheme.surface};
-  border-radius: 14px;
-  padding: 20px 22px;
-  border: 1px solid ${luxuryTheme.border};
-  animation: ${fadeInUp} 0.6s ease-out;
-  animation-delay: ${props => props.$delay}ms;
-  animation-fill-mode: both;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
-  &:hover {
-    border-color: ${luxuryTheme.primaryLight}60;
-  }
-`;
-
-const StatIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: ${theme.colors.background};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${luxuryTheme.primaryLight};
-  flex-shrink: 0;
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 40px;
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
+    color: ${luxuryTheme.primary};
+    opacity: 0.6;
   }
 `;
 
-const StatContent = styled.div`
-  min-width: 0;
-`;
-
-const StatValue = styled.div`
+const StatValue = styled.span`
   font-family: ${theme.typography.fontFamilyHeading};
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 600;
   color: ${luxuryTheme.text};
-  line-height: 1;
-  margin-bottom: 2px;
 `;
 
-const StatLabel = styled.div`
-  font-size: 12px;
+const StatLabel = styled.span`
+  font-size: 13px;
   color: ${luxuryTheme.textSecondary};
-  font-weight: 500;
-  letter-spacing: 0.2px;
+  font-weight: 400;
 `;
 
 const FiltersSection = styled.div`
@@ -217,6 +182,8 @@ const FiltersSection = styled.div`
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: 200ms;
   animation-fill-mode: both;
+  position: relative;
+  z-index: 10;
 `;
 
 const SearchContainer = styled.div`
@@ -260,84 +227,137 @@ const SearchInput = styled.input`
   }
 `;
 
-const FilterSelect = styled.select`
+const DropdownWrapper = styled.div`
+  position: relative;
+  min-width: 180px;
+  z-index: 50;
+`;
+
+const DropdownTrigger = styled.button<{ $open: boolean }>`
+  width: 100%;
   padding: 14px 40px 14px 16px;
   background: ${luxuryTheme.surface};
-  border: 1px solid ${luxuryTheme.border};
+  border: 1px solid ${props => props.$open ? luxuryTheme.primary : luxuryTheme.border};
   border-radius: 12px;
   font-size: 14px;
   color: ${luxuryTheme.text};
   cursor: pointer;
-  min-width: 180px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238B7355' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
+  text-align: left;
   transition: all 0.3s ease;
+  position: relative;
 
-  &:focus {
-    outline: none;
-    border-color: ${luxuryTheme.primary};
+  ${props => props.$open && css`
     box-shadow: 0 0 0 3px ${luxuryTheme.primary}15;
-  }
+  `}
 
   &:hover {
     border-color: ${luxuryTheme.primaryLight};
+  }
+
+  svg {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%) ${props => props.$open ? 'rotate(180deg)' : 'rotate(0deg)'};
+    transition: transform 0.2s ease;
+    color: ${luxuryTheme.primary};
+  }
+`;
+
+const DropdownMenu = styled.div<{ $open: boolean }>`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  overflow: hidden;
+  opacity: ${props => props.$open ? 1 : 0};
+  transform: ${props => props.$open ? 'translateY(0)' : 'translateY(-8px)'};
+  pointer-events: ${props => props.$open ? 'auto' : 'none'};
+  transition: all 0.2s ease;
+`;
+
+const DropdownOption = styled.button<{ $selected: boolean }>`
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  color: ${props => props.$selected ? luxuryTheme.primary : luxuryTheme.textSecondary};
+  font-weight: ${props => props.$selected ? '500' : '400'};
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(146, 86, 62, 0.04);
+    color: ${luxuryTheme.text};
   }
 `;
 
 const PatientsGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: 300ms;
   animation-fill-mode: both;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const PatientCard = styled.div<{ $index: number }>`
   background: ${luxuryTheme.surface};
-  border: 1px solid ${luxuryTheme.border};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 20px;
+  padding: 28px 20px 20px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  transition: all 0.3s ease;
+  text-align: center;
+  gap: 4px;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   animation: ${fadeInUp} 0.5s ease-out;
-  animation-delay: ${props => 350 + props.$index * 50}ms;
+  animation-delay: ${props => 200 + props.$index * 60}ms;
   animation-fill-mode: both;
   cursor: pointer;
 
   &:hover {
-    border-color: ${luxuryTheme.primaryLight};
-    box-shadow: 0 8px 24px ${luxuryTheme.primary}10;
-    transform: translateX(4px);
-    background: linear-gradient(135deg, ${luxuryTheme.surface} 0%, ${luxuryTheme.cream} 100%);
-  }
-
-  @media (max-width: 900px) {
-    grid-template-columns: auto 1fr;
-    gap: 16px;
+    border-color: rgba(146, 86, 62, 0.15);
+    box-shadow: 0 12px 40px rgba(146, 86, 62, 0.10);
+    transform: translateY(-6px);
   }
 `;
 
 const PatientAvatar = styled.div<{ $hasImage?: boolean }>`
-  width: 48px;
-  height: 48px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   background: ${props => props.$hasImage ? 'transparent' : '#E8E4E0'};
   display: flex;
   align-items: center;
   justify-content: center;
   color: ${theme.colors.textSecondary};
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 22px;
   font-family: ${theme.typography.fontFamilyHeading};
   letter-spacing: 0.5px;
   overflow: hidden;
-  flex-shrink: 0;
+  margin-bottom: 10px;
   transition: all 0.3s ease;
 
   img {
@@ -347,127 +367,110 @@ const PatientAvatar = styled.div<{ $hasImage?: boolean }>`
   }
 
   ${PatientCard}:hover & {
-    transform: scale(1.05);
+    transform: scale(1.06);
+    box-shadow: 0 6px 20px rgba(146, 86, 62, 0.15);
   }
 `;
 
 const PatientInfo = styled.div`
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  margin-bottom: 6px;
 `;
 
 const PatientName = styled.div`
   font-family: ${theme.typography.fontFamilyHeading};
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 600;
   color: ${luxuryTheme.text};
-  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  justify-content: center;
 `;
 
 const PatientEmail = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   color: ${luxuryTheme.textSecondary};
-  font-size: 13px;
+  font-size: 11px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
   svg {
     flex-shrink: 0;
-  }
-`;
-
-const PatientPhone = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: ${luxuryTheme.textSecondary};
-  font-size: 14px;
-  min-width: 150px;
-
-  svg {
-    color: ${luxuryTheme.primaryLight};
-  }
-
-  @media (max-width: 900px) {
-    display: none;
+    width: 11px;
+    height: 11px;
   }
 `;
 
 const PatientBadge = styled.span<{ $type: PatientType | null }>`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 24px;
-  font-size: 12px;
-  font-weight: 600;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: ${props => `${getPatientTypeColor(props.$type || 'general')}18`};
-  color: ${props => getPatientTypeColor(props.$type || 'general')};
-  border: 1px solid ${props => `${getPatientTypeColor(props.$type || 'general')}30`};
-  transition: all 0.3s ease;
-
-  ${PatientCard}:hover & {
-    transform: scale(1.05);
-  }
+  letter-spacing: 0.6px;
+  background: ${props => `${getPatientTypeColor(props.$type || 'general')}0A`};
+  color: ${props => `${getPatientTypeColor(props.$type || 'general')}BB`};
+  margin-bottom: 8px;
 
   svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  @media (max-width: 900px) {
-    grid-column: 2;
-    justify-self: start;
+    width: 10px;
+    height: 10px;
+    opacity: 0.7;
   }
 `;
 
 const NoShowBadge = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
   font-weight: 600;
-  background: ${luxuryTheme.error}15;
+  background: ${luxuryTheme.error}12;
   color: ${luxuryTheme.error};
-  border: 1px solid ${luxuryTheme.error}25;
   white-space: nowrap;
 
   svg {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
   }
 `;
 
 const PatientActions = styled.div`
   display: flex;
-  gap: 8px;
-
-  @media (max-width: 900px) {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
+  gap: 6px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid rgba(146, 86, 62, 0.06);
+  justify-content: center;
 `;
 
-const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
+const ActionButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 16px;
-  background: ${props => props.$variant === 'primary'
-    ? `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`
-    : luxuryTheme.surface};
-  color: ${props => props.$variant === 'primary' ? 'white' : luxuryTheme.primary};
-  border: 1px solid ${props => props.$variant === 'primary' ? 'transparent' : luxuryTheme.border};
+  padding: 10px 14px;
+  background: ${luxuryTheme.primary}15;
+  color: ${luxuryTheme.primary};
+  border: 1px solid ${luxuryTheme.primary}30;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
@@ -477,10 +480,6 @@ const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px ${luxuryTheme.primary}25;
-    ${props => props.$variant !== 'primary' && css`
-      background: ${luxuryTheme.cream};
-      border-color: ${luxuryTheme.primaryLight};
-    `}
   }
 
   &:active {
@@ -590,20 +589,24 @@ const EmptyStateCTA = styled.button`
 `;
 
 const LoadingSkeleton = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 800px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 500px) { grid-template-columns: 1fr; }
 `;
 
 const SkeletonCard = styled.div<{ $delay: number }>`
   background: ${luxuryTheme.surface};
-  border: 1px solid ${luxuryTheme.border};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: 56px 1fr 150px 100px 100px;
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 20px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   animation: ${pulse} 1.5s ease-in-out infinite;
   animation-delay: ${props => props.$delay}ms;
 `;
@@ -841,9 +844,21 @@ const PatientsPage: React.FC = () => {
     patient_type: 'new' as PatientType,
     preferred_language: 'pt' as PreferredLanguage
   });
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const editPatientId = searchParams.get('edit');
@@ -1122,39 +1137,30 @@ const PatientsPage: React.FC = () => {
           </NewPatientButton>
         </Header>
 
-        <StatsGrid>
-          <StatCard $delay={0}>
-            <StatIcon><Users size={20} /></StatIcon>
-            <StatContent>
-              <StatValue>{stats.total}</StatValue>
-              <StatLabel>Total de Pacientes</StatLabel>
-            </StatContent>
-          </StatCard>
-
-          <StatCard $delay={50}>
-            <StatIcon><UserPlus size={20} /></StatIcon>
-            <StatContent>
-              <StatValue>{stats.new}</StatValue>
-              <StatLabel>Novos Pacientes</StatLabel>
-            </StatContent>
-          </StatCard>
-
-          <StatCard $delay={100}>
-            <StatIcon><Activity size={20} /></StatIcon>
-            <StatContent>
-              <StatValue>{stats.wellness}</StatValue>
-              <StatLabel>Bem-estar</StatLabel>
-            </StatContent>
-          </StatCard>
-
-          <StatCard $delay={150}>
-            <StatIcon><Crown size={20} /></StatIcon>
-            <StatContent>
+        <StatsRow>
+          <StatPill>
+            <Users />
+            <StatValue>{stats.total}</StatValue>
+            <StatLabel>Pacientes</StatLabel>
+          </StatPill>
+          <StatPill>
+            <UserPlus />
+            <StatValue>{stats.new}</StatValue>
+            <StatLabel>Novos</StatLabel>
+          </StatPill>
+          <StatPill>
+            <Activity />
+            <StatValue>{stats.wellness}</StatValue>
+            <StatLabel>Bem-estar</StatLabel>
+          </StatPill>
+          {stats.vip > 0 && (
+            <StatPill>
+              <Crown />
               <StatValue>{stats.vip}</StatValue>
-              <StatLabel>Pacientes VIP</StatLabel>
-            </StatContent>
-          </StatCard>
-        </StatsGrid>
+              <StatLabel>VIP</StatLabel>
+            </StatPill>
+          )}
+        </StatsRow>
 
         <FiltersSection>
           <SearchContainer>
@@ -1166,29 +1172,46 @@ const PatientsPage: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </SearchContainer>
-          <FilterSelect
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="all">Todos os tipos</option>
-            {PATIENT_TYPE_OPTIONS.map(type => (
-              <option key={type.value} value={type.value}>{type.label}</option>
-            ))}
-          </FilterSelect>
+          <DropdownWrapper ref={dropdownRef}>
+            <DropdownTrigger
+              $open={dropdownOpen}
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              type="button"
+            >
+              {typeFilter === 'all'
+                ? 'Todos os tipos'
+                : PATIENT_TYPE_OPTIONS.find(t => t.value === typeFilter)?.label || typeFilter
+              }
+              <ChevronDown size={16} />
+            </DropdownTrigger>
+            <DropdownMenu $open={dropdownOpen}>
+              <DropdownOption
+                $selected={typeFilter === 'all'}
+                onClick={() => { setTypeFilter('all'); setDropdownOpen(false); }}
+              >
+                Todos os tipos
+              </DropdownOption>
+              {PATIENT_TYPE_OPTIONS.map(type => (
+                <DropdownOption
+                  key={type.value}
+                  $selected={typeFilter === type.value}
+                  onClick={() => { setTypeFilter(type.value); setDropdownOpen(false); }}
+                >
+                  {type.label}
+                </DropdownOption>
+              ))}
+            </DropdownMenu>
+          </DropdownWrapper>
         </FiltersSection>
 
         {loading ? (
           <LoadingSkeleton>
-            {[0, 1, 2, 3, 4].map(i => (
-              <SkeletonCard key={i} $delay={i * 100}>
-                <SkeletonElement $width="56px" $height="56px" $round />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <SkeletonElement $width="180px" $height="20px" />
-                  <SkeletonElement $width="220px" $height="14px" />
-                </div>
-                <SkeletonElement $width="130px" $height="16px" />
-                <SkeletonElement $width="80px" $height="32px" />
-                <SkeletonElement $width="90px" $height="36px" />
+            {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+              <SkeletonCard key={i} $delay={i * 80}>
+                <SkeletonElement $width="72px" $height="72px" $round />
+                <SkeletonElement $width="120px" $height="16px" />
+                <SkeletonElement $width="90px" $height="12px" />
+                <SkeletonElement $width="80px" $height="24px" />
               </SkeletonCard>
             ))}
           </LoadingSkeleton>
@@ -1236,15 +1259,10 @@ const PatientsPage: React.FC = () => {
                       )}
                     </PatientName>
                     <PatientEmail>
-                      <Mail size={12} />
+                      <Mail size={11} />
                       {patient.email}
                     </PatientEmail>
                   </PatientInfo>
-
-                  <PatientPhone>
-                    <Phone size={14} />
-                    {patient.phone || '—'}
-                  </PatientPhone>
 
                   <PatientBadge $type={patient.patient_type}>
                     {getBadgeIcon(patient.patient_type)}
@@ -1252,9 +1270,8 @@ const PatientsPage: React.FC = () => {
                   </PatientBadge>
 
                   <PatientActions>
-                    <ActionButton $variant="primary" onClick={(e) => { e.stopPropagation(); handleOpenModal(patient); }}>
-                      <Edit2 size={16} />
-                      Editar
+                    <ActionButton onClick={(e) => { e.stopPropagation(); handleOpenModal(patient); }}>
+                      <Edit2 size={15} />
                     </ActionButton>
                   </PatientActions>
                 </PatientCard>

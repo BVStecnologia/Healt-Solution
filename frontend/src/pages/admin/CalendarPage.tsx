@@ -320,8 +320,8 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-event {
-    border-radius: 8px;
-    padding: 4px 10px;
+    border-radius: 6px;
+    padding: 3px 8px;
     font-size: 11px;
     font-weight: 600;
     font-family: ${theme.typography.fontFamily};
@@ -330,28 +330,31 @@ const CalendarWrapper = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
     border: none !important;
-    margin: 1px 2px;
+    margin: 1px 4px;
+    text-align: center;
+    letter-spacing: 0.1px;
 
     &:hover {
-      transform: translateY(-1px) scale(1.01);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(146, 86, 62, 0.15);
       z-index: 10;
+      filter: brightness(0.95);
     }
 
     &:active {
-      transform: translateY(0) scale(1);
+      transform: translateY(0);
     }
 
     .rbc-event-content {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.4;
+      line-height: 1.5;
     }
   }
 
   .rbc-row-segment {
-    padding: 0 2px 2px 2px;
+    padding: 1px 4px 2px;
   }
 
   .rbc-event-label {
@@ -713,27 +716,27 @@ const LegendItem = styled.div`
   }
 
   .pending {
-    background: ${theme.colors.statusPendingBg};
-    border-color: ${theme.colors.statusPendingBorder};
-    color: ${theme.colors.statusPendingText};
+    background: rgba(212, 165, 116, 0.15);
+    border-color: #D4A574;
+    color: #A67B5B;
   }
 
   .confirmed {
-    background: ${theme.colors.statusConfirmedBg};
-    border-color: ${theme.colors.statusConfirmedBorder};
-    color: ${theme.colors.statusConfirmedText};
+    background: rgba(146, 86, 62, 0.10);
+    border-color: #92563E;
+    color: #92563E;
   }
 
   .completed {
-    background: ${theme.colors.statusCompletedBg};
-    border-color: ${theme.colors.statusCompletedBorder};
-    color: ${theme.colors.statusCompletedText};
+    background: rgba(140, 139, 139, 0.08);
+    border-color: #8C8B8B;
+    color: #8C8B8B;
   }
 
   .cancelled {
-    background: ${theme.colors.statusCancelledBg};
-    border-color: ${theme.colors.statusCancelledBorder};
-    color: ${theme.colors.statusCancelledText};
+    background: rgba(196, 131, 106, 0.08);
+    border-color: #C4836A;
+    color: #B49585;
   }
 `;
 
@@ -1815,17 +1818,16 @@ const CalendarPage: React.FC = () => {
       }
       return {
         style: {
-          backgroundColor: theme.colors.statusCancelledBg,
-          borderLeft: `4px solid ${theme.colors.statusCancelledBorder}`,
+          backgroundColor: 'rgba(140, 139, 139, 0.08)',
           borderRadius: '6px',
-          color: theme.colors.statusCancelledText,
+          color: '#8C8B8B',
           fontWeight: 600,
-          fontSize: '12px',
-          padding: '4px 8px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          opacity: 0.9,
+          fontSize: '11px',
+          padding: '3px 8px',
+          boxShadow: 'none',
+          opacity: 0.85,
           display: 'block',
-          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(220,38,38,0.05) 5px, rgba(220,38,38,0.05) 10px)',
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(140,139,139,0.06) 4px, rgba(140,139,139,0.06) 8px)',
         },
       };
     }
@@ -1845,42 +1847,35 @@ const CalendarPage: React.FC = () => {
       };
     }
 
-    // Paleta para outras views (mês, semana, dia)
-    const statusStyles: Record<string, { bg: string; border: string; text: string }> = {
+    // Paleta brand-aligned para calendar cards (mês, semana, dia)
+    const statusStyles: Record<string, { bg: string; text: string }> = {
       pending: {
-        bg: theme.colors.statusPendingBg,
-        border: theme.colors.statusPendingBorder,
-        text: theme.colors.statusPendingText,
+        bg: 'rgba(212, 165, 116, 0.18)',
+        text: '#A67B5B',
       },
       confirmed: {
-        bg: theme.colors.statusConfirmedBg,
-        border: theme.colors.statusConfirmedBorder,
-        text: theme.colors.statusConfirmedText,
+        bg: 'rgba(146, 86, 62, 0.12)',
+        text: '#92563E',
       },
       checked_in: {
-        bg: theme.colors.statusCheckedInBg,
-        border: theme.colors.statusCheckedInBorder,
-        text: theme.colors.statusCheckedInText,
+        bg: 'rgba(180, 143, 122, 0.15)',
+        text: '#7A6355',
       },
       in_progress: {
-        bg: theme.colors.statusInProgressBg,
-        border: theme.colors.statusInProgressBorder,
-        text: theme.colors.statusInProgressText,
+        bg: 'rgba(146, 86, 62, 0.18)',
+        text: '#7A4532',
       },
       completed: {
-        bg: theme.colors.statusCompletedBg,
-        border: theme.colors.statusCompletedBorder,
-        text: theme.colors.statusCompletedText,
+        bg: 'rgba(140, 139, 139, 0.10)',
+        text: '#8C8B8B',
       },
       cancelled: {
-        bg: theme.colors.statusCancelledBg,
-        border: theme.colors.statusCancelledBorder,
-        text: theme.colors.statusCancelledText,
+        bg: 'rgba(196, 131, 106, 0.10)',
+        text: '#B49585',
       },
       no_show: {
-        bg: theme.colors.statusNoShowBg,
-        border: theme.colors.statusNoShowBorder,
-        text: theme.colors.statusNoShowText,
+        bg: 'rgba(196, 131, 106, 0.12)',
+        text: '#B49585',
       },
     };
 
@@ -1889,16 +1884,16 @@ const CalendarPage: React.FC = () => {
     return {
       style: {
         backgroundColor: style.bg,
-        borderLeft: `4px solid ${style.border}`,
         borderRadius: '6px',
         color: style.text,
         fontWeight: 600,
-        fontSize: '12px',
-        padding: '4px 8px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        opacity: event.status === 'cancelled' || event.status === 'no_show' ? 0.85 : 1,
+        fontSize: '11px',
+        padding: '3px 8px',
+        boxShadow: 'none',
+        opacity: event.status === 'cancelled' || event.status === 'no_show' ? 0.7 : 1,
         display: 'block',
         textDecoration: event.status === 'cancelled' ? 'line-through' : 'none',
+        textAlign: 'center' as const,
       },
     };
   }, [view]);
@@ -2277,7 +2272,7 @@ const CalendarPage: React.FC = () => {
 
               <DetailCard>
                 <DetailRow>
-                  <DetailIcon $color="#8B5CF6">
+                  <DetailIcon $color="#92563E">
                     <User />
                   </DetailIcon>
                   <DetailInfo>
@@ -2287,7 +2282,7 @@ const CalendarPage: React.FC = () => {
                 </DetailRow>
 
                 <DetailRow>
-                  <DetailIcon $color={theme.colors.primary}>
+                  <DetailIcon $color="#B48F7A">
                     <Stethoscope />
                   </DetailIcon>
                   <DetailInfo>
@@ -2297,7 +2292,7 @@ const CalendarPage: React.FC = () => {
                 </DetailRow>
 
                 <DetailRow>
-                  <DetailIcon $color="#059669">
+                  <DetailIcon $color="#C4836A">
                     <CalendarIcon />
                   </DetailIcon>
                   <DetailInfo>
@@ -2309,7 +2304,7 @@ const CalendarPage: React.FC = () => {
                 </DetailRow>
 
                 <DetailRow>
-                  <DetailIcon $color="#F59E0B">
+                  <DetailIcon $color="#D4A574">
                     <FileText />
                   </DetailIcon>
                   <DetailInfo>

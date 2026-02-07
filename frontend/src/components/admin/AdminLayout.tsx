@@ -29,6 +29,7 @@ const Content = styled.div`
   padding: ${theme.spacing.xl};
   padding-right: 80px;
   overflow-x: hidden;
+  max-width: 1200px;
 
   @media (max-width: 768px) {
     padding: ${theme.spacing.md};

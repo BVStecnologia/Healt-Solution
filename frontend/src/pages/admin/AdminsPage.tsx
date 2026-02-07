@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import {
   Shield, Plus, Search, Edit2, Trash2, X, Check, AlertCircle,
-  Mail, Phone, Users, UserPlus, ChevronLeft, ChevronRight, Crown
+  Mail, Phone, Users, UserPlus, ChevronLeft, ChevronRight, Crown,
+  AlertTriangle
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database';
+import { useAuth } from '../../context/AuthContext';
 
 // ============================================
 // ANIMATIONS
@@ -47,8 +49,8 @@ const luxuryTheme = {
   primaryLight: '#AF8871',
   primarySoft: '#F4E7DE',
   primaryDark: '#7A4832',
-  success: '#10B981',
-  error: '#EF4444',
+  success: '#6B8E6B',
+  error: '#C4836A',
   // Theme-responsive colors (CSS variables - adapt to dark mode)
   cream: theme.colors.background,
   surface: theme.colors.surface,
@@ -62,9 +64,7 @@ const luxuryTheme = {
 // ============================================
 // STYLED COMPONENTS
 // ============================================
-const PageContainer = styled.div`
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
-`;
+const PageContainer = styled.div``;
 
 const Header = styled.div`
   display: flex;
@@ -76,12 +76,12 @@ const Header = styled.div`
   animation: ${fadeInUp} 0.6s ease-out;
 
   h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 42px;
-    font-weight: 600;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
-    letter-spacing: -0.5px;
+    letter-spacing: 0.5px;
   }
 
   p {
@@ -116,88 +116,42 @@ const AddButton = styled.button`
   }
 `;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
+const StatsRow = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  animation: ${fadeInUp} 0.5s ease-out;
 `;
 
-const StatCard = styled.div<{ $delay: number; $accentColor: string }>`
-  background: ${luxuryTheme.surface};
-  border-radius: 16px;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid ${luxuryTheme.border};
-  animation: ${fadeInUp} 0.6s ease-out;
-  animation-delay: ${props => props.$delay}ms;
-  animation-fill-mode: both;
-  transition: all 0.3s ease;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, ${props => props.$accentColor}, ${props => props.$accentColor}88);
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, ${props => props.$accentColor}08 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px ${luxuryTheme.primary}15;
-    border-color: ${props => props.$accentColor}40;
-  }
-`;
-
-const StatIcon = styled.div<{ $color: string }>`
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, ${props => props.$color}15, ${props => props.$color}08);
+const StatPill = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  color: ${props => props.$color};
-  transition: all 0.3s ease;
+  gap: 10px;
+  padding: 12px 20px;
+  background: ${luxuryTheme.surface};
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 40px;
 
-  ${StatCard}:hover & {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, ${props => props.$color}25, ${props => props.$color}15);
+  svg {
+    width: 16px;
+    height: 16px;
+    color: ${luxuryTheme.primary};
+    opacity: 0.6;
   }
 `;
 
-const StatValue = styled.div`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 36px;
+const StatValue = styled.span`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 20px;
   font-weight: 600;
   color: ${luxuryTheme.text};
-  line-height: 1;
-  margin-bottom: 6px;
 `;
 
-const StatLabel = styled.div`
+const StatLabel = styled.span`
   font-size: 13px;
   color: ${luxuryTheme.textSecondary};
-  font-weight: 500;
+  font-weight: 400;
 `;
 
 const FiltersSection = styled.div`
@@ -252,171 +206,140 @@ const SearchInput = styled.input`
 `;
 
 const AdminsGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: 200ms;
   animation-fill-mode: both;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const AdminCard = styled.div<{ $index: number }>`
   background: ${luxuryTheme.surface};
-  border: 1px solid ${luxuryTheme.border};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 20px;
+  padding: 28px 24px 20px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  transition: all 0.3s ease;
+  text-align: center;
+  gap: 4px;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   animation: ${fadeInUp} 0.5s ease-out;
-  animation-delay: ${props => 250 + props.$index * 50}ms;
+  animation-delay: ${props => 200 + props.$index * 80}ms;
   animation-fill-mode: both;
 
   &:hover {
-    border-color: ${luxuryTheme.primary};
-    box-shadow: 0 8px 24px ${luxuryTheme.primary}15;
-    transform: translateX(4px);
-    background: linear-gradient(135deg, ${luxuryTheme.surface} 0%, ${luxuryTheme.cream} 100%);
-  }
-
-  @media (max-width: 900px) {
-    grid-template-columns: auto 1fr;
-    gap: 16px;
+    border-color: rgba(146, 86, 62, 0.15);
+    box-shadow: 0 12px 40px rgba(146, 86, 62, 0.10);
+    transform: translateY(-6px);
   }
 `;
 
 const AdminAvatar = styled.div`
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight});
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, ${luxuryTheme.primary}, #7A4532);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 600;
-  font-size: 18px;
-  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: 24px;
+  font-family: ${theme.typography.fontFamilyHeading};
   letter-spacing: 1px;
-  box-shadow: 0 4px 12px ${luxuryTheme.primary}40;
-  transition: all 0.3s ease;
+  margin-bottom: 12px;
   position: relative;
+  transition: all 0.3s ease;
 
   &::after {
     content: '';
     position: absolute;
-    bottom: -2px;
-    right: -2px;
+    bottom: 2px;
+    right: 2px;
     width: 16px;
     height: 16px;
     border-radius: 50%;
     background: ${luxuryTheme.primary};
-    border: 2px solid ${luxuryTheme.surface};
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: 3px solid ${luxuryTheme.surface};
   }
 
   ${AdminCard}:hover & {
-    transform: scale(1.05);
+    transform: scale(1.06);
+    box-shadow: 0 8px 24px rgba(146, 86, 62, 0.20);
   }
 `;
 
 const AdminInfo = styled.div`
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 8px;
+  width: 100%;
 `;
 
 const AdminName = styled.div`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 17px;
   font-weight: 600;
   color: ${luxuryTheme.text};
-  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const AdminBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: ${luxuryTheme.primary}20;
-  color: ${luxuryTheme.primary};
-  letter-spacing: 0.5px;
+  max-width: 100%;
 `;
 
 const AdminEmail = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   color: ${luxuryTheme.textSecondary};
-  font-size: 13px;
+  font-size: 12px;
 
   svg {
     flex-shrink: 0;
-  }
-`;
-
-const AdminPhone = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: ${luxuryTheme.textSecondary};
-  font-size: 14px;
-  min-width: 150px;
-
-  svg {
-    color: ${luxuryTheme.primaryLight};
-  }
-
-  @media (max-width: 900px) {
-    display: none;
-  }
-`;
-
-const RoleBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 24px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: ${luxuryTheme.primary}15;
-  color: ${luxuryTheme.primary};
-  border: 1px solid ${luxuryTheme.primary}25;
-
-  svg {
     width: 12px;
     height: 12px;
   }
+`;
 
-  @media (max-width: 900px) {
-    display: none;
+const AdminBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(146, 86, 62, 0.08);
+  color: ${luxuryTheme.primary};
+  margin-bottom: 12px;
+
+  svg {
+    width: 11px;
+    height: 11px;
   }
 `;
 
 const AdminActions = styled.div`
   display: flex;
-  gap: 8px;
-
-  @media (max-width: 900px) {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
+  gap: 6px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid rgba(146, 86, 62, 0.06);
+  justify-content: center;
 `;
 
 const ActionButton = styled.button<{ $variant?: 'primary' | 'danger' }>`
@@ -523,7 +446,7 @@ const EmptyState = styled.div`
   }
 
   h3 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 24px;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
@@ -566,20 +489,23 @@ const EmptyStateCTA = styled.button`
 `;
 
 const LoadingSkeleton = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+  @media (max-width: 1000px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
 `;
 
 const SkeletonCard = styled.div<{ $delay: number }>`
   background: ${luxuryTheme.surface};
-  border: 1px solid ${luxuryTheme.border};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: 56px 1fr 150px 100px 120px;
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   animation: ${pulse} 1.5s ease-in-out infinite;
   animation-delay: ${props => props.$delay}ms;
 `;
@@ -629,7 +555,7 @@ const ModalHeader = styled.div`
   justify-content: space-between;
 
   h2 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 24px;
     font-weight: 600;
     color: white;
@@ -769,6 +695,110 @@ const Alert = styled.div<{ $variant: 'error' | 'success' }>`
   border: 1px solid ${props => props.$variant === 'error' ? `${luxuryTheme.error}30` : `${luxuryTheme.success}30`};
 `;
 
+// Confirmation Modal Styles
+const ConfirmOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 46, 36, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+  animation: ${fadeInUp} 0.2s ease-out;
+`;
+
+const ConfirmCard = styled.div`
+  background: ${luxuryTheme.surface};
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+  animation: ${fadeInUp} 0.35s ease-out;
+  text-align: center;
+`;
+
+const ConfirmBody = styled.div`
+  padding: 36px 32px 28px;
+`;
+
+const ConfirmIconCircle = styled.div`
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(196, 131, 106, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: ${luxuryTheme.error};
+`;
+
+const ConfirmTitle = styled.h3`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 20px;
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+  margin: 0 0 8px;
+`;
+
+const ConfirmText = styled.p`
+  font-size: 14px;
+  color: ${luxuryTheme.textSecondary};
+  margin: 0 0 8px;
+  line-height: 1.5;
+`;
+
+const ConfirmName = styled.span`
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+`;
+
+const ConfirmFooter = styled.div`
+  display: flex;
+  gap: 12px;
+  padding: 0 32px 28px;
+`;
+
+const ConfirmBtn = styled.button<{ $danger?: boolean }>`
+  flex: 1;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  ${props => props.$danger ? css`
+    background: linear-gradient(135deg, ${luxuryTheme.error}, #A66B55);
+    color: white;
+    border: none;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(196, 131, 106, 0.4);
+    }
+  ` : css`
+    background: transparent;
+    color: ${luxuryTheme.text};
+    border: 1px solid ${luxuryTheme.border};
+
+    &:hover {
+      background: ${luxuryTheme.cream};
+      border-color: ${luxuryTheme.primaryLight};
+    }
+  `}
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 // ============================================
 // CONSTANTS
 // ============================================
@@ -778,6 +808,7 @@ const ITEMS_PER_PAGE = 8;
 // COMPONENT
 // ============================================
 const AdminsPage: React.FC = () => {
+  const { user } = useAuth();
   const [admins, setAdmins] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -793,6 +824,7 @@ const AdminsPage: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmRemoveAdmin, setConfirmRemoveAdmin] = useState<Profile | null>(null);
 
   useEffect(() => {
     fetchAdmins();
@@ -903,18 +935,22 @@ const AdminsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (admin: Profile) => {
-    if (!window.confirm(`Remover ${admin.first_name} ${admin.last_name} como administrador?`)) {
-      return;
-    }
+  const handleDelete = (admin: Profile) => {
+    if (admin.id === user?.id) return;
+    setConfirmRemoveAdmin(admin);
+  };
+
+  const confirmRemove = async () => {
+    if (!confirmRemoveAdmin) return;
 
     try {
       const { error } = await supabase
         .from('profiles')
         .update({ role: 'patient', updated_at: new Date().toISOString() })
-        .eq('id', admin.id);
+        .eq('id', confirmRemoveAdmin.id);
 
       if (error) throw error;
+      setConfirmRemoveAdmin(null);
       await fetchAdmins();
     } catch (err) {
       console.error('Error removing admin:', err);
@@ -962,31 +998,18 @@ const AdminsPage: React.FC = () => {
           </AddButton>
         </Header>
 
-        <StatsGrid>
-          <StatCard $delay={0} $accentColor={luxuryTheme.primary}>
-            <StatIcon $color={luxuryTheme.primary}>
-              <Shield size={24} />
-            </StatIcon>
+        <StatsRow>
+          <StatPill>
+            <Shield />
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Total de Admins</StatLabel>
-          </StatCard>
-
-          <StatCard $delay={50} $accentColor={luxuryTheme.primary}>
-            <StatIcon $color={luxuryTheme.primary}>
-              <Crown size={24} />
-            </StatIcon>
-            <StatValue>{stats.total}</StatValue>
-            <StatLabel>Acesso Total</StatLabel>
-          </StatCard>
-
-          <StatCard $delay={100} $accentColor={luxuryTheme.success}>
-            <StatIcon $color={luxuryTheme.success}>
-              <Users size={24} />
-            </StatIcon>
+            <StatLabel>Administradores</StatLabel>
+          </StatPill>
+          <StatPill>
+            <Phone />
             <StatValue>{stats.withPhone}</StatValue>
             <StatLabel>Com Telefone</StatLabel>
-          </StatCard>
-        </StatsGrid>
+          </StatPill>
+        </StatsRow>
 
         <FiltersSection>
           <SearchContainer>
@@ -1002,16 +1025,12 @@ const AdminsPage: React.FC = () => {
 
         {loading ? (
           <LoadingSkeleton>
-            {[0, 1, 2, 3].map(i => (
+            {[0, 1, 2, 3, 4, 5].map(i => (
               <SkeletonCard key={i} $delay={i * 100}>
-                <SkeletonElement $width="56px" $height="56px" $round />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <SkeletonElement $width="180px" $height="20px" />
-                  <SkeletonElement $width="220px" $height="14px" />
-                </div>
-                <SkeletonElement $width="130px" $height="16px" />
-                <SkeletonElement $width="100px" $height="32px" />
-                <SkeletonElement $width="100px" $height="36px" />
+                <SkeletonElement $width="80px" $height="80px" $round />
+                <SkeletonElement $width="140px" $height="18px" />
+                <SkeletonElement $width="100px" $height="12px" />
+                <SkeletonElement $width="110px" $height="28px" />
               </SkeletonCard>
             ))}
           </LoadingSkeleton>
@@ -1045,37 +1064,27 @@ const AdminsPage: React.FC = () => {
                   </AdminAvatar>
 
                   <AdminInfo>
-                    <AdminName>
-                      {admin.first_name} {admin.last_name}
-                      <AdminBadge>
-                        <Crown size={10} />
-                        Admin
-                      </AdminBadge>
-                    </AdminName>
+                    <AdminName>{admin.first_name} {admin.last_name}</AdminName>
                     <AdminEmail>
                       <Mail size={12} />
                       {admin.email}
                     </AdminEmail>
                   </AdminInfo>
 
-                  <AdminPhone>
-                    <Phone size={14} />
-                    {admin.phone || '—'}
-                  </AdminPhone>
-
-                  <RoleBadge>
-                    <Shield size={12} />
+                  <AdminBadge>
+                    <Crown size={11} />
                     Administrador
-                  </RoleBadge>
+                  </AdminBadge>
 
                   <AdminActions>
-                    <ActionButton onClick={() => handleOpenModal(admin)}>
+                    <ActionButton onClick={() => handleOpenModal(admin)} title="Editar">
                       <Edit2 size={16} />
-                      Editar
                     </ActionButton>
-                    <ActionButton $variant="danger" onClick={() => handleDelete(admin)}>
-                      <Trash2 size={16} />
-                    </ActionButton>
+                    {admin.id !== user?.id && (
+                      <ActionButton $variant="danger" onClick={() => handleDelete(admin)} title="Remover">
+                        <Trash2 size={16} />
+                      </ActionButton>
+                    )}
                   </AdminActions>
                 </AdminCard>
               ))}
@@ -1109,6 +1118,34 @@ const AdminsPage: React.FC = () => {
               </Pagination>
             )}
           </>
+        )}
+
+        {/* Modal de Confirmação de Remoção */}
+        {confirmRemoveAdmin && (
+          <ConfirmOverlay onClick={() => setConfirmRemoveAdmin(null)}>
+            <ConfirmCard onClick={(e) => e.stopPropagation()}>
+              <ConfirmBody>
+                <ConfirmIconCircle>
+                  <AlertTriangle size={28} />
+                </ConfirmIconCircle>
+                <ConfirmTitle>Remover Administrador</ConfirmTitle>
+                <ConfirmText>
+                  Tem certeza que deseja remover <ConfirmName>{confirmRemoveAdmin.first_name} {confirmRemoveAdmin.last_name}</ConfirmName> como administrador?
+                </ConfirmText>
+                <ConfirmText style={{ fontSize: 13, opacity: 0.7 }}>
+                  O usuário será rebaixado para paciente e perderá acesso ao painel administrativo.
+                </ConfirmText>
+              </ConfirmBody>
+              <ConfirmFooter>
+                <ConfirmBtn onClick={() => setConfirmRemoveAdmin(null)}>
+                  Cancelar
+                </ConfirmBtn>
+                <ConfirmBtn $danger onClick={confirmRemove}>
+                  Remover
+                </ConfirmBtn>
+              </ConfirmFooter>
+            </ConfirmCard>
+          </ConfirmOverlay>
         )}
 
         {showModal && (

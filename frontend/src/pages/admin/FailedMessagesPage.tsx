@@ -8,14 +8,19 @@ import {
   Clock,
   MessageCircle,
   CheckCircle,
+  XCircle,
+  Send,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { whatsappService } from '../../lib/whatsappService';
 
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
+// ============================================
+// ANIMATIONS
+// ============================================
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -24,104 +29,143 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
+const float = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+`;
+
+// ============================================
+// THEME
+// ============================================
+const luxuryTheme = {
+  primary: '#92563E',
+  primaryLight: '#B8956E',
+  primaryDark: '#7A4832',
+  success: '#6B8E6B',
+  error: '#C4836A',
+  warning: '#B48F7A',
+  cream: theme.colors.background,
+  surface: theme.colors.surface,
+  border: theme.colors.border,
+  text: theme.colors.text,
+  textSecondary: theme.colors.textSecondary,
+};
+
+// ============================================
+// STYLED COMPONENTS
+// ============================================
+const PageContainer = styled.div``;
+
 const Header = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: ${theme.spacing.xl};
-  flex-wrap: wrap;
-  gap: ${theme.spacing.md};
+  margin-bottom: 32px;
+  animation: ${fadeInUp} 0.6s ease-out;
 
   h1 {
-    font-size: 28px;
-    font-weight: 700;
-    color: ${theme.colors.text};
-    margin: 0 0 ${theme.spacing.xs};
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
+    color: ${luxuryTheme.text};
+    margin: 0 0 8px;
+    letter-spacing: 0.5px;
   }
 
   p {
-    color: ${theme.colors.textSecondary};
+    color: ${luxuryTheme.textSecondary};
     margin: 0;
+    font-size: 15px;
+  }
+`;
+
+const RefreshButton = styled.button<{ $loading?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: ${luxuryTheme.surface};
+  color: ${luxuryTheme.text};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: ${props => props.$loading ? 'wait' : 'pointer'};
+  opacity: ${props => props.$loading ? 0.7 : 1};
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: ${luxuryTheme.primaryLight};
+    background: ${luxuryTheme.cream};
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: ${luxuryTheme.primary};
+    ${props => props.$loading ? css`animation: ${spin} 1s linear infinite;` : ''}
   }
 `;
 
 const StatsRow = styled.div`
   display: flex;
-  gap: ${theme.spacing.md};
-  margin-bottom: ${theme.spacing.xl};
+  gap: 12px;
+  margin-bottom: 28px;
   flex-wrap: wrap;
+  animation: ${fadeInUp} 0.5s ease-out;
 `;
 
-const StatCard = styled.div<{ $color: string }>`
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.xl};
-  padding: ${theme.spacing.lg};
-  min-width: 160px;
-  flex: 1;
-  border-left: 4px solid ${props => props.$color};
-  animation: ${fadeIn} 0.3s ease;
-
-  .value {
-    font-size: 32px;
-    font-weight: 700;
-    color: ${props => props.$color};
-  }
-
-  .label {
-    font-size: 13px;
-    color: ${theme.colors.textSecondary};
-    margin-top: 4px;
-  }
-`;
-
-const Button = styled.button<{ $variant?: 'primary' | 'secondary' | 'danger'; $loading?: boolean }>`
+const StatPill = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: ${theme.borderRadius.lg};
-  border: none;
-  cursor: ${props => props.$loading ? 'wait' : 'pointer'};
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s;
-  opacity: ${props => props.$loading ? 0.7 : 1};
-
-  ${props => {
-    switch (props.$variant) {
-      case 'danger':
-        return `background: #dc2626; color: white; &:hover { background: #b91c1c; }`;
-      case 'secondary':
-        return `background: ${theme.colors.surface}; color: ${theme.colors.text}; border: 1px solid ${theme.colors.border}; &:hover { background: ${theme.colors.background}; }`;
-      default:
-        return `background: ${theme.colors.primary}; color: white; &:hover { opacity: 0.9; }`;
-    }
-  }}
+  gap: 10px;
+  padding: 12px 20px;
+  background: ${luxuryTheme.surface};
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 40px;
 
   svg {
-    ${props => props.$loading ? css`animation: ${spin} 1s linear infinite;` : ''}
+    width: 16px;
+    height: 16px;
+    opacity: 0.6;
   }
+`;
+
+const StatValue = styled.span`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 20px;
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+`;
+
+const StatLabel = styled.span`
+  font-size: 13px;
+  color: ${luxuryTheme.textSecondary};
+  font-weight: 400;
 `;
 
 const Table = styled.div`
-  background: ${theme.colors.surface};
-  border-radius: ${theme.borderRadius.xl};
+  background: ${luxuryTheme.surface};
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 20px;
   overflow: hidden;
-  animation: ${fadeIn} 0.3s ease;
+  animation: ${fadeInUp} 0.6s ease-out;
+  animation-delay: 200ms;
+  animation-fill-mode: both;
 `;
 
 const TableHeader = styled.div`
   display: grid;
-  grid-template-columns: 1fr 140px 200px 120px 100px 120px;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  background: ${theme.colors.background};
-  border-bottom: 1px solid ${theme.colors.border};
-  font-weight: 600;
-  font-size: 13px;
-  color: ${theme.colors.textSecondary};
+  grid-template-columns: 1fr 120px 180px 130px 90px 110px;
+  gap: 12px;
+  padding: 14px 24px;
+  background: rgba(146, 86, 62, 0.03);
+  border-bottom: 1px solid rgba(146, 86, 62, 0.06);
+  font-weight: 500;
+  font-size: 11px;
+  color: ${luxuryTheme.textSecondary};
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 
   @media (max-width: 900px) {
     display: none;
@@ -130,35 +174,36 @@ const TableHeader = styled.div`
 
 const TableRow = styled.div<{ $retrying?: boolean }>`
   display: grid;
-  grid-template-columns: 1fr 140px 200px 120px 100px 120px;
-  gap: ${theme.spacing.sm};
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  border-bottom: 1px solid ${theme.colors.border};
+  grid-template-columns: 1fr 120px 180px 130px 90px 110px;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(146, 86, 62, 0.05);
   align-items: center;
-  transition: background 0.2s;
-  opacity: ${props => props.$retrying ? 0.6 : 1};
+  transition: all 0.2s ease;
+  opacity: ${props => props.$retrying ? 0.5 : 1};
 
   &:last-child {
     border-bottom: none;
   }
 
   &:hover {
-    background: ${theme.colors.background};
+    background: rgba(146, 86, 62, 0.02);
   }
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: ${theme.spacing.xs};
-    padding: ${theme.spacing.md};
+    gap: 8px;
+    padding: 16px 20px;
   }
 `;
 
 const CellLabel = styled.span`
   display: none;
-  font-weight: 600;
-  font-size: 11px;
-  color: ${theme.colors.textSecondary};
+  font-weight: 500;
+  font-size: 10px;
+  color: ${luxuryTheme.textSecondary};
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 
   @media (max-width: 900px) {
     display: inline;
@@ -168,11 +213,27 @@ const CellLabel = styled.span`
 
 const MessagePreview = styled.div`
   font-size: 13px;
-  color: ${theme.colors.text};
+  color: ${luxuryTheme.text};
   max-width: 300px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
+`;
+
+const DateCell = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: ${luxuryTheme.textSecondary};
+  margin-top: 4px;
+
+  svg {
+    width: 11px;
+    height: 11px;
+    opacity: 0.5;
+  }
 `;
 
 const PhoneCell = styled.div`
@@ -180,57 +241,74 @@ const PhoneCell = styled.div`
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: ${theme.colors.text};
+  color: ${luxuryTheme.textSecondary};
+
+  svg {
+    width: 13px;
+    height: 13px;
+    color: ${luxuryTheme.primary};
+    opacity: 0.5;
+  }
 `;
 
 const ErrorCell = styled.div`
   font-size: 12px;
-  color: #dc2626;
-  max-width: 200px;
+  color: ${luxuryTheme.error};
+  max-width: 180px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  opacity: 0.85;
+`;
+
+const TemplateCell = styled.span`
+  font-size: 12px;
+  color: ${luxuryTheme.textSecondary};
 `;
 
 const RetryBadge = styled.span<{ $count: number }>`
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${props => props.$count >= 3 ? '#fecaca' : '#fef3c7'};
-  color: ${props => props.$count >= 3 ? '#dc2626' : '#d97706'};
-`;
+  font-size: 11px;
+  font-weight: 500;
+  background: ${props => props.$count >= 3 ? `${luxuryTheme.error}10` : `${luxuryTheme.warning}10`};
+  color: ${props => props.$count >= 3 ? `${luxuryTheme.error}CC` : `${luxuryTheme.warning}`};
 
-const SpinIcon = styled.span`
-  display: inline-flex;
-  animation: ${spin} 1s linear infinite;
+  svg {
+    width: 10px;
+    height: 10px;
+  }
 `;
 
 const RetryButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: ${theme.borderRadius.md};
-  border: 1px solid ${theme.colors.primary};
-  background: transparent;
-  color: ${theme.colors.primary};
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: none;
+  background: ${luxuryTheme.primary}12;
+  color: ${luxuryTheme.primary};
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: ${theme.colors.primary};
-    color: white;
+    background: ${luxuryTheme.primary}20;
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
   }
 `;
 
@@ -238,36 +316,61 @@ const SuccessBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #d1fae5;
-  color: #059669;
+  font-size: 11px;
+  font-weight: 500;
+  background: ${luxuryTheme.success}12;
+  color: ${luxuryTheme.success};
+
+  svg {
+    width: 11px;
+    height: 11px;
+  }
+`;
+
+const ExhaustedLabel = styled.span`
+  font-size: 11px;
+  color: ${luxuryTheme.textSecondary};
+  opacity: 0.6;
+`;
+
+const SpinIcon = styled.span`
+  display: inline-flex;
+  animation: ${spin} 1s linear infinite;
 `;
 
 const EmptyState = styled.div`
-  padding: ${theme.spacing.xxl};
   text-align: center;
-  color: ${theme.colors.textSecondary};
+  padding: 80px 40px;
 
   svg {
-    margin-bottom: ${theme.spacing.md};
-    opacity: 0.3;
+    width: 48px;
+    height: 48px;
+    color: ${luxuryTheme.success};
+    opacity: 0.4;
+    margin-bottom: 16px;
+    animation: ${float} 3s ease-in-out infinite;
   }
 
   h3 {
-    font-size: 18px;
-    color: ${theme.colors.text};
-    margin-bottom: ${theme.spacing.sm};
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 20px;
+    font-weight: 400;
+    color: ${luxuryTheme.text};
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: ${luxuryTheme.textSecondary};
+    margin: 0;
+    font-size: 14px;
   }
 `;
 
-const DateCell = styled.div`
-  font-size: 12px;
-  color: ${theme.colors.textSecondary};
-`;
-
+// ============================================
+// TYPES
+// ============================================
 interface FailedMessage {
   id: string;
   phone_number: string;
@@ -280,6 +383,9 @@ interface FailedMessage {
   status: string;
 }
 
+// ============================================
+// COMPONENT
+// ============================================
 const FailedMessagesPage: React.FC = () => {
   const [messages, setMessages] = useState<FailedMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -334,7 +440,6 @@ const FailedMessagesPage: React.FC = () => {
       );
 
       if (result.success) {
-        // Update status in DB
         await supabase
           .from('message_logs')
           .update({
@@ -408,115 +513,120 @@ const FailedMessagesPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <Header>
-        <div>
-          <h1>Mensagens Falhas</h1>
-          <p>Mensagens WhatsApp que nao foram entregues</p>
-        </div>
-        <Button onClick={loadMessages} $loading={loading} $variant="secondary">
-          <RefreshCw size={16} />
-          Atualizar
-        </Button>
-      </Header>
+      <PageContainer>
+        <Header>
+          <div>
+            <h1>Mensagens Falhas</h1>
+            <p>Mensagens WhatsApp que nao foram entregues</p>
+          </div>
+          <RefreshButton onClick={loadMessages} $loading={loading}>
+            <RefreshCw size={16} />
+            Atualizar
+          </RefreshButton>
+        </Header>
 
-      <StatsRow>
-        <StatCard $color="#dc2626">
-          <div className="value">{stats.failed}</div>
-          <div className="label">Total falhas</div>
-        </StatCard>
-        <StatCard $color="#d97706">
-          <div className="value">{stats.retriable}</div>
-          <div className="label">Reenvio possivel</div>
-        </StatCard>
-        <StatCard $color="#6b7280">
-          <div className="value">{stats.exhausted}</div>
-          <div className="label">Tentativas esgotadas</div>
-        </StatCard>
-      </StatsRow>
+        <StatsRow>
+          <StatPill>
+            <XCircle style={{ color: luxuryTheme.error }} />
+            <StatValue>{stats.failed}</StatValue>
+            <StatLabel>Falhas</StatLabel>
+          </StatPill>
+          <StatPill>
+            <Send style={{ color: luxuryTheme.warning }} />
+            <StatValue>{stats.retriable}</StatValue>
+            <StatLabel>Reenvio possivel</StatLabel>
+          </StatPill>
+          <StatPill>
+            <AlertTriangle style={{ color: luxuryTheme.textSecondary }} />
+            <StatValue>{stats.exhausted}</StatValue>
+            <StatLabel>Esgotadas</StatLabel>
+          </StatPill>
+        </StatsRow>
 
-      <Table>
-        {messages.length === 0 && !loading ? (
-          <EmptyState>
-            <CheckCircle size={48} />
-            <h3>Nenhuma mensagem falha</h3>
-            <p>Todas as mensagens WhatsApp foram entregues com sucesso.</p>
-          </EmptyState>
-        ) : (
-          <>
-            <TableHeader>
-              <span>Mensagem</span>
-              <span>Telefone</span>
-              <span>Erro</span>
-              <span>Template</span>
-              <span>Tentativas</span>
-              <span>Acao</span>
-            </TableHeader>
-            {messages.map(msg => (
-              <TableRow key={msg.id} $retrying={retryingId === msg.id}>
-                <div>
-                  <CellLabel>Mensagem:</CellLabel>
-                  <MessagePreview title={msg.message}>
-                    {msg.message.substring(0, 80)}...
-                  </MessagePreview>
-                  <DateCell>
-                    <Clock size={11} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                    {formatDate(msg.created_at)}
-                  </DateCell>
-                </div>
+        <Table>
+          {messages.length === 0 && !loading ? (
+            <EmptyState>
+              <CheckCircle />
+              <h3>Nenhuma mensagem falha</h3>
+              <p>Todas as mensagens WhatsApp foram entregues com sucesso.</p>
+            </EmptyState>
+          ) : (
+            <>
+              <TableHeader>
+                <span>Mensagem</span>
+                <span>Telefone</span>
+                <span>Erro</span>
+                <span>Template</span>
+                <span>Tentativas</span>
+                <span>Acao</span>
+              </TableHeader>
+              {messages.map(msg => (
+                <TableRow key={msg.id} $retrying={retryingId === msg.id}>
+                  <div>
+                    <CellLabel>Mensagem:</CellLabel>
+                    <MessagePreview title={msg.message}>
+                      {msg.message.substring(0, 80)}...
+                    </MessagePreview>
+                    <DateCell>
+                      <Clock size={11} />
+                      {formatDate(msg.created_at)}
+                    </DateCell>
+                  </div>
 
-                <PhoneCell>
-                  <CellLabel>Tel:</CellLabel>
-                  <Phone size={14} />
-                  {msg.phone_number}
-                </PhoneCell>
+                  <PhoneCell>
+                    <CellLabel>Tel:</CellLabel>
+                    <Phone size={14} />
+                    {msg.phone_number}
+                  </PhoneCell>
 
-                <div>
-                  <CellLabel>Erro:</CellLabel>
-                  <ErrorCell title={msg.error || 'Sem detalhes'}>
-                    {msg.error || 'Sem detalhes'}
-                  </ErrorCell>
-                </div>
+                  <div>
+                    <CellLabel>Erro:</CellLabel>
+                    <ErrorCell title={msg.error || 'Sem detalhes'}>
+                      {msg.error || 'Sem detalhes'}
+                    </ErrorCell>
+                  </div>
 
-                <div>
-                  <CellLabel>Template:</CellLabel>
-                  <span style={{ fontSize: 12 }}>{formatTemplate(msg.template_name)}</span>
-                </div>
+                  <div>
+                    <CellLabel>Template:</CellLabel>
+                    <TemplateCell>{formatTemplate(msg.template_name)}</TemplateCell>
+                  </div>
 
-                <div>
-                  <CellLabel>Tentativas:</CellLabel>
-                  <RetryBadge $count={msg.retry_count}>
-                    <RotateCcw size={11} />
-                    {msg.retry_count}/3
-                  </RetryBadge>
-                </div>
+                  <div>
+                    <CellLabel>Tentativas:</CellLabel>
+                    <RetryBadge $count={msg.retry_count}>
+                      <RotateCcw size={11} />
+                      {msg.retry_count}/3
+                    </RetryBadge>
+                  </div>
 
-                <div>
-                  {retrySuccess.has(msg.id) ? (
-                    <SuccessBadge>
-                      <CheckCircle size={12} />
-                      Enviado!
-                    </SuccessBadge>
-                  ) : msg.retry_count >= 3 ? (
-                    <span style={{ fontSize: 12, color: '#9ca3af' }}>Esgotado</span>
-                  ) : (
-                    <RetryButton
-                      onClick={() => handleRetry(msg)}
-                      disabled={retryingId === msg.id}
-                    >
-                      {retryingId === msg.id ? (
-                        <SpinIcon><RefreshCw size={12} /></SpinIcon>
-                      ) : (
-                        <RotateCcw size={12} />
-                      )}
-                      Reenviar
-                    </RetryButton>
-                  )}
-                </div>
-              </TableRow>
-            ))}
-          </>
-        )}
-      </Table>
+                  <div>
+                    {retrySuccess.has(msg.id) ? (
+                      <SuccessBadge>
+                        <CheckCircle size={12} />
+                        Enviado!
+                      </SuccessBadge>
+                    ) : msg.retry_count >= 3 ? (
+                      <ExhaustedLabel>Esgotado</ExhaustedLabel>
+                    ) : (
+                      <RetryButton
+                        onClick={() => handleRetry(msg)}
+                        disabled={retryingId === msg.id}
+                      >
+                        {retryingId === msg.id ? (
+                          <SpinIcon><RefreshCw size={12} /></SpinIcon>
+                        ) : (
+                          <RotateCcw size={12} />
+                        )}
+                        Reenviar
+                      </RetryButton>
+                    )}
+                  </div>
+                </TableRow>
+              ))}
+            </>
+          )}
+        </Table>
+      </PageContainer>
     </AdminLayout>
   );
 };

@@ -42,21 +42,21 @@ const IconWrapper = styled.div<{ $type: DocumentType }>`
 
   background-color: ${props => {
     switch (props.$type) {
-      case 'lab_result': return '#EEF2FF'; // Cyan/Blueish
-      case 'prescription': return '#ECFDF5'; // Greenish
-      case 'invoice': return '#FFFBEB'; // Yellowish
-      case 'treatment_plan': return '#F5F3FF'; // Purple
-      default: return '#F3F4F6'; // Gray
+      case 'lab_result': return 'rgba(146, 86, 62, 0.10)';
+      case 'prescription': return 'rgba(180, 143, 122, 0.12)';
+      case 'invoice': return 'rgba(212, 165, 116, 0.12)';
+      case 'treatment_plan': return 'rgba(196, 131, 106, 0.10)';
+      default: return 'rgba(140, 139, 139, 0.10)';
     }
   }};
 
   color: ${props => {
     switch (props.$type) {
-      case 'lab_result': return '#4F46E5';
-      case 'prescription': return '#059669';
-      case 'invoice': return '#D97706';
-      case 'treatment_plan': return '#7C3AED';
-      default: return '#6B7280';
+      case 'lab_result': return '#92563E';
+      case 'prescription': return '#7A6355';
+      case 'invoice': return '#A67B5B';
+      case 'treatment_plan': return '#B48F7A';
+      default: return '#8C8B8B';
     }
   }};
 `;
@@ -100,8 +100,8 @@ const ActionBtn = styled.button`
 
 const DeleteBtn = styled(ActionBtn)`
   &:hover {
-    background: #FEE2E2;
-    color: #DC2626;
+    background: rgba(196, 131, 106, 0.12);
+    color: #C4836A;
   }
 `;
 

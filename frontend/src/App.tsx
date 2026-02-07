@@ -32,8 +32,13 @@ const MySchedulePage = lazy(() => import('./pages/admin/MySchedulePage'));
 const NotificationRulesPage = lazy(() => import('./pages/admin/NotificationRulesPage'));
 const FailedMessagesPage = lazy(() => import('./pages/admin/FailedMessagesPage'));
 
-// Dashboard do paciente (admin/provider também podem acessar para teste)
+// Smart redirect: admins/providers vão para sua área, pacientes ficam no dashboard
 const HomeDashboard: React.FC = () => {
+  const { profile } = useAuth();
+
+  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
+  if (profile?.role === 'provider') return <Navigate to="/doctor" replace />;
+
   return <Dashboard />;
 };
 

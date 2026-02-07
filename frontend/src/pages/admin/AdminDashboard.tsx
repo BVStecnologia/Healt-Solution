@@ -122,12 +122,12 @@ const Header = styled.div`
   }
 
   h1 {
-    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
-    font-size: 36px;
-    font-weight: 600;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
     color: ${luxuryColors.textDark};
     margin: 0 0 6px;
-    letter-spacing: -0.5px;
+    letter-spacing: 0.5px;
   }
 
   p {
@@ -232,7 +232,7 @@ const StatLabel = styled.div`
 `;
 
 const StatValue = styled.div`
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: ${theme.typography.fontFamilyHeading};
   font-size: 42px;
   font-weight: 600;
   color: ${luxuryColors.textDark};
@@ -313,7 +313,7 @@ const ChartHeader = styled.div`
 `;
 
 const ChartTitle = styled.h3`
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: ${theme.typography.fontFamilyHeading};
   font-size: 18px;
   font-weight: 600;
   color: ${luxuryColors.textDark};
@@ -386,7 +386,7 @@ const CardHeader = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: ${theme.typography.fontFamilyHeading};
   font-size: 22px;
   font-weight: 600;
   color: ${luxuryColors.textDark};
@@ -618,7 +618,7 @@ const PhoneDisplay = styled.div`
     width: 48px;
     height: 48px;
     border-radius: 14px;
-    background: linear-gradient(135deg, ${luxuryColors.success}, ${luxuryColors.success}CC);
+    background: linear-gradient(135deg, ${luxuryColors.primary}, ${luxuryColors.primaryDark});
     color: white;
     display: flex;
     align-items: center;
@@ -645,7 +645,7 @@ const PhoneDisplay = styled.div`
       font-size: 18px;
       font-weight: 600;
       color: ${luxuryColors.textDark};
-      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-family: ${theme.typography.fontFamilyHeading};
     }
   }
 `;
@@ -757,11 +757,11 @@ const TodayStatus = styled.div<{ $status: string }>`
   ${props => {
     switch (props.$status) {
       case 'confirmed':
-        return `background: ${luxuryColors.successLight}; color: ${luxuryColors.success};`;
+        return `background: rgba(146, 86, 62, 0.10); color: #92563E;`;
       case 'pending':
-        return `background: ${luxuryColors.warningLight}; color: ${luxuryColors.warning};`;
+        return `background: rgba(212, 165, 116, 0.15); color: #A67B5B;`;
       case 'in_progress':
-        return `background: ${luxuryColors.primary}15; color: ${luxuryColors.primary};`;
+        return `background: rgba(122, 69, 50, 0.12); color: #7A4532;`;
       default:
         return `background: ${luxuryColors.beige}; color: ${luxuryColors.textMuted};`;
     }

@@ -148,12 +148,12 @@ const Header = styled.div`
   }
 
   h1 {
-    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
-    font-size: 36px;
-    font-weight: 600;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
     color: ${luxuryColors.textDark};
     margin: 0 0 6px;
-    letter-spacing: -0.5px;
+    letter-spacing: 0.5px;
   }
 
   p {
@@ -172,34 +172,36 @@ const StatsBar = styled.div`
   animation: ${fadeInUp} 0.5s ease-out 0.1s both;
 `;
 
-const StatPill = styled.div<{ $active?: boolean; $color?: string }>`
+const StatPill = styled.div<{ $color?: string; $muted?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: ${props => props.$active ? luxuryColors.primary : luxuryColors.warmWhite};
-  color: ${props => props.$active ? 'white' : luxuryColors.textDark};
+  gap: 7px;
+  padding: 9px 16px;
+  background: ${luxuryColors.warmWhite};
+  color: ${luxuryColors.textDark};
   border-radius: 25px;
   font-size: 13px;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid ${props => props.$active ? luxuryColors.primary : 'rgba(146, 86, 62, 0.1)'};
-  box-shadow: ${props => props.$active ? `0 4px 12px ${luxuryColors.primary}30` : 'none'};
+  border: 1px solid rgba(146, 86, 62, 0.1);
+  opacity: ${props => props.$muted ? 0.45 : 1};
+  transition: opacity 0.3s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(146, 86, 62, 0.15);
-    border-color: ${luxuryColors.primary};
+  svg {
+    width: 15px;
+    height: 15px;
+    opacity: 0.6;
+    flex-shrink: 0;
   }
 
   .count {
-    background: ${props => props.$active ? 'rgba(255,255,255,0.25)' : props.$color || luxuryColors.beige};
-    color: ${props => props.$active ? 'white' : props.$color ? luxuryColors.textDark : luxuryColors.textMuted};
+    background: ${props => props.$color || luxuryColors.beige};
+    color: ${luxuryColors.textMuted};
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;
+    min-width: 20px;
+    text-align: center;
   }
 `;
 
@@ -296,11 +298,12 @@ const EmptyState = styled.div`
   }
 
   h3 {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 24px;
-    font-weight: 600;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 22px;
+    font-weight: 400;
     color: ${luxuryColors.textDark};
     margin: 0 0 8px;
+    letter-spacing: 0.5px;
   }
 
   p {
@@ -878,31 +881,8 @@ const KanbanAvatar = styled.div<{ $patientType?: string }>`
   font-weight: 600;
   font-size: 14px;
   flex-shrink: 0;
-
-  ${props => {
-    switch (props.$patientType) {
-      case 'vip':
-        return css`
-          background: linear-gradient(135deg, #D4AF37, #F4D03F);
-          color: #5D4E37;
-        `;
-      case 'trt':
-        return css`
-          background: linear-gradient(135deg, #8B5CF6, #A78BFA);
-          color: white;
-        `;
-      case 'hormone':
-        return css`
-          background: linear-gradient(135deg, #EC4899, #F472B6);
-          color: white;
-        `;
-      default:
-        return css`
-          background: linear-gradient(135deg, ${luxuryColors.primary}, ${luxuryColors.primaryLight});
-          color: white;
-        `;
-    }
-  }}
+  background: linear-gradient(135deg, ${luxuryColors.primary}, #7A4532);
+  color: white;
 `;
 
 const KanbanPatientInfo = styled.div`
@@ -1397,7 +1377,7 @@ const AdminAppointmentsPage: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -1819,12 +1799,12 @@ const AdminAppointmentsPage: React.FC = () => {
   }, [appointments, statusFilter, searchQuery]);
 
   const statusTabs = [
-    { key: 'all', label: 'Todas', count: totalCount },
-    { key: 'pending', label: 'Pendentes', count: getStatusCount('pending') },
-    { key: 'confirmed', label: 'Confirmadas', count: getStatusCount('confirmed') },
-    { key: 'in_progress', label: 'Em Andamento', count: getStatusCount('in_progress') },
-    { key: 'completed', label: 'Concluídas', count: getStatusCount('completed') },
-    { key: 'cancelled', label: 'Canceladas', count: getStatusCount('cancelled') },
+    { key: 'all', label: 'Todas', count: totalCount, icon: CalendarDays },
+    { key: 'pending', label: 'Pendentes', count: getStatusCount('pending'), icon: AlertCircle },
+    { key: 'confirmed', label: 'Confirmadas', count: getStatusCount('confirmed'), icon: CheckCircle },
+    { key: 'in_progress', label: 'Em Andamento', count: getStatusCount('in_progress'), icon: Loader2 },
+    { key: 'completed', label: 'Concluídas', count: getStatusCount('completed'), icon: CheckCheck },
+    { key: 'cancelled', label: 'Canceladas', count: getStatusCount('cancelled'), icon: XOctagon, color: `${luxuryColors.textMuted}18` },
   ];
 
   return (
@@ -1836,16 +1816,20 @@ const AdminAppointmentsPage: React.FC = () => {
         </Header>
 
         <StatsBar>
-          {statusTabs.map(tab => (
-            <StatPill
-              key={tab.key}
-              $active={statusFilter === tab.key}
-              onClick={() => setStatusFilter(tab.key)}
-            >
-              {tab.label}
-              <span className="count">{tab.count}</span>
-            </StatPill>
-          ))}
+          {statusTabs.map(tab => {
+            const TabIcon = tab.icon;
+            return (
+              <StatPill
+                key={tab.key}
+                $muted={tab.count === 0}
+                $color={(tab as any).color}
+              >
+                <TabIcon />
+                {tab.label}
+                <span className="count">{tab.count}</span>
+              </StatPill>
+            );
+          })}
         </StatsBar>
 
         <ControlsBar>

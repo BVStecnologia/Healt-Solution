@@ -821,13 +821,13 @@ const renderTypeIcon = (type: PatientType | null): React.ReactNode => {
 };
 
 const statusColors: Record<string, { dot: string; bg: string; text: string }> = {
-  completed:   { dot: '#10B981', bg: '#D1FAE5', text: '#047857' },
-  confirmed:   { dot: '#3B82F6', bg: '#DBEAFE', text: '#1D4ED8' },
-  pending:     { dot: '#F59E0B', bg: '#FEF3C7', text: '#B45309' },
-  cancelled:   { dot: '#EF4444', bg: '#FEE2E2', text: '#B91C1C' },
-  no_show:     { dot: '#6B7280', bg: '#F3F4F6', text: '#374151' },
-  checked_in:  { dot: '#2563EB', bg: '#DBEAFE', text: '#1E40AF' },
-  in_progress: { dot: '#7C3AED', bg: '#EDE9FE', text: '#5B21B6' },
+  completed:   { dot: '#92563E', bg: 'rgba(146, 86, 62, 0.10)', text: '#92563E' },
+  confirmed:   { dot: '#B48F7A', bg: 'rgba(180, 143, 122, 0.12)', text: '#7A6355' },
+  pending:     { dot: '#D4A574', bg: 'rgba(212, 165, 116, 0.15)', text: '#A67B5B' },
+  cancelled:   { dot: '#C4836A', bg: 'rgba(196, 131, 106, 0.10)', text: '#9A6B55' },
+  no_show:     { dot: '#8C8B8B', bg: 'rgba(140, 139, 139, 0.10)', text: '#6B6A6A' },
+  checked_in:  { dot: '#7A6355', bg: 'rgba(122, 99, 85, 0.10)', text: '#7A6355' },
+  in_progress: { dot: '#7A4532', bg: 'rgba(146, 86, 62, 0.15)', text: '#7A4532' },
 };
 
 const getStatusColors = (status: string) => statusColors[status] || statusColors.pending;
@@ -1104,7 +1104,7 @@ const PatientProfilePage: React.FC = () => {
                   Desde {formatDate(patient.created_at)}
                 </MetaChip>
                 {(patient.no_show_count || 0) > 0 && (
-                  <MetaChip style={{ color: '#DC2626' }}>
+                  <MetaChip style={{ color: '#C4836A' }}>
                     <AlertTriangle style={{ opacity: 1 }} />
                     {patient.no_show_count} falta{(patient.no_show_count || 0) > 1 ? 's' : ''}
                   </MetaChip>
@@ -1149,7 +1149,7 @@ const PatientProfilePage: React.FC = () => {
             </StatContent>
           </StatCard>
           <StatCard $delay={160}>
-            <StatIcon $bg="#D1FAE5" $color="#059669">
+            <StatIcon $bg="rgba(180, 143, 122, 0.15)" $color="#92563E">
               <CheckCircle />
             </StatIcon>
             <StatContent>
@@ -1158,7 +1158,7 @@ const PatientProfilePage: React.FC = () => {
             </StatContent>
           </StatCard>
           <StatCard $delay={240}>
-            <StatIcon $bg="#DBEAFE" $color="#2563EB">
+            <StatIcon $bg="rgba(212, 165, 116, 0.15)" $color="#A67B5B">
               <CalendarCheck />
             </StatIcon>
             <StatContent>
@@ -1216,7 +1216,7 @@ const PatientProfilePage: React.FC = () => {
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>Faltas (No-Show)</InfoLabel>
-                  <InfoValue style={(patient.no_show_count || 0) > 0 ? { color: '#DC2626', fontWeight: 600 } : undefined}>
+                  <InfoValue style={(patient.no_show_count || 0) > 0 ? { color: '#C4836A', fontWeight: 600 } : undefined}>
                     {patient.no_show_count || 0}
                   </InfoValue>
                 </InfoItem>

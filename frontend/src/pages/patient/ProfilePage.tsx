@@ -12,10 +12,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  Star,
   Sparkles,
-  Heart,
-  ChevronRight,
   X,
   Save,
   Camera,
@@ -24,7 +21,8 @@ import { theme } from '../../styles/GlobalStyle';
 import Layout from '../../components/Layout';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
-import { Profile, PatientType, AppointmentStatus } from '../../types/database';
+import { Profile, AppointmentStatus } from '../../types/database';
+import { getPatientTypeLabel, getTreatmentLabel } from '../../constants/treatments';
 
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -51,7 +49,7 @@ const PageContainer = styled.div`
   margin: 0 auto;
 `;
 
-const ProfileHeader = styled.div<{ $type: PatientType | null }>`
+const ProfileHeader = styled.div`
   position: relative;
   background: ${theme.colors.surface};
   border-radius: ${theme.borderRadius.xxl};
@@ -67,16 +65,8 @@ const ProfileHeader = styled.div<{ $type: PatientType | null }>`
     top: 0;
     left: 0;
     right: 0;
-    height: 6px;
-    background: ${props => {
-      switch (props.$type) {
-        case 'vip': return 'linear-gradient(90deg, #D4AF37, #FFD700, #D4AF37)';
-        case 'trt': return 'linear-gradient(90deg, #7C3AED, #A78BFA, #7C3AED)';
-        case 'hormone': return 'linear-gradient(90deg, #EC4899, #F472B6, #EC4899)';
-        case 'new': return 'linear-gradient(90deg, #10B981, #34D399, #10B981)';
-        default: return `linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight}, ${theme.colors.primary})`;
-      }
-    }};
+    height: 4px;
+    background: linear-gradient(90deg, ${theme.colors.primary}, #B48F7A, ${theme.colors.primary});
     background-size: 200% 100%;
     animation: ${shimmer} 3s linear infinite;
   }
@@ -101,19 +91,11 @@ const AvatarContainer = styled.div`
   flex-shrink: 0;
 `;
 
-const AvatarImage = styled.div<{ $type: PatientType | null }>`
+const AvatarImage = styled.div`
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: ${props => {
-    switch (props.$type) {
-      case 'vip': return 'linear-gradient(135deg, #D4AF37, #B8860B)';
-      case 'trt': return 'linear-gradient(135deg, #7C3AED, #5B21B6)';
-      case 'hormone': return 'linear-gradient(135deg, #EC4899, #BE185D)';
-      case 'new': return 'linear-gradient(135deg, #10B981, #047857)';
-      default: return `linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryHover})`;
-    }
-  }};
+  background: linear-gradient(135deg, ${theme.colors.primary}, #7A4532);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -121,7 +103,7 @@ const AvatarImage = styled.div<{ $type: PatientType | null }>`
   font-size: 42px;
   font-weight: 600;
   color: white;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(146, 86, 62, 0.25);
   overflow: hidden;
 
   img {
@@ -182,7 +164,7 @@ const PatientMeta = styled.div`
   }
 `;
 
-const TypeBadge = styled.span<{ $type: PatientType | null }>`
+const TypeBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -192,29 +174,8 @@ const TypeBadge = styled.span<{ $type: PatientType | null }>`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  background: ${props => {
-    switch (props.$type) {
-      case 'vip': return 'linear-gradient(135deg, #FEF3C7, #FDE68A)';
-      case 'trt': return 'linear-gradient(135deg, #EDE9FE, #DDD6FE)';
-      case 'hormone': return 'linear-gradient(135deg, #FCE7F3, #FBCFE8)';
-      case 'new': return 'linear-gradient(135deg, #D1FAE5, #A7F3D0)';
-      default: return `linear-gradient(135deg, ${theme.colors.primarySoft}, #E8D5CC)`;
-    }
-  }};
-  color: ${props => {
-    switch (props.$type) {
-      case 'vip': return '#92400E';
-      case 'trt': return '#5B21B6';
-      case 'hormone': return '#BE185D';
-      case 'new': return '#047857';
-      default: return theme.colors.primaryHover;
-    }
-  }};
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
+  background: ${theme.colors.primarySoft};
+  color: ${theme.colors.primaryHover};
 `;
 
 const MetaItem = styled.span`
@@ -437,11 +398,11 @@ const AppointmentItem = styled.div<{ $status: AppointmentStatus }>`
   border-radius: ${theme.borderRadius.lg};
   border-left: 4px solid ${props => {
     switch (props.$status) {
-      case 'completed': return '#10B981';
-      case 'confirmed': return '#3B82F6';
-      case 'pending': return '#F59E0B';
-      case 'cancelled': return '#EF4444';
-      case 'no_show': return '#6B7280';
+      case 'completed': return '#92563E';
+      case 'confirmed': return '#B48F7A';
+      case 'pending': return '#D4A574';
+      case 'cancelled': return '#C4836A';
+      case 'no_show': return '#8C8B8B';
       default: return theme.colors.border;
     }
   }};
@@ -462,10 +423,10 @@ const AppointmentIcon = styled.div<{ $status: AppointmentStatus }>`
   justify-content: center;
   background: ${props => {
     switch (props.$status) {
-      case 'completed': return '#D1FAE5';
-      case 'confirmed': return '#DBEAFE';
-      case 'pending': return '#FEF3C7';
-      case 'cancelled': return '#FEE2E2';
+      case 'completed': return 'rgba(146, 86, 62, 0.1)';
+      case 'confirmed': return 'rgba(180, 143, 122, 0.12)';
+      case 'pending': return 'rgba(212, 165, 116, 0.12)';
+      case 'cancelled': return 'rgba(196, 131, 106, 0.1)';
       default: return theme.colors.background;
     }
   }};
@@ -475,10 +436,10 @@ const AppointmentIcon = styled.div<{ $status: AppointmentStatus }>`
     height: 20px;
     color: ${props => {
       switch (props.$status) {
-        case 'completed': return '#059669';
-        case 'confirmed': return '#2563EB';
-        case 'pending': return '#D97706';
-        case 'cancelled': return '#DC2626';
+        case 'completed': return '#92563E';
+        case 'confirmed': return '#B48F7A';
+        case 'pending': return '#D4A574';
+        case 'cancelled': return '#C4836A';
         default: return theme.colors.textSecondary;
       }
     }};
@@ -514,19 +475,19 @@ const StatusBadge = styled.span<{ $status: AppointmentStatus }>`
   letter-spacing: 0.5px;
   background: ${props => {
     switch (props.$status) {
-      case 'completed': return '#D1FAE5';
-      case 'confirmed': return '#DBEAFE';
-      case 'pending': return '#FEF3C7';
-      case 'cancelled': return '#FEE2E2';
+      case 'completed': return 'rgba(146, 86, 62, 0.1)';
+      case 'confirmed': return 'rgba(180, 143, 122, 0.1)';
+      case 'pending': return 'rgba(212, 165, 116, 0.12)';
+      case 'cancelled': return 'rgba(196, 131, 106, 0.1)';
       default: return theme.colors.background;
     }
   }};
   color: ${props => {
     switch (props.$status) {
-      case 'completed': return '#047857';
-      case 'confirmed': return '#1D4ED8';
-      case 'pending': return '#B45309';
-      case 'cancelled': return '#B91C1C';
+      case 'completed': return '#92563E';
+      case 'confirmed': return '#B48F7A';
+      case 'pending': return '#A67B5B';
+      case 'cancelled': return '#C4836A';
       default: return theme.colors.textSecondary;
     }
   }};
@@ -783,25 +744,6 @@ const LoadingState = styled.div`
 `;
 
 // Helpers
-const getPatientTypeLabel = (type: PatientType | null): string => {
-  switch (type) {
-    case 'vip': return 'VIP';
-    case 'trt': return 'TRT';
-    case 'hormone': return 'Hormonal';
-    case 'new': return 'Novo';
-    default: return 'Geral';
-  }
-};
-
-const getPatientTypeIcon = (type: PatientType | null) => {
-  switch (type) {
-    case 'vip': return <Star />;
-    case 'trt': return <Activity />;
-    case 'hormone': return <Heart />;
-    case 'new': return <Sparkles />;
-    default: return <User />;
-  }
-};
 
 const getStatusIcon = (status: AppointmentStatus) => {
   switch (status) {
@@ -827,19 +769,6 @@ const getStatusLabel = (status: AppointmentStatus): string => {
   }
 };
 
-const getAppointmentTypeLabel = (type: string): string => {
-  const types: Record<string, string> = {
-    initial_consultation: 'Consulta Inicial',
-    follow_up: 'Retorno',
-    hormone_check: 'Avaliação Hormonal',
-    lab_review: 'Revisão de Exames',
-    nutrition: 'Nutrição',
-    health_coaching: 'Health Coaching',
-    therapy: 'Terapia',
-    personal_training: 'Personal Training',
-  };
-  return types[type] || type;
-};
 
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return '-';
@@ -1053,10 +982,10 @@ const ProfilePage: React.FC = () => {
   return (
     <Layout>
       <PageContainer>
-        <ProfileHeader $type={profile.patient_type}>
+        <ProfileHeader>
           <HeaderContent>
             <AvatarContainer>
-              <AvatarImage $type={profile.patient_type}>
+              <AvatarImage>
                 {profile.avatar_url ? (
                   <img src={profile.avatar_url} alt={profile.first_name} />
                 ) : (
@@ -1082,9 +1011,9 @@ const ProfilePage: React.FC = () => {
               <PatientName>{profile.first_name} {profile.last_name}</PatientName>
 
               <PatientMeta>
-                <TypeBadge $type={profile.patient_type}>
-                  {getPatientTypeIcon(profile.patient_type)}
-                  {getPatientTypeLabel(profile.patient_type)}
+                <TypeBadge>
+                  <Sparkles size={14} />
+                  {getPatientTypeLabel(profile.patient_type || 'new')}
                 </TypeBadge>
                 <MetaItem>
                   <Clock />
@@ -1120,11 +1049,11 @@ const ProfilePage: React.FC = () => {
             <StatValue>{stats.total}</StatValue>
             <StatLabel>Total de Consultas</StatLabel>
           </StatCard>
-          <StatCard $color="#10B981" $delay={200}>
+          <StatCard $color="#B48F7A" $delay={200}>
             <StatValue>{stats.completed}</StatValue>
             <StatLabel>Consultas Realizadas</StatLabel>
           </StatCard>
-          <StatCard $color="#3B82F6" $delay={300}>
+          <StatCard $color="#C4836A" $delay={300}>
             <StatValue>{stats.upcoming}</StatValue>
             <StatLabel>Próximas Consultas</StatLabel>
           </StatCard>
@@ -1158,7 +1087,7 @@ const ProfilePage: React.FC = () => {
             </InfoGrid>
           </Card>
 
-          <Card $delay={500} $borderColor="#10B981">
+          <Card $delay={500} $borderColor="#B48F7A">
             <CardHeader>
               <CardTitle>
                 <Activity />
@@ -1168,7 +1097,7 @@ const ProfilePage: React.FC = () => {
             <InfoGrid>
               <InfoItem>
                 <InfoLabel>Tipo de Paciente</InfoLabel>
-                <InfoValue>{getPatientTypeLabel(profile.patient_type)}</InfoValue>
+                <InfoValue>{getPatientTypeLabel(profile.patient_type || 'new')}</InfoValue>
               </InfoItem>
               <InfoItem>
                 <InfoLabel>Última Visita</InfoLabel>
@@ -1186,7 +1115,7 @@ const ProfilePage: React.FC = () => {
           </Card>
 
           {upcomingAppointments.length > 0 && (
-            <FullWidthCard $delay={600} $borderColor="#3B82F6">
+            <FullWidthCard $delay={600} $borderColor="#C4836A">
               <CardHeader>
                 <CardTitle>
                   <Calendar />
@@ -1200,7 +1129,7 @@ const ProfilePage: React.FC = () => {
                       {getStatusIcon(apt.status)}
                     </AppointmentIcon>
                     <AppointmentInfo>
-                      <AppointmentTitle>{getAppointmentTypeLabel(apt.type)}</AppointmentTitle>
+                      <AppointmentTitle>{getTreatmentLabel(apt.type)}</AppointmentTitle>
                       <AppointmentMeta>
                         <span>{formatDateTime(apt.scheduled_at)}</span>
                         <span>·</span>
@@ -1220,7 +1149,7 @@ const ProfilePage: React.FC = () => {
             </FullWidthCard>
           )}
 
-          <FullWidthCard $delay={700} $borderColor="#8B5CF6">
+          <FullWidthCard $delay={700} $borderColor="#D4A574">
             <CardHeader>
               <CardTitle>
                 <FileText />
@@ -1235,7 +1164,7 @@ const ProfilePage: React.FC = () => {
                       {getStatusIcon(apt.status)}
                     </AppointmentIcon>
                     <AppointmentInfo>
-                      <AppointmentTitle>{getAppointmentTypeLabel(apt.type)}</AppointmentTitle>
+                      <AppointmentTitle>{getTreatmentLabel(apt.type)}</AppointmentTitle>
                       <AppointmentMeta>
                         <span>{formatDateTime(apt.scheduled_at)}</span>
                         <span>·</span>

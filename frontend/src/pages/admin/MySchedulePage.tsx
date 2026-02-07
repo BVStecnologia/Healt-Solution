@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import {
   Clock,
@@ -88,8 +88,8 @@ const luxuryTheme = {
   primaryLight: '#AF8871',
   primarySoft: '#F4E7DE',
   primaryDark: '#7A4832',
-  success: '#10B981',
-  error: '#EF4444',
+  success: '#6B8E6B',
+  error: '#C4836A',
   // Theme-responsive colors (CSS variables - adapt to dark mode)
   cream: theme.colors.background,
   surface: theme.colors.surface,
@@ -129,10 +129,12 @@ const Header = styled.div`
   animation: ${fadeInUp} 0.6s ease-out;
 
   h1 {
-    font-size: 28px;
-    font-weight: 700;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
     color: ${luxuryTheme.text};
     margin: 0;
+    letter-spacing: 0.5px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -149,52 +151,83 @@ const Header = styled.div`
   }
 `;
 
-const ProviderSelect = styled.div`
+const ProviderDropdownWrapper = styled.div`
   position: relative;
+  max-width: 400px;
   margin-bottom: 24px;
+  z-index: 20;
   animation: ${fadeInUp} 0.6s ease-out 0.05s both;
 
-  select {
-    width: 100%;
-    max-width: 400px;
-    padding: 12px 40px 12px 16px;
-    border: 1px solid ${luxuryTheme.border};
-    border-radius: 12px;
-    font-size: 14px;
-    color: ${luxuryTheme.text};
-    background: ${luxuryTheme.surface};
-    cursor: pointer;
-    appearance: none;
-    transition: border-color 0.2s;
+  @media (max-width: 480px) {
+    max-width: 100%;
+  }
+`;
 
-    &:focus {
-      outline: none;
-      border-color: ${luxuryTheme.primary};
-    }
+const ProviderDropdownTrigger = styled.button<{ $open: boolean }>`
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 1px solid ${props => props.$open ? luxuryTheme.primary : luxuryTheme.border};
+  border-radius: 12px;
+  font-size: 14px;
+  color: ${luxuryTheme.text};
+  background: ${luxuryTheme.surface};
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s ease;
+  position: relative;
+
+  ${props => props.$open && `box-shadow: 0 0 0 3px ${luxuryTheme.primary}15;`}
+
+  &:hover {
+    border-color: ${luxuryTheme.primaryLight};
   }
 
   svg {
     position: absolute;
-    right: calc(100% - 400px + 14px);
+    right: 14px;
     top: 50%;
-    transform: translateY(-50%);
-    color: ${luxuryTheme.textSecondary};
-    pointer-events: none;
+    transform: translateY(-50%) ${props => props.$open ? 'rotate(180deg)' : 'rotate(0deg)'};
+    transition: transform 0.2s ease;
+    color: ${luxuryTheme.primary};
+  }
+`;
 
-    @media (min-width: 401px) {
-      right: auto;
-      left: 376px;
-    }
+const ProviderDropdownMenu = styled.div<{ $open: boolean }>`
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  overflow: hidden;
+  opacity: ${props => props.$open ? 1 : 0};
+  transform: ${props => props.$open ? 'translateY(0)' : 'translateY(-8px)'};
+  pointer-events: ${props => props.$open ? 'auto' : 'none'};
+  transition: all 0.2s ease;
+`;
+
+const ProviderDropdownOption = styled.button<{ $selected: boolean }>`
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: ${props => props.$selected ? luxuryTheme.primary : luxuryTheme.textSecondary};
+  font-weight: ${props => props.$selected ? '500' : '400'};
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(146, 86, 62, 0.04);
+    color: ${luxuryTheme.text};
   }
 
-  @media (max-width: 480px) {
-    select {
-      max-width: 100%;
-    }
-    svg {
-      right: 14px;
-      left: auto;
-    }
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(146, 86, 62, 0.05);
   }
 `;
 
@@ -220,58 +253,111 @@ const SectionTitle = styled.h2`
   }
 `;
 
-const ScheduleGrid = styled.div`
-  display: flex;
-  flex-direction: column;
+const WeekGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   gap: 10px;
-`;
+  margin-bottom: 16px;
 
-const DayCard = styled.div<{ $active?: boolean }>`
-  background: ${props => props.$active ? `${luxuryTheme.primary}06` : luxuryTheme.cream};
-  border-radius: 12px;
-  border: 1px solid ${props => props.$active ? `${luxuryTheme.primary}20` : luxuryTheme.border};
-  opacity: ${props => props.$active ? 1 : 0.6};
-  transition: all 0.3s ease;
-  overflow: hidden;
-`;
-
-const DayHeader = styled.div<{ $active?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-
-  .day-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .day-label {
-      font-weight: 600;
-      color: ${props => props.$active ? luxuryTheme.primary : luxuryTheme.textSecondary};
-      font-size: 14px;
-      min-width: 70px;
-    }
-
-    .day-summary {
-      font-size: 12px;
-      color: ${luxuryTheme.textSecondary};
-    }
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(4, 1fr);
   }
 
+  @media (max-width: 500px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+`;
+
+const DayTile = styled.div<{ $active?: boolean; $selected?: boolean }>`
+  background: ${props =>
+    props.$selected ? `${luxuryTheme.primary}0A` :
+    props.$active ? luxuryTheme.surface :
+    luxuryTheme.cream};
+  border-radius: 16px;
+  border: 1.5px solid ${props =>
+    props.$selected ? luxuryTheme.primary :
+    props.$active ? `${luxuryTheme.primary}20` :
+    luxuryTheme.border};
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  opacity: ${props => props.$active ? 1 : 0.5};
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  text-align: center;
+  min-height: 100px;
+
+  &:hover {
+    border-color: ${luxuryTheme.primaryLight};
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(146, 86, 62, 0.08);
+  }
+`;
+
+const DayName = styled.div<{ $active?: boolean }>`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 13px;
+  font-weight: 600;
+  color: ${props => props.$active ? luxuryTheme.primary : luxuryTheme.textSecondary};
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+`;
+
+const DayToggle = styled.div`
   input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     cursor: pointer;
     accent-color: ${luxuryTheme.primary};
   }
 `;
 
+const DaySummaryText = styled.div`
+  font-size: 11px;
+  color: ${luxuryTheme.textSecondary};
+  line-height: 1.5;
+  white-space: pre-line;
+  text-align: center;
+`;
+
+const DayOffLabel = styled.div`
+  font-size: 11px;
+  color: ${luxuryTheme.textSecondary};
+  opacity: 0.5;
+  font-style: italic;
+`;
+
+const ExpandedPanel = styled.div`
+  background: ${luxuryTheme.surface};
+  border: 1.5px solid ${luxuryTheme.primary}30;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  animation: ${fadeInUp} 0.3s ease-out;
+`;
+
+const ExpandedHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(146, 86, 62, 0.08);
+
+  .day-title {
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 16px;
+    font-weight: 500;
+    color: ${luxuryTheme.primary};
+  }
+`;
+
 const SegmentsContainer = styled.div`
-  padding: 0 16px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 `;
 
 const SegmentRow = styled.div`
@@ -693,6 +779,9 @@ const MySchedulePage: React.FC = () => {
   // Admin: lista de providers para selecionar
   const [providers, setProviders] = useState<ProviderOption[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
+  const providerDropdownRef = useRef<HTMLDivElement>(null);
+  const [expandedDay, setExpandedDay] = useState<number | null>(null);
 
   // Blocks state
   const [blocks, setBlocks] = useState<ProviderBlock[]>([]);
@@ -706,6 +795,16 @@ const MySchedulePage: React.FC = () => {
   const [blockConflicts, setBlockConflicts] = useState<any[]>([]);
 
   const effectiveProviderId = isAdmin ? selectedProviderId : providerId;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (providerDropdownRef.current && !providerDropdownRef.current.contains(event.target as Node)) {
+        setProviderDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Admin: carregar lista de providers
   useEffect(() => {
@@ -1025,6 +1124,11 @@ const MySchedulePage: React.FC = () => {
     return day.segments.map(s => `${s.start_time}–${s.end_time}`).join('  ·  ');
   };
 
+  const formatDayTileSummary = (day: DaySchedule) => {
+    if (!day.is_active) return '';
+    return day.segments.map(s => `${s.start_time}–${s.end_time}`).join('\n');
+  };
+
   const selectedProviderName = isAdmin
     ? providers.find(p => p.id === selectedProviderId)?.name || ''
     : '';
@@ -1064,19 +1168,30 @@ const MySchedulePage: React.FC = () => {
         </HelpTip>
 
         {isAdmin && providers.length > 0 && (
-          <ProviderSelect>
-            <select
-              value={selectedProviderId || ''}
-              onChange={(e) => setSelectedProviderId(e.target.value)}
+          <ProviderDropdownWrapper ref={providerDropdownRef}>
+            <ProviderDropdownTrigger
+              $open={providerDropdownOpen}
+              onClick={() => setProviderDropdownOpen(!providerDropdownOpen)}
+              type="button"
             >
+              {providers.find(p => p.id === selectedProviderId)
+                ? `${providers.find(p => p.id === selectedProviderId)!.name} — ${providers.find(p => p.id === selectedProviderId)!.specialty}`
+                : 'Selecionar médico'
+              }
+              <ChevronDown size={16} />
+            </ProviderDropdownTrigger>
+            <ProviderDropdownMenu $open={providerDropdownOpen}>
               {providers.map(p => (
-                <option key={p.id} value={p.id}>
+                <ProviderDropdownOption
+                  key={p.id}
+                  $selected={selectedProviderId === p.id}
+                  onClick={() => { setSelectedProviderId(p.id); setProviderDropdownOpen(false); }}
+                >
                   {p.name} — {p.specialty}
-                </option>
+                </ProviderDropdownOption>
               ))}
-            </select>
-            <ChevronDown size={18} />
-          </ProviderSelect>
+            </ProviderDropdownMenu>
+          </ProviderDropdownWrapper>
         )}
 
         {!isAdmin && !providerId && (
@@ -1113,6 +1228,9 @@ const MySchedulePage: React.FC = () => {
                 <Calendar size={20} />
                 Horários de Trabalho{selectedProviderName ? ` — ${selectedProviderName}` : ''}
               </SectionTitle>
+              <p style={{ fontSize: 13, color: luxuryTheme.textSecondary, margin: '-16px 0 20px', opacity: 0.7 }}>
+                Clique em um dia para editar os turnos
+              </p>
 
               {error && (
                 <Alert $variant="error">
@@ -1135,63 +1253,75 @@ const MySchedulePage: React.FC = () => {
                 </LoadingContainer>
               ) : (
                 <>
-                  <ScheduleGrid>
+                  <WeekGrid>
                     {DAYS_OF_WEEK.map((day, dayIndex) => {
                       const daySchedule = schedules[dayIndex];
                       return (
-                        <DayCard key={day.value} $active={daySchedule?.is_active}>
-                          <DayHeader $active={daySchedule?.is_active}>
-                            <div className="day-left">
-                              <span className="day-label">{day.label}</span>
-                              {daySchedule?.is_active && (
-                                <span className="day-summary">{formatDaySummary(daySchedule)}</span>
-                              )}
-                            </div>
+                        <DayTile
+                          key={day.value}
+                          $active={daySchedule?.is_active}
+                          $selected={expandedDay === dayIndex}
+                          onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
+                        >
+                          <DayName $active={daySchedule?.is_active}>{day.short}</DayName>
+                          <DayToggle onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={daySchedule?.is_active || false}
                               onChange={(e) => toggleDay(dayIndex, e.target.checked)}
                             />
-                          </DayHeader>
-
-                          {daySchedule?.is_active && (
-                            <SegmentsContainer>
-                              {daySchedule.segments.map((seg, segIndex) => (
-                                <SegmentRow key={segIndex}>
-                                  <span className="segment-label">
-                                    Turno {segIndex + 1}
-                                  </span>
-                                  <input
-                                    type="time"
-                                    value={seg.start_time}
-                                    onChange={(e) => updateSegment(dayIndex, segIndex, 'start_time', e.target.value)}
-                                  />
-                                  <span className="segment-dash">—</span>
-                                  <input
-                                    type="time"
-                                    value={seg.end_time}
-                                    onChange={(e) => updateSegment(dayIndex, segIndex, 'end_time', e.target.value)}
-                                  />
-                                  {daySchedule.segments.length > 1 && (
-                                    <RemoveSegmentBtn
-                                      onClick={() => removeSegment(dayIndex, segIndex)}
-                                      title="Remover turno"
-                                    >
-                                      <X size={14} />
-                                    </RemoveSegmentBtn>
-                                  )}
-                                </SegmentRow>
-                              ))}
-                              <AddSegmentBtn onClick={() => addSegment(dayIndex)}>
-                                <Plus size={14} />
-                                Adicionar turno
-                              </AddSegmentBtn>
-                            </SegmentsContainer>
+                          </DayToggle>
+                          {daySchedule?.is_active ? (
+                            <DaySummaryText>{formatDayTileSummary(daySchedule)}</DaySummaryText>
+                          ) : (
+                            <DayOffLabel>Folga</DayOffLabel>
                           )}
-                        </DayCard>
+                        </DayTile>
                       );
                     })}
-                  </ScheduleGrid>
+                  </WeekGrid>
+
+                  {expandedDay !== null && schedules[expandedDay]?.is_active && (
+                    <ExpandedPanel>
+                      <ExpandedHeader>
+                        <span className="day-title">
+                          {DAYS_OF_WEEK[expandedDay].label} — Turnos
+                        </span>
+                        <AddSegmentBtn onClick={() => addSegment(expandedDay)}>
+                          <Plus size={14} />
+                          Adicionar turno
+                        </AddSegmentBtn>
+                      </ExpandedHeader>
+                      <SegmentsContainer>
+                        {schedules[expandedDay].segments.map((seg, segIndex) => (
+                          <SegmentRow key={segIndex}>
+                            <span className="segment-label">
+                              Turno {segIndex + 1}
+                            </span>
+                            <input
+                              type="time"
+                              value={seg.start_time}
+                              onChange={(e) => updateSegment(expandedDay, segIndex, 'start_time', e.target.value)}
+                            />
+                            <span className="segment-dash">—</span>
+                            <input
+                              type="time"
+                              value={seg.end_time}
+                              onChange={(e) => updateSegment(expandedDay, segIndex, 'end_time', e.target.value)}
+                            />
+                            {schedules[expandedDay].segments.length > 1 && (
+                              <RemoveSegmentBtn
+                                onClick={() => removeSegment(expandedDay, segIndex)}
+                                title="Remover turno"
+                              >
+                                <X size={14} />
+                              </RemoveSegmentBtn>
+                            )}
+                          </SegmentRow>
+                        ))}
+                      </SegmentsContainer>
+                    </ExpandedPanel>
+                  )}
 
                   <SaveButton onClick={handleSave} disabled={saving} $saving={saving}>
                     {saving ? (

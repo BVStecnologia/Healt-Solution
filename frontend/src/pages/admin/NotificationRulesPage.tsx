@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useLocation } from 'react-router-dom';
 import {
   Bell, Plus, Trash2, Check, AlertCircle, X, Clock, Edit2,
-  Users, Stethoscope, ToggleLeft, ToggleRight, Save, RefreshCw
+  Users, Stethoscope, ToggleLeft, ToggleRight, Save, RefreshCw,
+  AlertTriangle, ChevronDown
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { theme } from '../../styles/GlobalStyle';
@@ -60,8 +61,8 @@ const luxuryTheme = {
   primaryLight: '#AF8871',
   primarySoft: '#F4E7DE',
   primaryDark: '#7A4832',
-  success: '#10B981',
-  error: '#EF4444',
+  success: '#6B8E6B',
+  error: '#C4836A',
   cream: theme.colors.background,
   surface: theme.colors.surface,
   border: theme.colors.border,
@@ -74,9 +75,7 @@ const luxuryTheme = {
 // ============================================
 // STYLED COMPONENTS
 // ============================================
-const PageContainer = styled.div`
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
-`;
+const PageContainer = styled.div``;
 
 const Header = styled.div`
   display: flex;
@@ -88,12 +87,12 @@ const Header = styled.div`
   animation: ${fadeInUp} 0.6s ease-out;
 
   h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 42px;
-    font-weight: 600;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
-    letter-spacing: -0.5px;
+    letter-spacing: 0.5px;
   }
 
   p {
@@ -127,9 +126,9 @@ const AddButton = styled.button`
 `;
 
 const SectionTitle = styled.h2`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 26px;
-  font-weight: 600;
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 22px;
+  font-weight: 500;
   color: ${luxuryTheme.text};
   margin: 0 0 20px;
   display: flex;
@@ -143,149 +142,154 @@ const SectionTitle = styled.h2`
 `;
 
 const RulesGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   margin-bottom: 40px;
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: 100ms;
   animation-fill-mode: both;
-`;
 
-const RuleCard = styled.div<{ $index: number; $active: boolean }>`
-  background: ${luxuryTheme.surface};
-  border: 1px solid ${props => props.$active ? luxuryTheme.border : `${luxuryTheme.error}30`};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
-  align-items: center;
-  gap: 20px;
-  transition: all 0.3s ease;
-  animation: ${fadeInUp} 0.5s ease-out;
-  animation-delay: ${props => 150 + props.$index * 50}ms;
-  animation-fill-mode: both;
-  opacity: ${props => props.$active ? 1 : 0.6};
-
-  &:hover {
-    border-color: ${luxuryTheme.primary};
-    box-shadow: 0 8px 24px ${luxuryTheme.primary}15;
-    transform: translateX(4px);
-    opacity: 1;
-  }
-
-  @media (max-width: 900px) {
-    grid-template-columns: auto 1fr auto;
-    gap: 16px;
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   @media (max-width: 600px) {
     grid-template-columns: 1fr;
-    gap: 12px;
+  }
+`;
+
+const RuleCard = styled.div<{ $index: number; $active: boolean }>`
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${props => props.$active ? 'rgba(146, 86, 62, 0.08)' : `${luxuryTheme.error}25`};
+  border-radius: 20px;
+  padding: 28px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: ${fadeInUp} 0.5s ease-out;
+  animation-delay: ${props => 150 + props.$index * 80}ms;
+  animation-fill-mode: both;
+  opacity: ${props => props.$active ? 1 : 0.5};
+
+  &:hover {
+    border-color: rgba(146, 86, 62, 0.15);
+    box-shadow: 0 12px 40px rgba(146, 86, 62, 0.10);
+    transform: translateY(-6px);
+    opacity: 1;
   }
 `;
 
 const RuleIcon = styled.div<{ $role: string }>`
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
   background: ${props => props.$role === 'patient'
-    ? 'linear-gradient(135deg, #6366F1, #818CF8)'
-    : `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`};
+    ? 'linear-gradient(145deg, #B48F7A, #92563E)'
+    : `linear-gradient(145deg, ${luxuryTheme.primary}, #7A4532)`};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px ${props => props.$role === 'patient' ? '#6366F140' : `${luxuryTheme.primary}40`};
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+
+  ${RuleCard}:hover & {
+    transform: scale(1.06);
+    box-shadow: 0 8px 24px rgba(146, 86, 62, 0.20);
+  }
 `;
 
 const RuleInfo = styled.div`
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
 `;
 
 const RuleName = styled.div`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 18px;
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 15px;
   font-weight: 600;
   color: ${luxuryTheme.text};
-  margin-bottom: 4px;
 `;
 
 const RuleDetail = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   color: ${luxuryTheme.textSecondary};
-  font-size: 13px;
+  font-size: 12px;
   flex-wrap: wrap;
+  justify-content: center;
 
-  svg { flex-shrink: 0; }
+  svg { flex-shrink: 0; width: 12px; height: 12px; }
 `;
 
 const TimeBadge = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 24px;
-  font-size: 13px;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
   font-weight: 600;
-  background: ${luxuryTheme.primary}12;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(146, 86, 62, 0.08);
   color: ${luxuryTheme.primary};
-  border: 1px solid ${luxuryTheme.primary}25;
-  white-space: nowrap;
+  margin-top: 4px;
 
-  svg { width: 14px; height: 14px; }
-
-  @media (max-width: 900px) { display: none; }
+  svg { width: 11px; height: 11px; }
 `;
 
 const ProviderBadge = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 24px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${luxuryTheme.success}12;
-  color: ${luxuryTheme.success};
-  border: 1px solid ${luxuryTheme.success}25;
-  white-space: nowrap;
-
-  @media (max-width: 900px) { display: none; }
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(180, 143, 122, 0.10);
+  color: #7A6355;
+  margin-top: 2px;
 `;
 
 const RuleActions = styled.div`
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid rgba(146, 86, 62, 0.06);
+  justify-content: center;
   align-items: center;
-
-  @media (max-width: 600px) {
-    justify-content: flex-end;
-  }
 `;
 
 const IconButton = styled.button<{ $variant?: 'danger' | 'success' | 'muted' }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   border: 1px solid ${props => {
     if (props.$variant === 'danger') return `${luxuryTheme.error}30`;
-    if (props.$variant === 'success') return `${luxuryTheme.success}30`;
+    if (props.$variant === 'success') return `${luxuryTheme.primary}30`;
     return luxuryTheme.border;
   }};
   background: ${props => {
     if (props.$variant === 'danger') return `${luxuryTheme.error}10`;
-    if (props.$variant === 'success') return `${luxuryTheme.success}10`;
+    if (props.$variant === 'success') return `${luxuryTheme.primary}10`;
     return luxuryTheme.surface;
   }};
   color: ${props => {
     if (props.$variant === 'danger') return luxuryTheme.error;
-    if (props.$variant === 'success') return luxuryTheme.success;
+    if (props.$variant === 'success') return luxuryTheme.primary;
     return luxuryTheme.textSecondary;
   }};
   cursor: pointer;
@@ -293,7 +297,7 @@ const IconButton = styled.button<{ $variant?: 'danger' | 'success' | 'muted' }>`
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
 `;
 
@@ -315,7 +319,7 @@ const EmptyState = styled.div`
   }
 
   h3 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 22px;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
@@ -377,7 +381,7 @@ const ModalContent = styled.div`
   width: 100%;
   max-width: 520px;
   max-height: 90vh;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
   animation: ${fadeInUp} 0.4s ease-out;
 `;
@@ -388,9 +392,10 @@ const ModalHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-radius: 20px 20px 0 0;
 
   h2 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 24px;
     font-weight: 600;
     color: white;
@@ -421,8 +426,7 @@ const CloseButton = styled.button`
 
 const ModalBody = styled.div`
   padding: 28px;
-  max-height: calc(90vh - 180px);
-  overflow-y: auto;
+  overflow: visible;
 `;
 
 const FormGroup = styled.div`
@@ -446,22 +450,79 @@ const FormGroup = styled.div`
   }
 `;
 
-const FormSelect = styled.select`
+const SelectWrapper = styled.div`
+  position: relative;
   width: 100%;
-  padding: 14px 16px;
+`;
+
+const SelectTrigger = styled.button<{ $open?: boolean }>`
+  width: 100%;
+  padding: 14px 40px 14px 16px;
   background: ${luxuryTheme.cream};
-  border: 1px solid ${luxuryTheme.border};
+  border: 1px solid ${props => props.$open ? luxuryTheme.primary : luxuryTheme.border};
   border-radius: 10px;
   font-size: 14px;
+  font-family: ${theme.typography.fontFamily};
   color: ${luxuryTheme.text};
   cursor: pointer;
   transition: all 0.3s ease;
+  text-align: left;
+  position: relative;
 
-  &:focus {
-    outline: none;
-    border-color: ${luxuryTheme.primary};
+  ${props => props.$open && css`
     background: ${luxuryTheme.surface};
     box-shadow: 0 0 0 3px ${luxuryTheme.primary}15;
+  `}
+
+  &:hover {
+    border-color: ${luxuryTheme.primaryLight};
+  }
+
+  svg {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%) ${props => props.$open ? 'rotate(180deg)' : 'rotate(0)'};
+    transition: transform 0.25s ease;
+    color: ${luxuryTheme.primary};
+    pointer-events: none;
+  }
+`;
+
+const SelectMenu = styled.div<{ $open?: boolean }>`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: ${luxuryTheme.surface};
+  border: 1px solid ${luxuryTheme.border};
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+  overflow: hidden;
+  opacity: ${props => props.$open ? 1 : 0};
+  transform: ${props => props.$open ? 'translateY(0)' : 'translateY(-4px)'};
+  pointer-events: ${props => props.$open ? 'auto' : 'none'};
+  transition: all 0.2s ease;
+  max-height: 220px;
+  overflow-y: auto;
+`;
+
+const SelectOption = styled.button<{ $selected?: boolean }>`
+  width: 100%;
+  padding: 11px 16px;
+  background: ${props => props.$selected ? `${luxuryTheme.primary}08` : 'transparent'};
+  border: none;
+  font-size: 13px;
+  font-family: ${theme.typography.fontFamily};
+  color: ${props => props.$selected ? luxuryTheme.primary : luxuryTheme.text};
+  font-weight: ${props => props.$selected ? 500 : 400};
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: ${luxuryTheme.primary}06;
   }
 `;
 
@@ -491,6 +552,7 @@ const ModalFooter = styled.div`
   justify-content: flex-end;
   gap: 12px;
   background: ${luxuryTheme.cream};
+  border-radius: 0 0 20px 20px;
 `;
 
 const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
@@ -562,6 +624,110 @@ const InfoBox = styled.div`
   strong { color: ${luxuryTheme.text}; }
 `;
 
+// Confirmation Modal Styles
+const ConfirmOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 46, 36, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+  animation: ${fadeInUp} 0.2s ease-out;
+`;
+
+const ConfirmCard = styled.div`
+  background: ${luxuryTheme.surface};
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+  animation: ${fadeInUp} 0.35s ease-out;
+  text-align: center;
+`;
+
+const ConfirmBody = styled.div`
+  padding: 36px 32px 28px;
+`;
+
+const ConfirmIconCircle = styled.div`
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(196, 131, 106, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: ${luxuryTheme.error};
+`;
+
+const ConfirmTitle = styled.h3`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 20px;
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+  margin: 0 0 8px;
+`;
+
+const ConfirmText = styled.p`
+  font-size: 14px;
+  color: ${luxuryTheme.textSecondary};
+  margin: 0 0 8px;
+  line-height: 1.5;
+`;
+
+const ConfirmName = styled.span`
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+`;
+
+const ConfirmFooter = styled.div`
+  display: flex;
+  gap: 12px;
+  padding: 0 32px 28px;
+`;
+
+const ConfirmBtn = styled.button<{ $danger?: boolean }>`
+  flex: 1;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  ${props => props.$danger ? css`
+    background: linear-gradient(135deg, ${luxuryTheme.error}, #A66B55);
+    color: white;
+    border: none;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(196, 131, 106, 0.4);
+    }
+  ` : css`
+    background: transparent;
+    color: ${luxuryTheme.text};
+    border: 1px solid ${luxuryTheme.border};
+
+    &:hover {
+      background: ${luxuryTheme.cream};
+      border-color: ${luxuryTheme.primaryLight};
+    }
+  `}
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 // ============================================
 // HELPERS
 // ============================================
@@ -627,6 +793,23 @@ const NotificationRulesPage: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmDeleteRule, setConfirmDeleteRule] = useState<NotificationRule | null>(null);
+  const [openSelect, setOpenSelect] = useState<string | null>(null);
+  const selectRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Click-outside handler for custom selects
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (openSelect) {
+        const ref = selectRefs.current[openSelect];
+        if (ref && !ref.contains(e.target as Node)) {
+          setOpenSelect(null);
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openSelect]);
 
   const [formData, setFormData] = useState({
     target_role: 'provider' as 'patient' | 'provider',
@@ -699,17 +882,22 @@ const NotificationRulesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (rule: NotificationRule) => {
-    if (!window.confirm(`Excluir regra "${rule.template_name}" (${formatMinutesLong(rule.minutes_before)})?`)) return;
+  const handleDelete = (rule: NotificationRule) => {
+    setConfirmDeleteRule(rule);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteRule) return;
 
     try {
       const { error } = await supabaseAdmin
         .from('notification_rules')
         .delete()
-        .eq('id', rule.id);
+        .eq('id', confirmDeleteRule.id);
 
       if (error) throw error;
-      setRules(prev => prev.filter(r => r.id !== rule.id));
+      setRules(prev => prev.filter(r => r.id !== confirmDeleteRule.id));
+      setConfirmDeleteRule(null);
     } catch (err: any) {
       console.error('Error deleting rule:', err);
     }
@@ -836,55 +1024,43 @@ const NotificationRulesPage: React.FC = () => {
   const renderRuleCard = (rule: NotificationRule, index: number, canEdit: boolean) => (
     <RuleCard key={rule.id} $index={index} $active={rule.is_active}>
       <RuleIcon $role={rule.target_role}>
-        {rule.target_role === 'patient' ? <Users size={22} /> : <Stethoscope size={22} />}
+        {rule.target_role === 'patient' ? <Users size={24} /> : <Stethoscope size={24} />}
       </RuleIcon>
       <RuleInfo>
         <RuleName>{rule.template_name.replace(/_/g, ' ')}</RuleName>
         <RuleDetail>
-          <Clock size={14} />
+          <Clock size={12} />
           {formatMinutesLong(rule.minutes_before)}
-          {!isDoctorView && rule.target_role === 'provider' && (
-            <>
-              <span style={{ margin: '0 4px' }}>·</span>
-              {rule.provider_id ? (
-                <><Stethoscope size={14} />{getProviderName(rule.provider_id)}</>
-              ) : (
-                <span>Global (todos os medicos)</span>
-              )}
-            </>
-          )}
         </RuleDetail>
       </RuleInfo>
       <TimeBadge>
-        <Clock size={14} />
+        <Clock size={11} />
         {formatMinutes(rule.minutes_before)}
       </TimeBadge>
       {!isDoctorView && rule.target_role === 'provider' && (
         <ProviderBadge>
-          {rule.provider_id ? getProviderName(rule.provider_id) : 'Global'}
+          {rule.provider_id ? getProviderName(rule.provider_id) : 'Global (todos)'}
         </ProviderBadge>
       )}
       {canEdit ? (
         <RuleActions>
           <IconButton onClick={() => handleOpenModal(rule)} title="Editar">
-            <Edit2 size={16} />
+            <Edit2 size={15} />
           </IconButton>
           <IconButton
             $variant={rule.is_active ? 'success' : 'muted'}
             onClick={() => handleToggle(rule)}
             title={rule.is_active ? 'Desativar' : 'Ativar'}
           >
-            {rule.is_active ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+            {rule.is_active ? <ToggleRight size={17} /> : <ToggleLeft size={17} />}
           </IconButton>
           <IconButton $variant="danger" onClick={() => handleDelete(rule)} title="Excluir">
-            <Trash2 size={16} />
+            <Trash2 size={15} />
           </IconButton>
         </RuleActions>
       ) : (
         <RuleActions>
-          <TimeBadge style={{ background: 'transparent', border: 'none', color: luxuryTheme.textSecondary }}>
-            Padrao da clinica
-          </TimeBadge>
+          <ProviderBadge style={{ marginTop: 0 }}>Padrao da clinica</ProviderBadge>
         </RuleActions>
       )}
     </RuleCard>
@@ -996,7 +1172,50 @@ const NotificationRulesPage: React.FC = () => {
                 {myProviderRules.map((rule, index) => renderRuleCard(rule, index, true))}
               </RulesGrid>
             )}
+
+            {globalProviderRules.length > 0 && (
+              <>
+                <SectionTitle style={{ marginTop: 32, opacity: 0.7 }}>
+                  <Users size={22} />
+                  Lembretes Padrao da Clinica
+                </SectionTitle>
+                <p style={{ fontSize: 13, color: luxuryTheme.textSecondary, margin: '-16px 0 20px', opacity: 0.6 }}>
+                  Regras configuradas pela administracao — aplicam-se a todos os medicos
+                </p>
+                <RulesGrid>
+                  {globalProviderRules.map((rule, index) => renderRuleCard(rule, index, false))}
+                </RulesGrid>
+              </>
+            )}
           </>
+        )}
+
+        {/* Modal de Confirmação de Exclusão */}
+        {confirmDeleteRule && (
+          <ConfirmOverlay onClick={() => setConfirmDeleteRule(null)}>
+            <ConfirmCard onClick={(e) => e.stopPropagation()}>
+              <ConfirmBody>
+                <ConfirmIconCircle>
+                  <AlertTriangle size={28} />
+                </ConfirmIconCircle>
+                <ConfirmTitle>Excluir Regra</ConfirmTitle>
+                <ConfirmText>
+                  Tem certeza que deseja excluir a regra <ConfirmName>{confirmDeleteRule.template_name.replace(/_/g, ' ')}</ConfirmName>?
+                </ConfirmText>
+                <ConfirmText style={{ fontSize: 13, opacity: 0.7 }}>
+                  O lembrete de {formatMinutesLong(confirmDeleteRule.minutes_before)} nao sera mais enviado.
+                </ConfirmText>
+              </ConfirmBody>
+              <ConfirmFooter>
+                <ConfirmBtn onClick={() => setConfirmDeleteRule(null)}>
+                  Cancelar
+                </ConfirmBtn>
+                <ConfirmBtn $danger onClick={confirmDelete}>
+                  Excluir
+                </ConfirmBtn>
+              </ConfirmFooter>
+            </ConfirmCard>
+          </ConfirmOverlay>
         )}
 
         {/* Modal Nova Regra */}
@@ -1031,49 +1250,111 @@ const NotificationRulesPage: React.FC = () => {
                 {!isDoctorView && (
                   <FormGroup>
                     <label>Destinatario <span>*</span></label>
-                    <FormSelect
-                      value={formData.target_role}
-                      onChange={(e) => setFormData({ ...formData, target_role: e.target.value as any })}
-                    >
-                      <option value="patient">Paciente</option>
-                      <option value="provider">Medico</option>
-                    </FormSelect>
+                    <SelectWrapper ref={el => { selectRefs.current['target_role'] = el; }}>
+                      <SelectTrigger
+                        type="button"
+                        $open={openSelect === 'target_role'}
+                        onClick={() => setOpenSelect(openSelect === 'target_role' ? null : 'target_role')}
+                      >
+                        {formData.target_role === 'patient' ? 'Paciente' : 'Medico'}
+                        <ChevronDown size={16} />
+                      </SelectTrigger>
+                      <SelectMenu $open={openSelect === 'target_role'}>
+                        {[{ value: 'patient', label: 'Paciente' }, { value: 'provider', label: 'Medico' }].map(opt => (
+                          <SelectOption
+                            key={opt.value}
+                            type="button"
+                            $selected={formData.target_role === opt.value}
+                            onClick={() => {
+                              setFormData({ ...formData, target_role: opt.value as any });
+                              setOpenSelect(null);
+                            }}
+                          >
+                            {opt.label}
+                          </SelectOption>
+                        ))}
+                      </SelectMenu>
+                    </SelectWrapper>
                   </FormGroup>
                 )}
 
                 {!isDoctorView && formData.target_role === 'provider' && (
                   <FormGroup>
                     <label>Medico especifico</label>
-                    <FormSelect
-                      value={formData.provider_id}
-                      onChange={(e) => setFormData({ ...formData, provider_id: e.target.value })}
-                    >
-                      <option value="">Global (todos os medicos)</option>
-                      {providers.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </FormSelect>
+                    <SelectWrapper ref={el => { selectRefs.current['provider_id'] = el; }}>
+                      <SelectTrigger
+                        type="button"
+                        $open={openSelect === 'provider_id'}
+                        onClick={() => setOpenSelect(openSelect === 'provider_id' ? null : 'provider_id')}
+                      >
+                        {formData.provider_id
+                          ? providers.find(p => p.id === formData.provider_id)?.name || 'Selecionar'
+                          : 'Global (todos os medicos)'}
+                        <ChevronDown size={16} />
+                      </SelectTrigger>
+                      <SelectMenu $open={openSelect === 'provider_id'}>
+                        <SelectOption
+                          type="button"
+                          $selected={!formData.provider_id}
+                          onClick={() => {
+                            setFormData({ ...formData, provider_id: '' });
+                            setOpenSelect(null);
+                          }}
+                        >
+                          Global (todos os medicos)
+                        </SelectOption>
+                        {providers.map(p => (
+                          <SelectOption
+                            key={p.id}
+                            type="button"
+                            $selected={formData.provider_id === p.id}
+                            onClick={() => {
+                              setFormData({ ...formData, provider_id: p.id });
+                              setOpenSelect(null);
+                            }}
+                          >
+                            {p.name}
+                          </SelectOption>
+                        ))}
+                      </SelectMenu>
+                    </SelectWrapper>
                     <small>Regras especificas de um medico substituem as regras globais</small>
                   </FormGroup>
                 )}
 
                 <FormGroup>
                   <label>Tempo antes da consulta <span>*</span></label>
-                  <FormSelect
-                    value={formData.use_preset ? formData.minutes_before : 0}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (val === 0) {
-                        setFormData({ ...formData, use_preset: false, custom_minutes: '' });
-                      } else {
-                        setFormData({ ...formData, use_preset: true, minutes_before: val });
-                      }
-                    }}
-                  >
-                    {MINUTES_PRESETS.map(p => (
-                      <option key={p.value} value={p.value}>{p.label}</option>
-                    ))}
-                  </FormSelect>
+                  <SelectWrapper ref={el => { selectRefs.current['minutes'] = el; }}>
+                    <SelectTrigger
+                      type="button"
+                      $open={openSelect === 'minutes'}
+                      onClick={() => setOpenSelect(openSelect === 'minutes' ? null : 'minutes')}
+                    >
+                      {formData.use_preset
+                        ? MINUTES_PRESETS.find(p => p.value === formData.minutes_before)?.label || 'Selecionar'
+                        : 'Personalizado...'}
+                      <ChevronDown size={16} />
+                    </SelectTrigger>
+                    <SelectMenu $open={openSelect === 'minutes'}>
+                      {MINUTES_PRESETS.map(p => (
+                        <SelectOption
+                          key={p.value}
+                          type="button"
+                          $selected={formData.use_preset && formData.minutes_before === p.value}
+                          onClick={() => {
+                            if (p.value === 0) {
+                              setFormData({ ...formData, use_preset: false, custom_minutes: '' });
+                            } else {
+                              setFormData({ ...formData, use_preset: true, minutes_before: p.value });
+                            }
+                            setOpenSelect(null);
+                          }}
+                        >
+                          {p.label}
+                        </SelectOption>
+                      ))}
+                    </SelectMenu>
+                  </SelectWrapper>
                 </FormGroup>
 
                 {!formData.use_preset && (
@@ -1091,21 +1372,38 @@ const NotificationRulesPage: React.FC = () => {
 
                 <FormGroup>
                   <label>Template da mensagem <span>*</span></label>
-                  <FormSelect
-                    value={formData.template_name}
-                    onChange={(e) => setFormData({ ...formData, template_name: e.target.value })}
-                  >
-                    {TEMPLATE_OPTIONS
-                      .filter(t => isDoctorView
-                        ? t.value.includes('provider')
-                        : !isDoctorView && formData.target_role === 'patient'
-                          ? !t.value.includes('provider')
-                          : true
-                      )
-                      .map(t => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                  </FormSelect>
+                  <SelectWrapper ref={el => { selectRefs.current['template'] = el; }}>
+                    <SelectTrigger
+                      type="button"
+                      $open={openSelect === 'template'}
+                      onClick={() => setOpenSelect(openSelect === 'template' ? null : 'template')}
+                    >
+                      {TEMPLATE_OPTIONS.find(t => t.value === formData.template_name)?.label || 'Selecionar'}
+                      <ChevronDown size={16} />
+                    </SelectTrigger>
+                    <SelectMenu $open={openSelect === 'template'}>
+                      {TEMPLATE_OPTIONS
+                        .filter(t => isDoctorView
+                          ? t.value.includes('provider')
+                          : !isDoctorView && formData.target_role === 'patient'
+                            ? !t.value.includes('provider')
+                            : true
+                        )
+                        .map(t => (
+                          <SelectOption
+                            key={t.value}
+                            type="button"
+                            $selected={formData.template_name === t.value}
+                            onClick={() => {
+                              setFormData({ ...formData, template_name: t.value });
+                              setOpenSelect(null);
+                            }}
+                          >
+                            {t.label}
+                          </SelectOption>
+                        ))}
+                    </SelectMenu>
+                  </SelectWrapper>
                   <small>O template determina o conteudo da mensagem enviada</small>
                 </FormGroup>
               </ModalBody>

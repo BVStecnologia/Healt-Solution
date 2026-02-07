@@ -3,7 +3,7 @@ import styled, { keyframes, css } from 'styled-components';
 import {
   Stethoscope, Plus, Search, Edit2, Trash2, Check, AlertCircle,
   Calendar, Clock, X, UserCog, Phone, Mail, Activity, Users,
-  ChevronLeft, ChevronRight, Sparkles
+  ChevronLeft, ChevronRight, Sparkles, AlertTriangle, RotateCcw
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { theme } from '../../styles/GlobalStyle';
@@ -63,8 +63,8 @@ const luxuryTheme = {
   primaryLight: '#AF8871',
   primarySoft: '#F4E7DE',
   primaryDark: '#7A4832',
-  success: '#10B981',
-  error: '#EF4444',
+  success: '#6B8E6B',
+  error: '#C4836A',
   // Theme-responsive colors (CSS variables - adapt to dark mode)
   cream: theme.colors.background,
   surface: theme.colors.surface,
@@ -78,9 +78,7 @@ const luxuryTheme = {
 // ============================================
 // STYLED COMPONENTS
 // ============================================
-const PageContainer = styled.div`
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
-`;
+const PageContainer = styled.div``;
 
 const Header = styled.div`
   display: flex;
@@ -92,12 +90,12 @@ const Header = styled.div`
   animation: ${fadeInUp} 0.6s ease-out;
 
   h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 42px;
-    font-weight: 600;
+    font-family: ${theme.typography.fontFamilyHeading};
+    font-size: 32px;
+    font-weight: 400;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
-    letter-spacing: -0.5px;
+    letter-spacing: 0.5px;
   }
 
   p {
@@ -132,92 +130,42 @@ const AddButton = styled.button`
   }
 `;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
-
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-  }
+const StatsRow = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  animation: ${fadeInUp} 0.5s ease-out;
 `;
 
-const StatCard = styled.div<{ $delay: number; $accentColor: string }>`
-  background: ${luxuryTheme.surface};
-  border-radius: 16px;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid ${luxuryTheme.border};
-  animation: ${fadeInUp} 0.6s ease-out;
-  animation-delay: ${props => props.$delay}ms;
-  animation-fill-mode: both;
-  transition: all 0.3s ease;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, ${props => props.$accentColor}, ${props => props.$accentColor}88);
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, ${props => props.$accentColor}08 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px ${luxuryTheme.primary}15;
-    border-color: ${props => props.$accentColor}40;
-  }
-`;
-
-const StatIcon = styled.div<{ $color: string }>`
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, ${props => props.$color}15, ${props => props.$color}08);
+const StatPill = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  color: ${props => props.$color};
-  transition: all 0.3s ease;
+  gap: 10px;
+  padding: 12px 20px;
+  background: ${luxuryTheme.surface};
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 40px;
 
-  ${StatCard}:hover & {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, ${props => props.$color}25, ${props => props.$color}15);
+  svg {
+    width: 16px;
+    height: 16px;
+    color: ${luxuryTheme.primary};
+    opacity: 0.6;
   }
 `;
 
-const StatValue = styled.div`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 36px;
+const StatValue = styled.span`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 20px;
   font-weight: 600;
   color: ${luxuryTheme.text};
-  line-height: 1;
-  margin-bottom: 6px;
 `;
 
-const StatLabel = styled.div`
+const StatLabel = styled.span`
   font-size: 13px;
   color: ${luxuryTheme.textSecondary};
-  font-weight: 500;
+  font-weight: 400;
 `;
 
 const FiltersSection = styled.div`
@@ -272,165 +220,150 @@ const SearchInput = styled.input`
 `;
 
 const ProvidersGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   animation: ${fadeInUp} 0.6s ease-out;
   animation-delay: 300ms;
   animation-fill-mode: both;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const ProviderCard = styled.div<{ $index: number }>`
   background: ${luxuryTheme.surface};
-  border: 1px solid ${luxuryTheme.border};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 20px;
+  padding: 28px 24px 20px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  transition: all 0.3s ease;
+  text-align: center;
+  gap: 4px;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   animation: ${fadeInUp} 0.5s ease-out;
-  animation-delay: ${props => 350 + props.$index * 50}ms;
+  animation-delay: ${props => 200 + props.$index * 80}ms;
   animation-fill-mode: both;
+  position: relative;
 
   &:hover {
-    border-color: ${luxuryTheme.primary};
-    box-shadow: 0 8px 24px ${luxuryTheme.primary}15;
-    transform: translateX(4px);
-    background: linear-gradient(135deg, ${luxuryTheme.surface} 0%, ${luxuryTheme.cream} 100%);
-  }
-
-  @media (max-width: 1000px) {
-    grid-template-columns: auto 1fr;
-    gap: 16px;
+    border-color: rgba(146, 86, 62, 0.15);
+    box-shadow: 0 12px 40px rgba(146, 86, 62, 0.10);
+    transform: translateY(-6px);
   }
 `;
 
 const ProviderAvatar = styled.div<{ $active: boolean }>`
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
   background: ${props => props.$active
-    ? `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`
-    : `linear-gradient(135deg, ${luxuryTheme.textSecondary}, #A0A0A0)`};
+    ? `linear-gradient(145deg, ${luxuryTheme.primary}, #7A4532)`
+    : '#D5D0CC'};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: 600;
-  font-size: 18px;
-  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: 24px;
+  font-family: ${theme.typography.fontFamilyHeading};
   letter-spacing: 1px;
-  box-shadow: 0 4px 12px ${props => props.$active ? `${luxuryTheme.primary}40` : 'rgba(0,0,0,0.15)'};
-  transition: all 0.3s ease;
+  margin-bottom: 12px;
   position: relative;
+  transition: all 0.3s ease;
 
   &::after {
     content: '';
     position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 14px;
-    height: 14px;
+    bottom: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    background: ${props => props.$active ? luxuryTheme.success : luxuryTheme.error};
-    border: 2px solid ${luxuryTheme.surface};
+    background: ${props => props.$active ? '#92563E' : '#8C8B8B'};
+    border: 3px solid ${luxuryTheme.surface};
   }
 
   ${ProviderCard}:hover & {
-    transform: scale(1.05);
+    transform: scale(1.06);
+    box-shadow: 0 8px 24px rgba(146, 86, 62, 0.20);
   }
 `;
 
 const ProviderInfo = styled.div`
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 8px;
+  width: 100%;
 `;
 
 const ProviderName = styled.div`
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 17px;
   font-weight: 600;
   color: ${luxuryTheme.text};
-  margin-bottom: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 `;
 
 const ProviderEmail = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   color: ${luxuryTheme.textSecondary};
-  font-size: 13px;
+  font-size: 12px;
 
   svg {
     flex-shrink: 0;
+    width: 12px;
+    height: 12px;
   }
 `;
 
 const ProviderSpecialty = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 180px;
-
-  @media (max-width: 1000px) {
-    grid-column: 2;
-  }
+  margin-bottom: 12px;
 `;
 
 const SpecialtyBadge = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 24px;
-  font-size: 12px;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: ${luxuryTheme.primary}15;
+  background: rgba(146, 86, 62, 0.08);
   color: ${luxuryTheme.primary};
-  border: 1px solid ${luxuryTheme.primary}25;
-  transition: all 0.3s ease;
 
   svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  ${ProviderCard}:hover & {
-    transform: scale(1.05);
+    width: 11px;
+    height: 11px;
   }
 `;
 
 const StatusBadge = styled.span<{ $active: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 24px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${props => props.$active ? luxuryTheme.successLight : luxuryTheme.errorLight};
-  color: ${props => props.$active ? luxuryTheme.success : luxuryTheme.error};
-  border: 1px solid ${props => props.$active ? `${luxuryTheme.success}25` : `${luxuryTheme.error}25`};
-
-  @media (max-width: 1000px) {
-    display: none;
-  }
+  display: none;
 `;
 
 const ProviderActions = styled.div`
   display: flex;
-  gap: 8px;
-
-  @media (max-width: 1000px) {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
+  gap: 6px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid rgba(146, 86, 62, 0.06);
+  justify-content: center;
 `;
 
 const ActionButton = styled.button<{ $variant?: 'primary' | 'info' | 'danger' }>`
@@ -537,7 +470,7 @@ const EmptyState = styled.div`
   }
 
   h3 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 24px;
     color: ${luxuryTheme.text};
     margin: 0 0 8px;
@@ -580,20 +513,23 @@ const EmptyStateCTA = styled.button`
 `;
 
 const LoadingSkeleton = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+  @media (max-width: 1000px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
 `;
 
 const SkeletonCard = styled.div<{ $delay: number }>`
   background: ${luxuryTheme.surface};
-  border: 1px solid ${luxuryTheme.border};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: grid;
-  grid-template-columns: 56px 1fr 150px 100px 120px;
+  border: 1px solid rgba(146, 86, 62, 0.08);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   animation: ${pulse} 1.5s ease-in-out infinite;
   animation-delay: ${props => props.$delay}ms;
 `;
@@ -604,7 +540,7 @@ const SkeletonElement = styled.div<{ $width?: string; $height?: string; $round?:
   background: linear-gradient(90deg, ${luxuryTheme.cream} 25%, ${luxuryTheme.border} 50%, ${luxuryTheme.cream} 75%);
   background-size: 200% 100%;
   animation: ${shimmer} 1.5s infinite;
-  border-radius: ${props => props.$round ? '14px' : '6px'};
+  border-radius: ${props => props.$round ? '50%' : '6px'};
 `;
 
 // Modal Styles
@@ -643,7 +579,7 @@ const ModalHeader = styled.div`
   justify-content: space-between;
 
   h2 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 24px;
     font-weight: 600;
     color: white;
@@ -894,7 +830,7 @@ const ScheduleSection = styled.div`
   border-top: 1px solid ${luxuryTheme.border};
 
   h3 {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: ${theme.typography.fontFamilyHeading};
     font-size: 18px;
     font-weight: 600;
     color: ${luxuryTheme.text};
@@ -953,6 +889,110 @@ const ScheduleRow = styled.div<{ $active?: boolean }>`
     height: 20px;
     cursor: pointer;
     accent-color: ${luxuryTheme.primary};
+  }
+`;
+
+// Confirmation Modal Styles
+const ConfirmOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(61, 46, 36, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+  animation: ${fadeInUp} 0.2s ease-out;
+`;
+
+const ConfirmCard = styled.div`
+  background: ${luxuryTheme.surface};
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+  animation: ${fadeInUp} 0.35s ease-out;
+  text-align: center;
+`;
+
+const ConfirmBody = styled.div`
+  padding: 36px 32px 28px;
+`;
+
+const ConfirmIconCircle = styled.div`
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(196, 131, 106, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: ${luxuryTheme.error};
+`;
+
+const ConfirmTitle = styled.h3`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 20px;
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+  margin: 0 0 8px;
+`;
+
+const ConfirmText = styled.p`
+  font-size: 14px;
+  color: ${luxuryTheme.textSecondary};
+  margin: 0 0 8px;
+  line-height: 1.5;
+`;
+
+const ConfirmDoctorName = styled.span`
+  font-weight: 600;
+  color: ${luxuryTheme.text};
+`;
+
+const ConfirmFooter = styled.div`
+  display: flex;
+  gap: 12px;
+  padding: 0 32px 28px;
+`;
+
+const ConfirmBtn = styled.button<{ $danger?: boolean }>`
+  flex: 1;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  ${props => props.$danger ? css`
+    background: linear-gradient(135deg, ${luxuryTheme.error}, #A66B55);
+    color: white;
+    border: none;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(196, 131, 106, 0.4);
+    }
+  ` : css`
+    background: transparent;
+    color: ${luxuryTheme.text};
+    border: 1px solid ${luxuryTheme.border};
+
+    &:hover {
+      background: ${luxuryTheme.cream};
+      border-color: ${luxuryTheme.primaryLight};
+    }
+  `}
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -1020,6 +1060,7 @@ const ProvidersPage: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const [tempPassword, setTempPassword] = useState('');
+  const [confirmProvider, setConfirmProvider] = useState<{ provider: ProviderWithProfile; action: 'deactivate' | 'reactivate' } | null>(null);
 
   useEffect(() => {
     fetchProviders();
@@ -1310,21 +1351,30 @@ const ProvidersPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (provider: ProviderWithProfile) => {
-    if (!window.confirm(`Desativar Dr(a). ${provider.profile.first_name} ${provider.profile.last_name}?`)) {
-      return;
-    }
+  const handleDelete = (provider: ProviderWithProfile) => {
+    setConfirmProvider({ provider, action: 'deactivate' });
+  };
+
+  const handleReactivate = (provider: ProviderWithProfile) => {
+    setConfirmProvider({ provider, action: 'reactivate' });
+  };
+
+  const confirmAction = async () => {
+    if (!confirmProvider) return;
+
+    const newStatus = confirmProvider.action === 'reactivate';
 
     try {
       const { error } = await supabaseAdmin
         .from('providers')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('id', provider.id);
+        .update({ is_active: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', confirmProvider.provider.id);
 
       if (error) throw error;
+      setConfirmProvider(null);
       await fetchProviders();
     } catch (err) {
-      console.error('Error deactivating provider:', err);
+      console.error('Error updating provider:', err);
     }
   };
 
@@ -1372,39 +1422,30 @@ const ProvidersPage: React.FC = () => {
           </AddButton>
         </Header>
 
-        <StatsGrid>
-          <StatCard $delay={0} $accentColor={luxuryTheme.primary}>
-            <StatIcon $color={luxuryTheme.primary}>
-              <Stethoscope size={24} />
-            </StatIcon>
+        <StatsRow>
+          <StatPill>
+            <Stethoscope />
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Total de Médicos</StatLabel>
-          </StatCard>
-
-          <StatCard $delay={50} $accentColor={luxuryTheme.success}>
-            <StatIcon $color={luxuryTheme.success}>
-              <Activity size={24} />
-            </StatIcon>
+            <StatLabel>Médicos</StatLabel>
+          </StatPill>
+          <StatPill>
+            <Activity />
             <StatValue>{stats.active}</StatValue>
-            <StatLabel>Médicos Ativos</StatLabel>
-          </StatCard>
-
-          <StatCard $delay={100} $accentColor={luxuryTheme.error}>
-            <StatIcon $color={luxuryTheme.error}>
-              <Users size={24} />
-            </StatIcon>
-            <StatValue>{stats.inactive}</StatValue>
-            <StatLabel>Médicos Inativos</StatLabel>
-          </StatCard>
-
-          <StatCard $delay={150} $accentColor={luxuryTheme.primary}>
-            <StatIcon $color={luxuryTheme.primary}>
-              <Sparkles size={24} />
-            </StatIcon>
+            <StatLabel>Ativos</StatLabel>
+          </StatPill>
+          {stats.inactive > 0 && (
+            <StatPill style={{ opacity: 0.5 }}>
+              <Users />
+              <StatValue>{stats.inactive}</StatValue>
+              <StatLabel>Inativos</StatLabel>
+            </StatPill>
+          )}
+          <StatPill>
+            <Sparkles />
             <StatValue>{stats.specialties}</StatValue>
             <StatLabel>Especialidades</StatLabel>
-          </StatCard>
-        </StatsGrid>
+          </StatPill>
+        </StatsRow>
 
         <FiltersSection>
           <SearchContainer>
@@ -1420,16 +1461,12 @@ const ProvidersPage: React.FC = () => {
 
         {loading ? (
           <LoadingSkeleton>
-            {[0, 1, 2, 3, 4].map(i => (
+            {[0, 1, 2, 3, 4, 5].map(i => (
               <SkeletonCard key={i} $delay={i * 100}>
-                <SkeletonElement $width="56px" $height="56px" $round />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <SkeletonElement $width="180px" $height="20px" />
-                  <SkeletonElement $width="220px" $height="14px" />
-                </div>
-                <SkeletonElement $width="120px" $height="32px" />
-                <SkeletonElement $width="80px" $height="32px" />
-                <SkeletonElement $width="100px" $height="36px" />
+                <SkeletonElement $width="80px" $height="80px" $round />
+                <SkeletonElement $width="140px" $height="18px" />
+                <SkeletonElement $width="100px" $height="12px" />
+                <SkeletonElement $width="110px" $height="28px" />
               </SkeletonCard>
             ))}
           </LoadingSkeleton>
@@ -1488,9 +1525,15 @@ const ProvidersPage: React.FC = () => {
                     <ActionButton onClick={() => handleOpenModal(provider)} title="Editar">
                       <Edit2 size={16} />
                     </ActionButton>
-                    <ActionButton $variant="danger" onClick={() => handleDelete(provider)} title="Desativar">
-                      <Trash2 size={16} />
-                    </ActionButton>
+                    {provider.is_active ? (
+                      <ActionButton $variant="danger" onClick={() => handleDelete(provider)} title="Desativar">
+                        <Trash2 size={16} />
+                      </ActionButton>
+                    ) : (
+                      <ActionButton $variant="primary" onClick={() => handleReactivate(provider)} title="Reativar">
+                        <RotateCcw size={16} />
+                      </ActionButton>
+                    )}
                   </ProviderActions>
                 </ProviderCard>
               ))}
@@ -1659,6 +1702,39 @@ const ProvidersPage: React.FC = () => {
               </ModalFooter>
             </ModalContent>
           </ModalOverlay>
+        )}
+
+        {/* Modal de Confirmação */}
+        {confirmProvider && (
+          <ConfirmOverlay onClick={() => setConfirmProvider(null)}>
+            <ConfirmCard onClick={(e) => e.stopPropagation()}>
+              <ConfirmBody>
+                <ConfirmIconCircle style={confirmProvider.action === 'reactivate' ? { background: 'rgba(146, 86, 62, 0.12)', color: luxuryTheme.primary } : undefined}>
+                  {confirmProvider.action === 'reactivate' ? <RotateCcw size={28} /> : <AlertTriangle size={28} />}
+                </ConfirmIconCircle>
+                <ConfirmTitle>
+                  {confirmProvider.action === 'reactivate' ? 'Reativar Médico' : 'Desativar Médico'}
+                </ConfirmTitle>
+                <ConfirmText>
+                  {confirmProvider.action === 'reactivate' ? 'Deseja reativar ' : 'Tem certeza que deseja desativar '}
+                  <ConfirmDoctorName>Dr(a). {confirmProvider.provider.profile.first_name} {confirmProvider.provider.profile.last_name}</ConfirmDoctorName>?
+                </ConfirmText>
+                <ConfirmText style={{ fontSize: 13, opacity: 0.7 }}>
+                  {confirmProvider.action === 'reactivate'
+                    ? 'O médico voltará a ficar disponível para agendamentos.'
+                    : 'O médico não ficará mais disponível para agendamentos.'}
+                </ConfirmText>
+              </ConfirmBody>
+              <ConfirmFooter>
+                <ConfirmBtn onClick={() => setConfirmProvider(null)}>
+                  Cancelar
+                </ConfirmBtn>
+                <ConfirmBtn $danger={confirmProvider.action === 'deactivate'} style={confirmProvider.action === 'reactivate' ? { background: `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`, color: 'white', border: 'none' } : undefined} onClick={confirmAction}>
+                  {confirmProvider.action === 'reactivate' ? 'Reativar' : 'Desativar'}
+                </ConfirmBtn>
+              </ConfirmFooter>
+            </ConfirmCard>
+          </ConfirmOverlay>
         )}
 
         {/* Modal de Horários */}
