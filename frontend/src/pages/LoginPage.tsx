@@ -22,6 +22,16 @@ const fadeIn = keyframes`
   to { opacity: 1; }
 `;
 
+const accentReveal = keyframes`
+  from { width: 0; opacity: 0; }
+  to { width: 48px; opacity: 1; }
+`;
+
+const glowPulse = keyframes`
+  0%, 100% { opacity: 0.6; filter: blur(0px); }
+  50% { opacity: 1; filter: blur(1px); }
+`;
+
 const shimmer = keyframes`
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
@@ -40,7 +50,7 @@ const Container = styled.div`
   display: flex;
   position: relative;
   overflow: hidden;
-  background: ${theme.colors.background};
+  background: #FFFFFF;
 `;
 
 const LeftPanel = styled.div`
@@ -59,9 +69,11 @@ const LeftPanel = styled.div`
     inset: 0;
     background: linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.15) 0%,
-      rgba(0, 0, 0, 0.2) 50%,
-      rgba(0, 0, 0, 0.55) 100%
+      rgba(80, 70, 60, 0.05) 0%,
+      rgba(60, 50, 40, 0.10) 30%,
+      rgba(40, 30, 22, 0.45) 55%,
+      rgba(30, 22, 16, 0.75) 75%,
+      rgba(20, 14, 10, 0.92) 100%
     );
     z-index: 1;
   }
@@ -70,10 +82,11 @@ const LeftPanel = styled.div`
 const LeftImage = styled.div`
   position: absolute;
   inset: 0;
-  background: url('/images/brand-bg-2.jpg');
+  background: url('/images/brand-bg-spheres.jpg');
   background-size: cover;
   background-position: center;
   animation: ${fadeIn} 1.2s ease-out;
+  filter: sepia(0.5) saturate(1.6) brightness(0.55) hue-rotate(-5deg);
 `;
 
 const LeftOverlay = styled.div`
@@ -83,7 +96,27 @@ const LeftOverlay = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 60px;
+  padding: 56px;
+`;
+
+const AccentLine = styled.div`
+  height: 2px;
+  width: 48px;
+  background: linear-gradient(90deg, #C4896B, #92563E);
+  margin-bottom: 24px;
+  animation: ${accentReveal} 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  border-radius: 1px;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px -4px;
+    background: linear-gradient(90deg, rgba(196, 137, 107, 0.5), rgba(146, 86, 62, 0.3));
+    filter: blur(6px);
+    border-radius: 2px;
+    animation: ${glowPulse} 3s ease-in-out infinite;
+  }
 `;
 
 const OverlayBrand = styled.div`
@@ -91,22 +124,28 @@ const OverlayBrand = styled.div`
 
   h2 {
     font-family: ${theme.typography.fontFamilyHeading};
-    font-size: 48px;
+    font-size: 58px;
     font-weight: 400;
     color: #FFFFFF;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 0, 0, 0.3);
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    line-height: 1;
+    text-shadow:
+      0 2px 20px rgba(0, 0, 0, 0.9),
+      0 4px 40px rgba(0, 0, 0, 0.5),
+      0 0 80px rgba(0, 0, 0, 0.3);
   }
 
   span {
     display: block;
-    font-size: 14px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.85);
-    letter-spacing: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(220, 190, 170, 0.95);
+    letter-spacing: 7px;
     text-transform: uppercase;
-    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+    text-shadow:
+      0 1px 12px rgba(0, 0, 0, 0.8),
+      0 0 30px rgba(0, 0, 0, 0.4);
   }
 `;
 
@@ -114,13 +153,17 @@ const OverlayQuote = styled.p`
   ${stagger(1)}
   margin-top: 32px;
   font-size: 15px;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.85);
-  max-width: 380px;
+  line-height: 1.85;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 400px;
   font-style: italic;
-  border-left: 2px solid rgba(196, 137, 107, 0.7);
+  border-left: 2px solid rgba(196, 137, 107, 0.6);
   padding-left: 20px;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  text-shadow:
+    0 1px 12px rgba(0, 0, 0, 0.9),
+    0 2px 24px rgba(0, 0, 0, 0.5);
+  font-weight: 400;
+  letter-spacing: 0.3px;
 `;
 
 /* ═══════════════════════════════
@@ -142,26 +185,22 @@ const RightPanel = styled.div`
   }
 `;
 
-/* Decorative brand lines */
-const DecorativeLines = styled.div<{ $position: 'top' | 'bottom' }>`
+const RightDecorativeLines = styled.div`
   position: absolute;
-  left: -10%;
-  right: -10%;
-  height: 260px;
+  left: -15%;
+  right: -15%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 360px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.35;
+  opacity: 0.28;
   overflow: hidden;
-
-  ${p => p.$position === 'bottom' ? `
-    bottom: -40px;
-  ` : `
-    top: -60px;
-    transform: rotate(180deg);
-  `}
+  mask-image: radial-gradient(ellipse 70% 80% at center, black 20%, transparent 65%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at center, black 20%, transparent 65%);
 
   img {
-    width: 120%;
+    width: 130%;
     height: 100%;
     object-fit: cover;
     object-position: center;
@@ -170,20 +209,19 @@ const DecorativeLines = styled.div<{ $position: 'top' | 'bottom' }>`
 
 const LeftDecorativeLines = styled.div`
   position: absolute;
-  left: -5%;
-  right: -5%;
+  left: 0;
+  right: 0;
   bottom: 0;
-  height: 300px;
+  height: 40%;
   pointer-events: none;
-  z-index: 1;
-  opacity: 0.25;
-  overflow: hidden;
+  z-index: 3;
+  opacity: 0.5;
 
   img {
-    width: 120%;
+    width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center bottom;
+    object-position: center top;
   }
 `;
 
@@ -200,7 +238,7 @@ const ContentWrapper = styled.div`
 
 const WelcomeSection = styled.div`
   text-align: center;
-  margin-bottom: ${theme.spacing.xl};
+  margin-bottom: ${theme.spacing.lg};
   ${stagger(0)}
 `;
 
@@ -210,9 +248,9 @@ const WelcomeTag = styled.div`
   gap: 6px;
   padding: 6px 14px;
   border-radius: ${theme.borderRadius.full};
-  background: ${theme.colors.primaryA10};
-  border: 1px solid ${theme.colors.primaryA20};
-  color: ${theme.colors.primary};
+  background: rgba(146, 86, 62, 0.08);
+  border: 1px solid rgba(146, 86, 62, 0.15);
+  color: #92563E;
   font-size: 11px;
   font-weight: ${theme.typography.weights.semibold};
   text-transform: uppercase;
@@ -220,8 +258,8 @@ const WelcomeTag = styled.div`
   margin-bottom: ${theme.spacing.md};
 
   svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 `;
 
@@ -229,7 +267,7 @@ const WelcomeTitle = styled.h1`
   font-family: ${theme.typography.fontFamilyHeading};
   font-size: 28px;
   font-weight: 400;
-  color: ${theme.colors.text};
+  color: #2D2420;
   margin-bottom: ${theme.spacing.sm};
   line-height: 1.2;
   letter-spacing: 0.5px;
@@ -242,7 +280,7 @@ const WelcomeTitle = styled.h1`
 const WelcomeSubtitle = styled.p`
   font-size: ${theme.typography.sizes.md};
   line-height: 1.6;
-  color: ${theme.colors.textMuted};
+  color: #8C8B8B;
   max-width: 340px;
   margin: 0 auto;
 `;
@@ -253,10 +291,10 @@ const WelcomeSubtitle = styled.p`
 
 const Card = styled.div`
   width: 100%;
-  background: ${theme.colors.surface};
+  background: white;
   border-radius: ${theme.borderRadius.xxl};
-  border: 1px solid ${theme.colors.borderLight};
-  box-shadow: ${theme.shadows.card};
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   padding: ${theme.spacing.xl} ${theme.spacing.lg};
   ${stagger(1)}
   position: relative;
@@ -272,7 +310,7 @@ const Card = styled.div`
     background: linear-gradient(
       90deg,
       transparent 0%,
-      ${theme.colors.primary} 50%,
+      #92563E 50%,
       transparent 100%
     );
     opacity: 0.6;
@@ -285,19 +323,19 @@ const Card = styled.div`
 
 const Logo = styled.div`
   text-align: center;
-  margin-bottom: ${theme.spacing.xl};
+  margin-bottom: ${theme.spacing.lg};
 
   h1 {
     font-family: ${theme.typography.fontFamilyHeading};
     font-size: 28px;
     font-weight: 400;
-    color: ${theme.colors.primary};
+    color: #92563E;
     margin: 0 0 2px;
     letter-spacing: 1px;
   }
 
   p {
-    color: ${theme.colors.textMuted};
+    color: #8C8B8B;
     margin: 0;
     font-size: 11px;
     letter-spacing: 3px;
@@ -326,7 +364,7 @@ const InputIcon = styled.div`
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: ${theme.colors.textMuted};
+  color: #8C8B8B;
   transition: color 0.25s ease, transform 0.25s ease;
   z-index: 1;
 
@@ -339,31 +377,31 @@ const InputIcon = styled.div`
 const Input = styled.input`
   width: 100%;
   padding: 15px 15px 15px 46px;
-  border: 1.5px solid ${theme.colors.border};
+  border: 1.5px solid #e8e4e0;
   border-radius: ${theme.borderRadius.lg};
   font-size: ${theme.typography.sizes.md};
-  color: ${theme.colors.text};
-  background: ${theme.colors.background};
+  color: #2D2420;
+  background: #FAF8F6;
   transition: all 0.25s ease;
 
   &:hover {
-    border-color: ${theme.colors.secondary};
+    border-color: #d4cec8;
   }
 
   &:focus {
     outline: none;
-    border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px ${theme.colors.primaryA10}, 0 2px 8px ${theme.colors.primaryA10};
-    background: ${theme.colors.surface};
+    border-color: #92563E;
+    box-shadow: 0 0 0 3px rgba(146, 86, 62, 0.1), 0 2px 8px rgba(146, 86, 62, 0.08);
+    background: white;
   }
 
   &:focus ~ ${InputIcon} {
-    color: ${theme.colors.primary};
+    color: #92563E;
     transform: translateY(-50%) scale(1.05);
   }
 
   &::placeholder {
-    color: ${theme.colors.textMuted};
+    color: #b0a9a2;
     font-weight: 300;
   }
 `;
@@ -375,7 +413,7 @@ const PasswordToggle = styled.button`
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: ${theme.colors.textMuted};
+  color: #8C8B8B;
   cursor: pointer;
   padding: 4px;
   border-radius: ${theme.borderRadius.sm};
@@ -388,14 +426,14 @@ const PasswordToggle = styled.button`
   }
 
   &:hover {
-    color: ${theme.colors.primary};
+    color: #92563E;
   }
 `;
 
 const ErrorMessage = styled.div`
-  background: ${theme.colors.errorLight};
-  border: 1px solid ${theme.colors.errorA30};
-  color: ${theme.colors.error};
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  color: #dc2626;
   padding: ${theme.spacing.sm} ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};
   font-size: ${theme.typography.sizes.sm};
@@ -409,13 +447,14 @@ const ForgotPassword = styled.a`
   display: block;
   text-align: right;
   font-size: ${theme.typography.sizes.xs};
-  color: ${theme.colors.textMuted};
+  color: #8C8B8B;
   margin-top: -${theme.spacing.xs};
   transition: color 0.2s ease;
   ${stagger(4)}
+  text-decoration: none;
 
   &:hover {
-    color: ${theme.colors.primary};
+    color: #92563E;
   }
 `;
 
@@ -426,7 +465,7 @@ const ForgotPassword = styled.a`
 const SubmitButton = styled.button<{ $loading?: boolean }>`
   width: 100%;
   padding: 15px ${theme.spacing.lg};
-  background: linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryHover} 100%);
+  background: linear-gradient(135deg, #92563E 0%, #7A4833 100%);
   color: white;
   border: none;
   border-radius: ${theme.borderRadius.lg};
@@ -462,7 +501,7 @@ const SubmitButton = styled.button<{ $loading?: boolean }>`
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px ${theme.colors.primaryA40};
+    box-shadow: 0 8px 24px rgba(146, 86, 62, 0.35);
 
     &::before {
       opacity: 1;
@@ -506,7 +545,7 @@ const Divider = styled.div`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.md};
-  margin: ${theme.spacing.lg} 0;
+  margin: ${theme.spacing.md} 0;
   ${stagger(6)}
 
   &::before,
@@ -514,11 +553,11 @@ const Divider = styled.div`
     content: '';
     flex: 1;
     height: 1px;
-    background: ${theme.colors.border};
+    background: #e8e4e0;
   }
 
   span {
-    color: ${theme.colors.textMuted};
+    color: #8C8B8B;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 1.5px;
@@ -533,21 +572,21 @@ const GoogleButton = styled.button<{ $loading?: boolean }>`
   justify-content: center;
   gap: ${theme.spacing.sm};
   padding: 14px ${theme.spacing.lg};
-  background: ${theme.colors.surface};
-  border: 1.5px solid ${theme.colors.border};
+  background: white;
+  border: 1.5px solid #e8e4e0;
   border-radius: ${theme.borderRadius.lg};
   font-size: ${theme.typography.sizes.md};
   font-weight: ${theme.typography.weights.medium};
-  color: ${theme.colors.text};
+  color: #2D2420;
   cursor: pointer;
   transition: all 0.25s ease;
   ${stagger(7)}
 
   &:hover:not(:disabled) {
-    background: ${theme.colors.surfaceHover};
-    border-color: ${theme.colors.secondary};
+    background: #FAF8F6;
+    border-color: #d4cec8;
     transform: translateY(-1px);
-    box-shadow: ${theme.shadows.sm};
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   }
 
   &:disabled {
@@ -563,26 +602,23 @@ const GoogleButton = styled.button<{ $loading?: boolean }>`
 
 const Footer = styled.div`
   text-align: center;
-  margin-top: ${theme.spacing.xl};
-  padding-top: ${theme.spacing.lg};
-  border-top: 1px solid ${theme.colors.borderLight};
+  margin-top: ${theme.spacing.md};
+  padding-top: ${theme.spacing.md};
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
   ${stagger(8)}
 
   p {
-    color: ${theme.colors.textMuted};
+    color: #8C8B8B;
     font-size: ${theme.typography.sizes.sm};
 
     a {
-      color: ${theme.colors.primary};
+      color: #92563E;
       font-weight: ${theme.typography.weights.semibold};
+      text-decoration: none;
       transition: all 0.2s ease;
 
       &:hover {
-        text-decoration: none;
-        background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.primaryLight});
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        opacity: 0.8;
       }
     }
   }
@@ -656,31 +692,28 @@ const LoginPage: React.FC = () => {
       <LeftPanel>
         <LeftImage />
         <LeftDecorativeLines>
-          <img src="/images/lines/lines3-bege.svg" alt="" />
+          <img src="/images/lines/lines3-dourado.svg" alt="" />
         </LeftDecorativeLines>
         <LeftOverlay>
+          <AccentLine />
           <OverlayBrand>
             <EssenceLogo variant="horizontal" size="xl" color="light" />
           </OverlayBrand>
           <OverlayQuote>
-            Your health begins with your essence.
+            Your health begins with your essence. Balance is the new beauty.
           </OverlayQuote>
         </LeftOverlay>
       </LeftPanel>
 
       <RightPanel>
-        {/* Decorative brand lines */}
-        <DecorativeLines $position="top">
-          <img src="/images/lines/lines2-bege.svg" alt="" />
-        </DecorativeLines>
-        <DecorativeLines $position="bottom">
-          <img src="/images/lines/lines2-dourado.svg" alt="" />
-        </DecorativeLines>
+        <RightDecorativeLines>
+          <img src="/images/lines/lines2-marrom.svg" alt="" />
+        </RightDecorativeLines>
 
         <ContentWrapper>
           <WelcomeSection>
             <WelcomeTag>
-              <Leaf size={12} />
+              <Leaf size={14} />
               Portal do Paciente
             </WelcomeTag>
             <WelcomeTitle>{t('login.welcome')}</WelcomeTitle>
@@ -731,7 +764,7 @@ const LoginPage: React.FC = () => {
                 {t('login.forgot')}
               </ForgotPassword>
 
-              <SubmitButton type="submit" disabled={loading} $loading={loading}>
+              <SubmitButton type="submit" disabled={loading || googleLoading} $loading={loading}>
                 {loading ? <Spinner /> : (
                   <>
                     {t('login.submit')}
@@ -748,12 +781,12 @@ const LoginPage: React.FC = () => {
             <GoogleButton
               type="button"
               onClick={handleGoogleSignIn}
-              disabled={googleLoading}
+              disabled={loading || googleLoading}
               $loading={googleLoading}
             >
               {googleLoading ? <Spinner /> : (
                 <>
-                  <svg viewBox="0 0 24 24">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
                     <path
                       fill="#4285F4"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
