@@ -16,21 +16,28 @@
     <meta name="apple-mobile-web-app-title" content="Essence Medical" />
     <meta name="application-name" content="Essence Medical" />
 
-    <!-- Google Fonts - Carregamento otimizado -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Satoshi Variable Font - Carregamento otimizado -->
+    <link rel="preload" href="%PUBLIC_URL%/fonts/Satoshi-Variable.woff2" as="font" type="font/woff2" crossorigin>
+    <style>
+      @font-face {
+        font-family: 'Satoshi';
+        src: url('%PUBLIC_URL%/fonts/Satoshi-Variable.woff2') format('woff2');
+        font-weight: 200 900;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Satoshi';
+        src: url('%PUBLIC_URL%/fonts/Satoshi-VariableItalic.woff2') format('woff2');
+        font-weight: 200 900;
+        font-style: italic;
+        font-display: swap;
+      }
+    </style>
 
     <title>Essence Medical Clinic - Portal do Paciente</title>
   </head>
   <body>
-    <script>
-      // Anti-flash: apply theme before first paint
-      (function() {
-        var t = localStorage.getItem('essence-theme');
-        if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-      })();
-    </script>
     <noscript>Você precisa habilitar JavaScript para rodar esta aplicação.</noscript>
     <div id="root"></div>
   </body>

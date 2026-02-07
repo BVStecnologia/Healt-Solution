@@ -1,4 +1,4 @@
--- =============================================
+./.clipshot/image_20260205_192911_001.png-- =============================================
 -- Migration 006: Notificações para Médicos + Confirmação Automática
 -- =============================================
 -- 1. Altera create_appointment para status 'confirmed' (auto-confirmação)

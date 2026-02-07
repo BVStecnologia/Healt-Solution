@@ -1,9 +1,9 @@
 import React, { ReactNode, useState } from 'react';
 import styled from 'styled-components';
-import { Menu, Shield, Sun, Moon } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminSidebar from './AdminSidebar';
-import { useTheme } from '../../context/ThemeContext';
+import EssenceLogo from '../ui/EssenceLogo';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -123,7 +123,6 @@ const MobileThemeToggle = styled.button`
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { themeMode, toggleTheme } = useTheme();
 
   return (
     <Container>
@@ -134,11 +133,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <MobileMenuButton onClick={() => setSidebarOpen(true)}>
             <Menu />
           </MobileMenuButton>
-          <Shield size={20} color="rgba(146, 86, 62, 0.8)" />
-          <MobileTitle>Essence</MobileTitle>
-          <MobileThemeToggle onClick={toggleTheme}>
-            {themeMode === 'light' ? <Moon /> : <Sun />}
-          </MobileThemeToggle>
+          <EssenceLogo variant="horizontal" size="xs" color="dark" />
         </MobileHeader>
         <Content>{children}</Content>
       </Main>

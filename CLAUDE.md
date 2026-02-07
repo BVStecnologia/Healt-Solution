@@ -20,10 +20,15 @@ Este arquivo documenta toda a arquitetura, funcionalidades e padrões do sistema
 - **Lead Provider:** Dr. Rosane Nunes
 
 ### Identidade Visual
+- **Manual da Marca:** WABOO Creative (Google Drive)
 - **Cor Primária:** #92563E (Marrom terracota)
 - **Cor Secundária:** #8C8B8B (Cinza)
 - **Background:** #FAF8F6 (Bege claro)
-- **Fontes:** Italiana (headings) + Raleway (body)
+- **Fonte:** Satoshi Variable (weight 200-900, sans-serif, geométrica) — via @font-face local
+- **Logo:** SVGs oficiais em `public/images/logo-horizontal.svg` (dark) e `logo-horizontal-dark.svg` (light)
+- **Componente:** `EssenceLogo` — variant (horizontal/vertical), color (dark/light), size (xs-xl)
+- **Slogans:** "Your health begins with your essence", "Balance is the new beauty"
+- **Tema:** Apenas claro (dark mode desabilitado, ThemeContext mantido para futuro)
 
 ---
 

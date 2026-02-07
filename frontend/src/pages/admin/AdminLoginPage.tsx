@@ -4,9 +4,9 @@ import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, Shield, Stethoscope, ArrowRight } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../lib/supabaseClient';
+import EssenceLogo from '../../components/ui/EssenceLogo';
 
 /* ═══════════════════════════════
    ANIMATIONS
@@ -94,7 +94,7 @@ const LeftPanel = styled.div`
 const LeftImage = styled.div`
   position: absolute;
   inset: 0;
-  background: url('/images/admin-login-bg.png');
+  background: url('/images/brand-bg-1.jpg');
   background-size: cover;
   background-position: center;
   animation: ${fadeIn} 1.2s ease-out;
@@ -615,7 +615,6 @@ const AdminLoginPage: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const { user, profile, signIn, signInWithGoogle } = useAuth();
-  const { syncFromDatabase: syncThemeFromDatabase } = useTheme();
   const { syncFromDatabase: syncLanguageFromDatabase } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -666,11 +665,8 @@ const AdminLoginPage: React.FC = () => {
         return;
       }
 
-      // Sincronizar tema e idioma do DB
-      await Promise.all([
-        syncThemeFromDatabase(user.id),
-        syncLanguageFromDatabase(user.id),
-      ]);
+      // Sincronizar idioma do DB
+      await syncLanguageFromDatabase(user.id);
 
       // Smart redirect: provider → /doctor, admin → /admin
       navigate(profile.role === 'provider' ? '/doctor' : '/admin');
@@ -705,8 +701,7 @@ const AdminLoginPage: React.FC = () => {
         <LeftOverlay>
           <AccentLine />
           <OverlayBrand>
-            <h2>Essence</h2>
-            <span>Medical Clinic</span>
+            <EssenceLogo variant="horizontal" size="xl" color="light" />
           </OverlayBrand>
           <OverlayQuote>
             {isDoctorLogin
@@ -748,8 +743,7 @@ const AdminLoginPage: React.FC = () => {
 
           <Card>
             <Logo>
-              <h1>Essence</h1>
-              <p>Medical Clinic</p>
+              <EssenceLogo variant="horizontal" size="sm" color="dark" />
             </Logo>
 
             <Form onSubmit={handleSubmit}>

@@ -22,10 +22,11 @@
 | 9 | Dark/Light mode + Onboarding admin | ✅ Completo | ⬜ Active |
 | 10 | Google OAuth (VPS via nip.io) | ✅ Completo | - |
 | 11 | Confiabilidade WhatsApp (retry + monitoramento) | ✅ Completo | - |
-| 12 | Upload de documentos/exames | ❌ Pendente | - |
-| 13 | IA/Chatbot WhatsApp | ❌ Pendente | - |
-| 14 | E-commerce (produtos) | ❌ Pendente | - |
-| 15 | Integrações externas (OptiMantra) | ❌ Pendente | - |
+| 12 | Brand Identity (manual da marca WABOO) | 🔄 Em progresso | ⬜ Active |
+| 13 | Upload de documentos/exames | ❌ Pendente | - |
+| 14 | IA/Chatbot WhatsApp | ❌ Pendente | - |
+| 15 | E-commerce (produtos) | ❌ Pendente | - |
+| 16 | Integrações externas (OptiMantra) | ❌ Pendente | - |
 
 ---
 
@@ -257,4 +258,4 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 ---
 
-*Atualizado: 06/02/2026 (v2 - Confiabilidade WhatsApp)*
+*Atualizado: 06/02/2026 (v3 - Brand Identity em progresso)*

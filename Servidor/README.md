@@ -1,7 +1,5 @@
 # Servidor VPS - Essence Medical Clinic
 
-> Espelho do estado de produção para comparação antes de deploy
-
 ## Acesso Rápido
 
 ```bash
@@ -12,12 +10,6 @@ ssh clinica-vps
 http://217.216.81.92:9000
 User: admin
 Pass: 2026projectessence@
-
-# URLs
-http://217.216.81.92:3000    # Frontend
-http://217.216.81.92:8000    # Supabase API
-http://217.216.81.92:8082    # Evolution API
-http://217.216.81.92:3001    # Supabase Studio
 ```
 
 ## Dados do Servidor
@@ -25,89 +17,176 @@ http://217.216.81.92:3001    # Supabase Studio
 | Campo | Valor |
 |-------|-------|
 | **IP** | 217.216.81.92 |
+| **IPv6** | 2605:a143:2306:4648::1/64 |
 | **User** | root |
-| **OS** | Ubuntu 24.04.3 LTS |
+| **Região** | US-east (Orangeburg, SC) |
+| **OS** | Ubuntu 24.04.3 LTS |![image_20260204_200850_001.png](./.clipshot/image_20260204_200850_001.png)![image_20260204_201532_001.png](./.clipshot/image_20260204_201532_001.png)![image_20260204_203931_001.png](./.clipshot/image_20260204_203931_001.png)
 | **CPU** | 8 cores |
 | **RAM** | 24 GB |
 | **Disco** | 400 GB SSD |
 | **Provedor** | Contabo |
+| **Vencimento** | Fevereiro 2027 |
 
----
+## Chaves SSH
 
-## 📊 Status das Stacks
-
-| Stack | Containers | Status | Detalhes |
-|-------|------------|--------|----------|
-| **Supabase** | 13 | ✅ Online | [Ver versões](./supabase/VERSOES.md) |
-| **Evolution** | 3 | ✅ Online | [Ver versões](./evolution/VERSOES.md) |
-| **Frontend** | 1 | ✅ Online | [Ver versões](./frontend/VERSOES.md) |
-
----
-
-## 🔄 Antes de Fazer Deploy
-
-### 1. Comparar Versões
-
-```bash
-# Ver o que mudou localmente
-git log origin/main..HEAD --oneline
-
-# Ver o que falta no VPS
-ssh clinica-vps "cd /root/Clinica && git fetch && git log HEAD..origin/main --oneline"
 ```
-
-### 2. Verificar Migrations Pendentes
-
-```bash
-# Migrations aplicadas no VPS
-ssh clinica-vps "docker exec supabase-db psql -U postgres -c 'SELECT * FROM schema_migrations;'"
-
-# Migrations locais
-ls supabase/migrations/
-```
-
-### 3. Atualizar Esta Pasta
-
-Após cada deploy, atualizar os arquivos VERSOES.md com:
-```bash
-# Copiar versões atuais do VPS
-ssh clinica-vps "docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'"
+Privada: ~/.ssh/clinica_vps
+Pública: ~/.ssh/clinica_vps.pub
 ```
 
 ---
 
-## 🚀 Fazer Deploy
+## Deploy da Aplicação
+
+### Estrutura
+
+```
+/root/Clinica/
+├── supabase/           # Stack Supabase (13 serviços)
+│   ├── docker-compose.yml
+│   └── .env
+├── evolution/          # Stack Evolution API (3 serviços)
+│   ├── docker-compose.yml
+│   └── .env
+├── frontend/           # React App
+│   ├── Dockerfile
+│   ├── .env
+│   └── build/          # Build de produção
+└── nginx/              # Reverse Proxy
+    └── nginx.conf
+```
+
+### Primeiro Deploy
 
 ```bash
-# 1. Push local para origin
-git push origin main
+# 1. Conectar ao VPS
+ssh clinica-vps
 
-# 2. Pull no VPS + rebuild
+# 2. Clonar repositório
+cd /root
+git clone https://github.com/SEU_USUARIO/Clinica.git
+cd Clinica
+
+# 3. Configurar variáveis de ambiente
+# Editar: supabase/.env, evolution/.env, frontend/.env
+
+# 4. Subir Supabase
+cd supabase
+docker compose up -d
+
+# 5. Subir Evolution API
+cd ../evolution
+docker compose up -d
+
+# 6. Build e servir frontend
+cd ../frontend
+npm install
+npm run build
+# Servir com nginx ou container
+```
+
+### Atualizar Deploy
+
+```bash
+# Do computador local:
 ssh clinica-vps "cd /root/Clinica && git pull && \
-  cd frontend && npm install && npm run build"
-
-# 3. Aplicar migrations (se houver)
-ssh clinica-vps "cd /root/Clinica && bash scripts/migrate.sh"
-
-# 4. Reiniciar containers (se necessário)
-ssh clinica-vps "cd /root/Clinica/supabase && docker compose restart"
+  cd frontend && npm install && npm run build && \
+  cd ../supabase && docker compose restart && \
+  cd ../evolution && docker compose restart"
 ```
 
 ---
 
-## 📁 Estrutura
+## Comandos Úteis
 
+### Docker
+```bash
+# Ver todos os containers
+docker ps -a
+
+# Ver logs
+docker logs <container> --tail 100 -f
+
+# Reiniciar container
+docker restart <container>
+
+# Ver uso de recursos
+docker stats --no-stream
+
+# Limpar recursos não usados
+docker system prune -a
 ```
-Servidor/
-├── README.md              # Este arquivo (visão geral)
-├── supabase/
-│   └── VERSOES.md         # Containers + Migrations
-├── evolution/
-│   └── VERSOES.md         # Containers + Config
-└── frontend/
-    └── VERSOES.md         # Git commit + Dependências
+
+### Stacks
+```bash
+# Supabase
+cd /root/Clinica/supabase
+docker compose up -d      # Iniciar
+docker compose down       # Parar
+docker compose logs -f    # Ver logs
+docker compose restart    # Reiniciar
+
+# Evolution
+cd /root/Clinica/evolution
+docker compose up -d
+docker compose down
+docker compose logs -f
+```
+
+### Banco de Dados
+```bash
+# Acessar PostgreSQL do Supabase
+docker exec -it supabase-db psql -U postgres
+
+# Backup
+docker exec supabase-db pg_dump -U postgres > backup.sql
+
+# Restore
+cat backup.sql | docker exec -i supabase-db psql -U postgres
 ```
 
 ---
 
-*Última atualização: 05/02/2026*
+## Portas
+
+| Porta | Serviço |
+|-------|---------|
+| 22 | SSH |
+| 80 | HTTP (nginx) |
+| 443 | HTTPS (nginx) |
+| 3001 | Supabase Studio |
+| 4000 | Supabase Analytics |
+| 5432 | PostgreSQL |
+| 8000 | Supabase API (Kong) |
+| 8082 | Evolution API |
+| 9000 | Portainer HTTP |
+| 9443 | Portainer HTTPS |
+
+---
+
+## Troubleshooting
+
+### Container não inicia
+```bash
+docker logs <container> --tail 50
+docker inspect <container>
+```
+
+### Erro de permissão
+```bash
+chmod -R 755 /root/Clinica
+chown -R root:root /root/Clinica
+```
+
+### Disco cheio
+```bash
+df -h
+docker system prune -a
+```
+
+### Memória insuficiente
+```bash
+free -h
+docker stats --no-stream
+# Parar containers não essenciais
+```

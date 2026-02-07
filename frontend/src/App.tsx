@@ -31,11 +31,8 @@ const MySchedulePage = lazy(() => import('./pages/admin/MySchedulePage'));
 const NotificationRulesPage = lazy(() => import('./pages/admin/NotificationRulesPage'));
 const FailedMessagesPage = lazy(() => import('./pages/admin/FailedMessagesPage'));
 
-// Redirect inteligente na raiz: admin → /admin, provider → /doctor, patient → Dashboard
-const HomeRedirect: React.FC = () => {
-  const { profile } = useAuth();
-  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
-  if (profile?.role === 'provider') return <Navigate to="/doctor" replace />;
+// Dashboard do paciente (admin/provider também podem acessar para teste)
+const HomeDashboard: React.FC = () => {
   return <Dashboard />;
 };
 
@@ -58,7 +55,7 @@ const App: React.FC = () => {
         {/* Rotas protegidas */}
         <Route path="/" element={
           <ProtectedRoute>
-            <HomeRedirect />
+            <HomeDashboard />
           </ProtectedRoute>
         } />
 

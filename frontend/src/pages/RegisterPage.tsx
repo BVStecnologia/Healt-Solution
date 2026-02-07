@@ -5,6 +5,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, User, CheckCircle } from 'lucide-r
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import EssenceLogo from '../components/ui/EssenceLogo';
 
 const fadeIn = keyframes`
   from {
@@ -26,7 +27,7 @@ const Container = styled.div`
 const LeftPanel = styled.div`
   flex: 1;
   display: none;
-  background: url('/images/login-doctor.png');
+  background: url('/images/brand-bg-2.jpg');
   background-size: cover;
   background-position: center;
 
@@ -366,8 +367,7 @@ const RegisterPage: React.FC = () => {
           </WelcomeText>
           <Card>
             <Logo>
-              <h1>Essence</h1>
-              <p>Medical Clinic</p>
+              <EssenceLogo variant="horizontal" size="sm" color="dark" />
             </Logo>
 
             {success ? (

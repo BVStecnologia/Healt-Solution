@@ -18,8 +18,7 @@ import {
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import EssenceLogo from '../ui/EssenceLogo';
 
 const subtleGlow = keyframes`
   0%, 100% {
@@ -102,6 +101,7 @@ const LogoIcon = styled.div`
 const SwitcherWrapper = styled.div`
   padding: 12px 12px 0;
   position: relative;
+  z-index: 10;
 `;
 
 const SwitcherButton = styled.button<{ $open?: boolean }>`
@@ -298,32 +298,26 @@ const NavLink = styled(Link)<{ $active: boolean }>`
 // USER SECTION
 // ============================================
 const UserSection = styled.div`
-  padding: 16px;
+  padding: 12px 16px;
   border-top: 1px solid ${theme.colors.border};
-`;
-
-const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
-  margin-bottom: 12px;
-  border-radius: 10px;
+  gap: 10px;
 `;
 
 const Avatar = styled.div<{ $hasImage?: boolean }>`
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: ${props => props.$hasImage ? 'transparent' : `linear-gradient(145deg, ${theme.colors.primary} 0%, #7A4833 100%)`};
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 12px;
   font-family: ${theme.typography.fontFamilyHeading};
-  letter-spacing: -0.5px;
+  flex-shrink: 0;
   overflow: hidden;
 
   img {
@@ -333,84 +327,38 @@ const Avatar = styled.div<{ $hasImage?: boolean }>`
   }
 `;
 
-const UserDetails = styled.div`
-  flex: 1;
-  overflow: hidden;
-`;
-
 const UserName = styled.div`
-  font-size: 14px;
+  flex: 1;
+  font-size: 13px;
   font-weight: 600;
   color: ${theme.colors.text};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: ${theme.typography.fontFamilyHeading};
-`;
-
-const UserRole = styled.div`
-  font-size: 12px;
-  color: ${theme.colors.textSecondary};
-  font-weight: 500;
-`;
-
-const UserActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-`;
-
-const AdminThemeToggle = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex: 1;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 10px;
-  background: ${theme.colors.surfaceHover};
-  color: ${theme.colors.textSecondary};
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${theme.colors.primaryA10};
-    color: ${theme.colors.text};
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
 `;
 
 const LogoutButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 12px 16px;
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
-  color: ${theme.colors.error};
-  font-size: 14px;
-  font-weight: 600;
+  color: ${theme.colors.textMuted};
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 
   &:hover {
     background: ${theme.colors.errorA10};
+    color: ${theme.colors.error};
   }
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 `;
 
@@ -452,7 +400,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  const { themeMode, toggleTheme } = useTheme();
+  // Theme toggle desabilitado - usando apenas tema claro da marca
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
 
@@ -523,20 +471,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
       : `${profile.first_name} ${profile.last_name}`
     : 'Admin';
 
-  const roleLabel = currentEnv === 'doctor' ? 'Médico' : isProvider ? 'Médico' : 'Administrador';
   const badgeLabel = currentEnv === 'doctor' ? 'Médico' : isProvider ? 'Médico' : 'Admin';
-
-  const logoIcon = currentEnv === 'doctor' ? <Stethoscope /> : <Shield />;
 
   return (
     <Sidebar $open={open}>
       <Logo>
-        <LogoIcon>
-          {logoIcon}
-        </LogoIcon>
-        <div>
-          <h1>Essence</h1>
-        </div>
+        <EssenceLogo variant="horizontal" size="sm" color="dark" />
         <span className="badge">{badgeLabel}</span>
       </Logo>
 
@@ -601,28 +541,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
       </Nav>
 
       <UserSection>
-        <UserInfo>
-          <Avatar $hasImage={!!profile?.avatar_url}>
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
-            ) : (
-              initials
-            )}
-          </Avatar>
-          <UserDetails>
-            <UserName>{displayName}</UserName>
-            <UserRole>{roleLabel}</UserRole>
-          </UserDetails>
-        </UserInfo>
-        <UserActions>
-          <AdminThemeToggle onClick={toggleTheme}>
-            {themeMode === 'light' ? <Moon /> : <Sun />}
-            {themeMode === 'light' ? 'Escuro' : 'Claro'}
-          </AdminThemeToggle>
-        </UserActions>
-        <LogoutButton onClick={handleLogout}>
+        <Avatar $hasImage={!!profile?.avatar_url}>
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt={displayName} />
+          ) : (
+            initials
+          )}
+        </Avatar>
+        <UserName>{displayName}</UserName>
+        <LogoutButton onClick={handleLogout} title="Sair">
           <LogOut />
-          Sair
         </LogoutButton>
       </UserSection>
     </Sidebar>

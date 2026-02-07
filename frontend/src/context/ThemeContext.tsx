@@ -21,16 +21,8 @@ function applyTheme(mode: ThemeMode) {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const manuallyChanged = useRef(false);
 
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'light' || stored === 'dark') {
-      return stored;
-    }
-    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
-  });
+  // Forçar tema claro (dark mode desabilitado temporariamente)
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, themeMode);

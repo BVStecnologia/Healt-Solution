@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
-import ThemeToggle from './ThemeToggle';
+import EssenceLogo from './ui/EssenceLogo';
 
 interface LayoutProps {
   children: ReactNode;
@@ -311,8 +311,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       <Sidebar $open={sidebarOpen}>
         <Logo>
-          <h1>Essence</h1>
-          <span>Portal do Paciente</span>
+          <EssenceLogo variant="horizontal" size="sm" color="dark" />
         </Logo>
 
         <Nav>
@@ -344,7 +343,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <UserEmail>{profile?.email}</UserEmail>
             </UserDetails>
             <UserActions>
-              <ThemeToggle />
             </UserActions>
           </UserInfo>
           <LogoutButton onClick={handleLogout}>
@@ -359,8 +357,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <MobileMenuButton onClick={() => setSidebarOpen(true)}>
             <Menu />
           </MobileMenuButton>
-          <MobileTitle>Essence</MobileTitle>
-          <ThemeToggle />
+          <EssenceLogo variant="horizontal" size="xs" color="dark" />
         </Header>
 
         <Content>{children}</Content>

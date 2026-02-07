@@ -5,8 +5,8 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Leaf } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
+import EssenceLogo from '../components/ui/EssenceLogo';
 
 /* ═══════════════════════════════
    ANIMATIONS
@@ -81,7 +81,7 @@ const LeftPanel = styled.div`
 const LeftImage = styled.div`
   position: absolute;
   inset: 0;
-  background: url('/images/login-doctor.png');
+  background: url('/images/brand-bg-2.jpg');
   background-size: cover;
   background-position: center;
   animation: ${fadeIn} 1.2s ease-out;
@@ -595,7 +595,6 @@ const LoginPage: React.FC = () => {
 
   const { signIn, signInWithGoogle } = useAuth();
   const { t, syncFromDatabase } = useLanguage();
-  const { syncFromDatabase: syncThemeFromDatabase } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -618,7 +617,6 @@ const LoginPage: React.FC = () => {
       const { data: { user: loggedUser } } = await supabase.auth.getUser();
       if (loggedUser) {
         await syncFromDatabase(loggedUser.id);
-        await syncThemeFromDatabase(loggedUser.id);
       }
 
       navigate(from, { replace: true });
@@ -652,11 +650,10 @@ const LoginPage: React.FC = () => {
         <LeftImage />
         <LeftOverlay>
           <OverlayBrand>
-            <h2>Essence</h2>
-            <span>Medical Clinic</span>
+            <EssenceLogo variant="horizontal" size="xl" color="light" />
           </OverlayBrand>
           <OverlayQuote>
-            Cuidando da sua saúde com excelência e dedicação, proporcionando bem-estar e qualidade de vida.
+            Your health begins with your essence.
           </OverlayQuote>
         </LeftOverlay>
       </LeftPanel>
@@ -681,8 +678,7 @@ const LoginPage: React.FC = () => {
 
           <Card>
             <Logo>
-              <h1>Essence</h1>
-              <p>Medical Clinic</p>
+              <EssenceLogo variant="horizontal" size="sm" color="dark" />
             </Logo>
 
             <Form onSubmit={handleSubmit}>

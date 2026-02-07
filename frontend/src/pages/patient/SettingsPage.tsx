@@ -1,9 +1,8 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Sun, Moon, Globe, Info } from 'lucide-react';
+import { Globe, Info } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import Layout from '../../components/Layout';
-import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 const fadeInUp = keyframes`
@@ -141,7 +140,6 @@ const InfoBox = styled.div`
 `;
 
 const SettingsPage: React.FC = () => {
-  const { themeMode, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
 
   return (
@@ -149,25 +147,6 @@ const SettingsPage: React.FC = () => {
       <PageTitle>Configurações</PageTitle>
 
       <Section $delay={0}>
-        <SectionTitle>
-          {themeMode === 'dark' ? <Moon /> : <Sun />}
-          Aparência
-        </SectionTitle>
-        <SettingRow>
-          <SettingInfo>
-            <SettingLabel>Tema</SettingLabel>
-            <SettingDescription>
-              Alterne entre tema claro e escuro
-            </SettingDescription>
-          </SettingInfo>
-          <ThemeSwitch $dark={themeMode === 'dark'} onClick={toggleTheme}>
-            {themeMode === 'dark' ? <Moon /> : <Sun />}
-            {themeMode === 'dark' ? 'Escuro' : 'Claro'}
-          </ThemeSwitch>
-        </SettingRow>
-      </Section>
-
-      <Section $delay={100}>
         <SectionTitle>
           <Globe />
           Idioma

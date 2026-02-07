@@ -106,8 +106,8 @@ export const theme = {
   },
 
   typography: {
-    fontFamily: "'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-    fontFamilyHeading: "'Italiana', Georgia, 'Times New Roman', serif",
+    fontFamily: "'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamilyHeading: "'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 
     sizes: {
       xs: '12px',
