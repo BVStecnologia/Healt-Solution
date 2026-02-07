@@ -50,7 +50,7 @@ const Container = styled.div`
   display: flex;
   position: relative;
   overflow: hidden;
-  background: #FAF8F6;
+  background: #FFFFFF;
 `;
 
 const LeftPanel = styled.div`
@@ -185,25 +185,22 @@ const RightPanel = styled.div`
   }
 `;
 
-const DecorativeLines = styled.div<{ $position: 'top' | 'bottom' }>`
+const RightDecorativeLines = styled.div`
   position: absolute;
-  left: -10%;
-  right: -10%;
-  height: 260px;
+  left: -15%;
+  right: -15%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 360px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.35;
+  opacity: 0.28;
   overflow: hidden;
-
-  ${p => p.$position === 'bottom' ? `
-    bottom: -40px;
-  ` : `
-    top: -60px;
-    transform: rotate(180deg);
-  `}
+  mask-image: radial-gradient(ellipse 70% 80% at center, black 20%, transparent 65%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at center, black 20%, transparent 65%);
 
   img {
-    width: 120%;
+    width: 130%;
     height: 100%;
     object-fit: cover;
     object-position: center;
@@ -212,20 +209,19 @@ const DecorativeLines = styled.div<{ $position: 'top' | 'bottom' }>`
 
 const LeftDecorativeLines = styled.div`
   position: absolute;
-  left: -5%;
-  right: -5%;
+  left: 0;
+  right: 0;
   bottom: 0;
-  height: 300px;
+  height: 40%;
   pointer-events: none;
-  z-index: 1;
-  opacity: 0.25;
-  overflow: hidden;
+  z-index: 3;
+  opacity: 0.5;
 
   img {
-    width: 120%;
+    width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center bottom;
+    object-position: center top;
   }
 `;
 
@@ -706,7 +702,7 @@ const AdminLoginPage: React.FC = () => {
       <LeftPanel>
         <LeftImage />
         <LeftDecorativeLines>
-          <img src="/images/lines/lines3-bege.svg" alt="" />
+          <img src="/images/lines/lines3-dourado.svg" alt="" />
         </LeftDecorativeLines>
         <LeftOverlay>
           <AccentLine />
@@ -722,13 +718,10 @@ const AdminLoginPage: React.FC = () => {
       </LeftPanel>
 
       <RightPanel>
-        {/* Decorative brand lines */}
-        <DecorativeLines $position="top">
-          <img src="/images/lines/lines2-bege.svg" alt="" />
-        </DecorativeLines>
-        <DecorativeLines $position="bottom">
-          <img src="/images/lines/lines2-dourado.svg" alt="" />
-        </DecorativeLines>
+        {/* Decorative brand line — dark line through center */}
+        <RightDecorativeLines>
+          <img src="/images/lines/lines2-marrom.svg" alt="" />
+        </RightDecorativeLines>
 
         <ContentWrapper>
           <WelcomeSection>

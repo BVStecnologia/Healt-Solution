@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FileText, FileSpreadsheet, FileCheck, FileOutput, FileSearch, Download, Trash2 } from 'lucide-react';
+import { FileText, FileSpreadsheet, FileCheck, FileOutput, FileSearch, Download, Trash2, Eye } from 'lucide-react';
 import { PatientDocument, DocumentType } from '../../types/documents';
 import { theme } from '../../styles/GlobalStyle';
 import { format } from 'date-fns';
@@ -10,9 +10,10 @@ interface DocumentCardProps {
   document: PatientDocument;
   onDelete?: (id: string) => void;
   onDownload?: () => void;
+  onView?: () => void;
 }
 
-const Card = styled.div`
+const Card = styled.div<{ $clickable?: boolean }>`
   background: white;
   border-radius: ${theme.borderRadius.lg};
   padding: ${theme.spacing.md};
@@ -22,6 +23,7 @@ const Card = styled.div`
   gap: ${theme.spacing.md};
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid ${theme.colors.border};
+  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
 
   &:hover {
     transform: translateY(-2px);
@@ -141,8 +143,9 @@ const getTypeLabel = (type: DocumentType) => {
   }
 };
 
-export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete, onDownload }) => {
-  const handleDownload = () => {
+export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete, onDownload, onView }) => {
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (onDownload) {
       onDownload();
     } else {
@@ -150,8 +153,12 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete, 
     }
   };
 
+  const handleCardClick = () => {
+    if (onView) onView();
+  };
+
   return (
-    <Card>
+    <Card $clickable={!!onView} onClick={handleCardClick}>
       <IconWrapper $type={document.type}>
         {getIcon(document.type)}
       </IconWrapper>
@@ -163,11 +170,16 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete, 
         </Meta>
       </Content>
       <Actions>
+        {onView && (
+          <ActionBtn onClick={(e) => { e.stopPropagation(); onView(); }} title="Visualizar documento">
+            <Eye size={20} />
+          </ActionBtn>
+        )}
         <ActionBtn onClick={handleDownload} title="Baixar documento">
           <Download size={20} />
         </ActionBtn>
         {onDelete && (
-          <DeleteBtn onClick={() => onDelete(document.id)} title="Excluir documento">
+          <DeleteBtn onClick={(e) => { e.stopPropagation(); onDelete(document.id); }} title="Excluir documento">
             <Trash2 size={18} />
           </DeleteBtn>
         )}

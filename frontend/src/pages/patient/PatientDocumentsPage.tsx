@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { theme } from '../../styles/GlobalStyle';
 import { usePatientDocuments } from '../../hooks/usePatientDocuments';
 import { DocumentCard } from '../../components/patient/DocumentCard';
+import DocumentViewerModal from '../../components/DocumentViewerModal';
+import { PatientDocument } from '../../types/documents';
 import { FileText, Filter } from 'lucide-react';
 import Layout from '../../components/Layout';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -101,6 +103,8 @@ const ADMIN_TYPES = ['invoice', 'consent_form', 'intake_form'];
 const PatientDocumentsPage: React.FC = () => {
   const { documents, loading, getSignedUrl } = usePatientDocuments();
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [viewingDoc, setViewingDoc] = useState<PatientDocument | null>(null);
+  const [viewerUrl, setViewerUrl] = useState<string>('');
 
   const handleDownload = async (filePath: string) => {
     const url = await getSignedUrl(filePath);
@@ -108,6 +112,16 @@ const PatientDocumentsPage: React.FC = () => {
       window.open(url, '_blank');
     } else {
       alert('Erro ao gerar link de download.');
+    }
+  };
+
+  const handleView = async (doc: PatientDocument) => {
+    const url = await getSignedUrl(doc.file_url);
+    if (url) {
+      setViewerUrl(url);
+      setViewingDoc(doc);
+    } else {
+      alert('Erro ao gerar link de visualizacao.');
     }
   };
 
@@ -149,7 +163,12 @@ const PatientDocumentsPage: React.FC = () => {
       {filteredDocs.length > 0 ? (
         <Grid>
           {filteredDocs.map(doc => (
-            <DocumentCard key={doc.id} document={doc} onDownload={() => handleDownload(doc.file_url)} />
+            <DocumentCard
+              key={doc.id}
+              document={doc}
+              onDownload={() => handleDownload(doc.file_url)}
+              onView={() => handleView(doc)}
+            />
           ))}
         </Grid>
       ) : (
@@ -163,6 +182,14 @@ const PatientDocumentsPage: React.FC = () => {
           )}
         </EmptyState>
       )}
+
+      <DocumentViewerModal
+        isOpen={!!viewingDoc}
+        onClose={() => { setViewingDoc(null); setViewerUrl(''); }}
+        fileUrl={viewerUrl}
+        fileName={viewingDoc?.file_url || ''}
+        title={viewingDoc?.title || ''}
+      />
     </Layout>
   );
 };

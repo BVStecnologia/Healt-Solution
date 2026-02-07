@@ -48,6 +48,8 @@ import {
 import { useAdminDocuments } from '../../hooks/admin/useAdminDocuments';
 import { DocumentCard } from '../../components/patient/DocumentCard';
 import DocumentUploadModal from '../../components/admin/DocumentUploadModal';
+import DocumentViewerModal from '../../components/DocumentViewerModal';
+import { PatientDocument } from '../../types/documents';
 
 // ============================================
 // ANIMATIONS — subtle, refined
@@ -904,6 +906,8 @@ const PatientProfilePage: React.FC = () => {
   // Documents
   const { documents, loading: docsLoading, upload: uploadDoc, remove: removeDoc, getSignedUrl } = useAdminDocuments(id || '');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [viewingDoc, setViewingDoc] = useState<PatientDocument | null>(null);
+  const [viewerUrl, setViewerUrl] = useState<string>('');
 
   useEffect(() => {
     if (id) fetchPatientData();
@@ -1000,6 +1004,16 @@ const PatientProfilePage: React.FC = () => {
       window.open(url, '_blank');
     } else {
       alert('Erro ao gerar link de download.');
+    }
+  };
+
+  const handleViewDocument = async (doc: PatientDocument) => {
+    const url = await getSignedUrl(doc.file_url);
+    if (url) {
+      setViewerUrl(url);
+      setViewingDoc(doc);
+    } else {
+      alert('Erro ao gerar link de visualizacao.');
     }
   };
 
@@ -1321,6 +1335,7 @@ const PatientProfilePage: React.FC = () => {
                     document={doc}
                     onDelete={handleDeleteDocument}
                     onDownload={() => handleDownloadDocument(doc.file_url)}
+                    onView={() => handleViewDocument(doc)}
                   />
                 ))}
               </DocumentGrid>
@@ -1341,6 +1356,15 @@ const PatientProfilePage: React.FC = () => {
           onUpload={uploadDoc}
         />
       )}
+
+      {/* ===== DOCUMENT VIEWER MODAL ===== */}
+      <DocumentViewerModal
+        isOpen={!!viewingDoc}
+        onClose={() => { setViewingDoc(null); setViewerUrl(''); }}
+        fileUrl={viewerUrl}
+        fileName={viewingDoc?.file_url || ''}
+        title={viewingDoc?.title || ''}
+      />
 
       {/* ===== EDIT MODAL ===== */}
       {isEditModalOpen && (
