@@ -22,11 +22,12 @@
 | 9 | Dark/Light mode + Onboarding admin | ✅ Completo | ⬜ Active |
 | 10 | Google OAuth (VPS via nip.io) | ✅ Completo | - |
 | 11 | Confiabilidade WhatsApp (retry + monitoramento) | ✅ Completo | - |
-| 12 | Brand Identity (manual da marca WABOO) | 🔄 Em progresso | ⬜ Active |
-| 13 | Upload de documentos/exames | ❌ Pendente | - |
-| 14 | IA/Chatbot WhatsApp | ❌ Pendente | - |
-| 15 | E-commerce (produtos) | ❌ Pendente | - |
-| 16 | Integrações externas (OptiMantra) | ❌ Pendente | - |
+| 12 | Tratamentos reais do site (18 tipos + categorias) | ✅ Completo | - |
+| 13 | Brand Identity (manual da marca WABOO) | 🔄 Em progresso | ⬜ Active |
+| 14 | Upload de documentos/exames | 🔄 Em progresso | - |
+| 15 | IA/Chatbot WhatsApp | ❌ Pendente | - |
+| 16 | E-commerce (produtos) | ❌ Pendente | - |
+| 17 | Integrações externas (OptiMantra) | ❌ Pendente | - |
 
 ---
 
@@ -40,7 +41,7 @@
 - VPS Contabo configurada e rodando (217.216.81.92)
 - Portainer para gerenciamento visual
 
-### 2. Banco de Dados (15 migrações)
+### 2. Banco de Dados (17 migrações)
 | Migração | Descrição |
 |----------|-----------|
 | 000 | Schema migrations (controle de versões) |
@@ -58,8 +59,10 @@
 | 012 | No-show automático + confirmação de presença + templates no-show |
 | 013 | Auto-create profile (trigger on auth.users para Google OAuth + email) |
 | 014 | retry_count e last_retry_at no message_logs (sistema de retry) |
+| 015 | Novos ENUMs: appointment_type (16 novos) + patient_type (4 novos) |
+| 016 | treatment_types table + fix duração create_appointment + elegibilidade |
 
-**Totais:** 9 tabelas, 4 ENUMs, 8+ RPCs, RLS completo, triggers automáticos
+**Totais:** 10 tabelas, 4 ENUMs, 8+ RPCs, RLS completo, triggers automáticos
 
 ### 3. Portal do Paciente (7 páginas)
 - **Login**: Email/senha + Google OAuth (auto-criação de perfil com idioma do navegador)
@@ -157,6 +160,28 @@
 - Página `/admin/failed-messages`: lista mensagens falhas com retry manual
 - Sidebar admin: link "Msgs Falhas" na seção configurações
 
+### 12. Tratamentos Reais do Site (18 tipos + 5 categorias)
+- Source of truth: `frontend/src/constants/treatments.ts`
+- 18 tipos ativos baseados no site essencemedicalclinic.com + 6 legados
+- 5 categorias: General, Well-being, Personalized, Rejuvenation, IV Therapy
+- Tabela `treatment_types` no DB com duração real por tipo
+- RPC `create_appointment` busca duração da tabela (não mais hardcoded 30min)
+- Patient types novos: wellness, bhrt, rejuvenation, iv_therapy
+- NewAppointmentPage redesenhada com seções por categoria
+
+### 13. Brand Identity (em progresso)
+- Fonte Satoshi Variable (woff2, @font-face local)
+- Logo SVG: 4 variantes (horizontal/vertical, dark/light)
+- Componente EssenceLogo para uso em toda a app
+- Backgrounds: brand-bg-1 (dark), brand-bg-2 (light), brand-bg-3 (alt), brand-bg-spheres (paciente login)
+- Ondas decorativas: 4 SVGs em 4 cores (bege, dourado, marrom, preto)
+- Linhas decorativas: 3 estilos x 4 cores = 12 SVGs
+- Favicon: "E" terracota (16/32/180/192/512px)
+- Admin login page: redesenhada com brand-bg-1 + linhas decorativas
+- Patient login page: redesenhada com spheres + CSS filter marrom + linhas
+- PatientsPage: stat cards minimalistas na paleta da marca
+- PatientProfilePage: redesenhada com linha decorativa + avatares neutros
+
 ---
 
 ## URLs de Produção
@@ -191,17 +216,19 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 | # | Feature | Prioridade | Depende de |
 |---|---------|------------|------------|
 | 1 | ~~Google OAuth na VPS~~ | ✅ Feito | nip.io (217-216-81-92.nip.io) |
-| 2 | Upload de documentos/exames | 🔴 Alta | Nada (Supabase Storage pronto) |
-| 3 | Relatórios e analytics | 🟡 Média | Nada |
-| 4 | Chatbot IA WhatsApp | 🟡 Média | Escolha de provider IA (Claude/OpenAI) |
-| 5 | Notificações push | 🟢 Baixa | Nada |
-| 6 | E-commerce (produtos/suplementos) | 🟢 Baixa | Provider de pagamento |
-| 7 | Sistema de pagamentos/depósitos | 🟢 Baixa | Provider de pagamento (Stripe/Square) |
-| 8 | Integração OptiMantra (EMR) | 🟢 Baixa | API/credenciais do cliente |
-| 9 | AI Scribe (Plaud) | 🟢 Baixa | Info do cliente |
+| 2 | Upload de documentos/exames | 🔄 Em progresso | Supabase Storage + DocumentViewerModal |
+| 3 | Tratamentos faltantes (Cortisol, Iron, Chelation, Peptides) | 🟡 Média | Confirmação do cliente |
+| 4 | Chatbot IA WhatsApp | 🟡 Média | Claude API + treinamento |
+| 5 | Sistema de pagamentos/depósitos | 🟡 Média | Stripe/Square |
+| 6 | E-commerce (produtos/suplementos) | 🟡 Média | Pagamentos + inventário |
+| 7 | Integração OptiMantra (EMR) | 🟡 Média | Automação browser (sem API disponível) |
+| 8 | AI Scribe (Plaud → SOAP → OptiMantra) | 🟡 Média | OptiMantra integration |
+| 9 | Domínio + SSL (HTTPS) | 🟡 Média | Cliente compra domínio |
 | 10 | Memberships/assinaturas | 🟢 Baixa | E-commerce + pagamentos |
-| 11 | Testes automatizados + CI/CD | 🟢 Baixa | Nada |
-| 12 | Domínio + SSL (HTTPS) | 🟡 Média | Cliente compra domínio |
+| 11 | Nurturing sequences (follow-up 7/30/90 dias) | 🟢 Baixa | Nada |
+| 12 | SMS/Email (Twilio + Resend) | 🟢 Baixa | Nada |
+| 13 | Relatórios e analytics | 🟢 Baixa | Nada |
+| 14 | Testes automatizados + CI/CD | 🟢 Baixa | Nada |
 
 ---
 
@@ -210,7 +237,8 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 | Arquivo | Função |
 |---------|--------|
 | `CLAUDE.md` | Documentação técnica completa (arquitetura, DB, rotas, padrões) |
-| `docs/requisitos-cliente.md` | Requisitos originais do cliente |
+| `docs/requisitos-cliente.md` | Requisitos originais do cliente (6 pilares) |
+| `docs/ANALISE_SISTEMA.md` | Análise completa: site + OptiMantra + gap analysis |
 | `docs/DEPLOY.md` | Guia de deploy passo a passo |
 | `docs/WHATSAPP.md` | Arquitetura WhatsApp completa (médico + paciente) |
 | `docs/PLANO_DE_TESTES.md` | 85 casos de teste organizados |
@@ -223,15 +251,16 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 | Métrica | Valor |
 |---------|-------|
 | Páginas frontend | 20 (7 portal + 13 admin/médico) |
-| Componentes React | 19 |
-| Hooks customizados | 6 |
-| Contextos React | 3 (Auth, Language, Theme) |
-| Migrações SQL | 15 (000-014) |
-| Tabelas no banco | 9 |
+| Componentes React | 25+ |
+| Hooks customizados | 8 |
+| Contextos React | 3 (Auth, Language, Loading) |
+| Migrações SQL | 17 (000-016) |
+| Tabelas no banco | 10 |
 | RPCs PostgreSQL | 8+ |
 | Templates WhatsApp | 28 (14 tipos x 2 idiomas) |
-| Serviços Docker | 13 |
-| Commits Git | 49 |
+| Tipos de tratamento | 18 ativos + 6 legados |
+| Serviços Docker (VPS) | 19 |
+| Brand assets (SVGs) | 20+ (logos, ondas, linhas, favicon) |
 
 ---
 
@@ -239,23 +268,31 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 | Requisito | Status | Notas |
 |-----------|--------|-------|
-| Follow-ups automáticos | ✅ | Lembretes WhatsApp configuráveis |
+| Follow-ups automáticos | ✅ | Lembretes WhatsApp (24h, 1h) via cron |
 | Agendamento com elegibilidade | ✅ | Portal multi-step com regras por tipo |
-| Fluxos por tipo de paciente | ✅ | 5 tipos (new, trt, hormone, general, vip) |
-| Confirmações automatizadas | ✅ | WhatsApp + confirmação "OK" |
-| Gestão de depósitos | ❌ | Precisa de provider de pagamento |
-| Agendar consultas (portal) | ✅ | Completo |
-| Histórico de consultas | ✅ | Completo |
-| Serviços adicionais | ✅ | Tipos de consulta (nutrição, coaching, etc.) |
-| Regras TRT/Hormônios | ✅ | Elegibilidade com exames + visita 6 meses |
-| Recomendações personalizadas | ❌ | Fase 2 |
-| E-commerce (produtos) | ❌ | Fase 2 |
-| Prescrições | ❌ | Fase 2 |
-| Vendas/Upsells inteligentes | ❌ | Fase 2 |
-| AI Scribe / Prontuário | ❌ | Aguardando info do cliente |
-| Chatbot IA | ❌ | Fase 2 (temos menu WhatsApp, não IA) |
-| Integração OptiMantra | ❌ | Aguardando API do cliente |
+| Fluxos por tipo de paciente | ✅ | 6 tipos ativos (new, wellness, bhrt, rejuvenation, iv_therapy, vip) |
+| Confirmações automatizadas | ✅ | WhatsApp + confirmação "OK/sim/yes" |
+| No-show detection | ✅ | Auto 30min após fim + notificação + contador |
+| Cancelamento inteligente | ✅ | Aviso <24h, motivo, link reagendamento |
+| Retry mensagens falhas | ✅ | Até 3 tentativas + monitoramento admin |
+| Agendar consultas (portal) | ✅ | 18 tipos reais do site, 5 categorias |
+| Histórico de consultas | ✅ | Completo com detalhes |
+| Brand identity | 🔄 | Satoshi, logos, linhas, login pages redesigned |
+| Upload de documentos | 🔄 | Em desenvolvimento (Supabase Storage + viewer modal) |
+| Gestão de depósitos | ❌ | Precisa Stripe/Square |
+| Recomendações personalizadas | ❌ | Plano pós-consulta |
+| E-commerce (produtos) | ❌ | Stripe + inventário |
+| Prescrições | ❌ | Integração OptiMantra/SureScripts |
+| Vendas/Upsells inteligentes | ❌ | Motor de recomendação por perfil |
+| Memberships/assinaturas | ❌ | Planos mensais |
+| AI Scribe (Plaud) | ❌ | Notas áudio → SOAP → OptiMantra |
+| Chatbot IA WhatsApp | ❌ | Claude API (temos menu interativo, não IA) |
+| Integração OptiMantra | ❌ | Sem API pública — automação browser |
+| SMS/Email | ❌ | Twilio + Resend planejados |
+| Nurturing sequences | ❌ | Follow-up 7/30/90 dias pós-consulta |
+
+> **Análise detalhada:** Ver `docs/ANALISE_SISTEMA.md` para mapeamento completo dos 6 pilares do cliente
 
 ---
 
-*Atualizado: 06/02/2026 (v3 - Brand Identity em progresso)*
+*Atualizado: 07/02/2026 (v4 - Tratamentos, Brand Identity, Análise Sistema)*

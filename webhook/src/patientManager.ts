@@ -23,6 +23,18 @@ const TYPE_DURATIONS: Record<string, number> = {
   nutrient_testing: 30,
   nad_therapy: 90,
   vitamin_injections: 20,
+  iron_infusions: 60,
+  chelation_therapy: 90,
+  high_cortisol: 45,
+  // Peptide Therapy
+  bpc_157: 30,
+  thymosin_alpha_1: 30,
+  cjc_1295_ipamorelin: 30,
+  pt_141: 30,
+  selank: 30,
+  kpv: 30,
+  dihexa: 30,
+  mots_c: 30,
   // Legacy types (for existing records)
   hormone_check: 45,
   lab_review: 20,

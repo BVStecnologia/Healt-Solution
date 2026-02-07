@@ -14,8 +14,8 @@ Este arquivo documenta toda a arquitetura, funcionalidades e padrões do sistema
 - **Nome:** Essence Medical Clinic
 - **Endereço:** 2000 NE 44th ST, Suite 101B, Fort Lauderdale, FL 33308
 - **Telefone:** +1 (954) 756-2565
-- **Email:** info@essencemedicalclinic.com
-- **Horário:** Mon-Fri 9am-5pm
+- **Email:** team@essencemedicalclinic.com
+- **Horário:** Mon-Fri 10am-6pm, Sat 11am-3pm (2x/month)
 - **Site:** https://essencemedicalclinic.com
 - **Lead Provider:** Dr. Rosane Nunes
 

@@ -4,7 +4,7 @@
 // Replaces 10+ duplicated maps across the codebase.
 // =============================================
 
-export type TreatmentCategory = 'general' | 'wellbeing' | 'personalized' | 'rejuvenation' | 'iv_therapy';
+export type TreatmentCategory = 'general' | 'wellbeing' | 'personalized' | 'rejuvenation' | 'iv_therapy' | 'peptide_therapy';
 
 export interface TreatmentType {
   key: string;
@@ -45,11 +45,12 @@ export const CATEGORIES: CategoryInfo[] = [
   { key: 'personalized', label: 'Medicina Personalizada', labelEn: 'Personalized Medicine', icon: 'Brain', color: '#8B5CF6' },
   { key: 'rejuvenation', label: 'Rejuvenescimento', labelEn: 'Rejuvenation', icon: 'Sparkles', color: '#EC4899' },
   { key: 'iv_therapy', label: 'Terapia IV', labelEn: 'IV Therapy', icon: 'Droplets', color: '#3B82F6' },
+  { key: 'peptide_therapy', label: 'Terapia de Peptideos', labelEn: 'Peptide Therapy', icon: 'Dna', color: '#F59E0B' },
   { key: 'general', label: 'Geral', labelEn: 'General', icon: 'Stethoscope', color: '#92563E' },
 ];
 
 // =============================================
-// TREATMENT TYPES (all 24: 18 active + 6 legacy)
+// TREATMENT TYPES (all 35: 29 active + 6 legacy)
 // =============================================
 
 export const TREATMENT_TYPES: TreatmentType[] = [
@@ -110,6 +111,12 @@ export const TREATMENT_TYPES: TreatmentType[] = [
     description: 'Suporte e otimizacao tireoidiana', descriptionEn: 'Thyroid support and optimization',
     duration: 45, category: 'personalized', active: true,
   },
+  {
+    key: 'high_cortisol', label: 'Gerenciamento de Cortisol Alto', labelEn: 'High Cortisol Management',
+    shortLabel: 'Cortisol', shortLabelEn: 'Cortisol',
+    description: 'Gerenciamento de niveis elevados de cortisol', descriptionEn: 'High cortisol level management',
+    duration: 45, category: 'personalized', active: true,
+  },
   // Rejuvenation
   {
     key: 'morpheus8', label: 'Morpheus8', labelEn: 'Morpheus8',
@@ -165,6 +172,67 @@ export const TREATMENT_TYPES: TreatmentType[] = [
     shortLabel: 'Vitaminas', shortLabelEn: 'Vitamins',
     description: 'Injecoes intramusculares de vitaminas', descriptionEn: 'Intramuscular vitamin injections',
     duration: 20, category: 'iv_therapy', active: true,
+  },
+  {
+    key: 'iron_infusions', label: 'Infusao de Ferro', labelEn: 'Iron Infusions',
+    shortLabel: 'Ferro', shortLabelEn: 'Iron',
+    description: 'Infusao intravenosa de ferro', descriptionEn: 'Intravenous iron infusion',
+    duration: 60, category: 'iv_therapy', active: true,
+  },
+  {
+    key: 'chelation_therapy', label: 'Terapia de Quelacao', labelEn: 'Chelation Therapy',
+    shortLabel: 'Quelacao', shortLabelEn: 'Chelation',
+    description: 'Terapia de quelacao para desintoxicacao de metais pesados', descriptionEn: 'Chelation therapy for heavy metal detoxification',
+    duration: 90, category: 'iv_therapy', active: true,
+  },
+  // Peptide Therapy
+  {
+    key: 'bpc_157', label: 'BPC-157', labelEn: 'BPC-157',
+    shortLabel: 'BPC-157', shortLabelEn: 'BPC-157',
+    description: 'Peptideo para recuperacao e saude intestinal', descriptionEn: 'Peptide for recovery and gut healing',
+    duration: 30, category: 'peptide_therapy', active: true,
+  },
+  {
+    key: 'thymosin_alpha_1', label: 'Thymosin Alpha-1', labelEn: 'Thymosin Alpha-1',
+    shortLabel: 'Thymosin', shortLabelEn: 'Thymosin',
+    description: 'Peptideo para suporte imunologico', descriptionEn: 'Peptide for immune system support',
+    duration: 30, category: 'peptide_therapy', active: true,
+  },
+  {
+    key: 'cjc_1295_ipamorelin', label: 'CJC-1295/Ipamorelin', labelEn: 'CJC-1295/Ipamorelin',
+    shortLabel: 'CJC/Ipam.', shortLabelEn: 'CJC/Ipam.',
+    description: 'Combo de peptideos para GH e anti-aging', descriptionEn: 'Peptide combo for GH release and anti-aging',
+    duration: 30, category: 'peptide_therapy', active: true,
+  },
+  {
+    key: 'pt_141', label: 'PT-141', labelEn: 'PT-141',
+    shortLabel: 'PT-141', shortLabelEn: 'PT-141',
+    description: 'Peptideo para saude sexual e bem-estar', descriptionEn: 'Peptide for sexual wellness',
+    duration: 30, category: 'peptide_therapy', active: true,
+  },
+  {
+    key: 'selank', label: 'Selank', labelEn: 'Selank',
+    shortLabel: 'Selank', shortLabelEn: 'Selank',
+    description: 'Peptideo para ansiedade e funcao cognitiva', descriptionEn: 'Peptide for anxiety and cognitive function',
+    duration: 30, category: 'peptide_therapy', active: true,
+  },
+  {
+    key: 'kpv', label: 'KPV', labelEn: 'KPV',
+    shortLabel: 'KPV', shortLabelEn: 'KPV',
+    description: 'Peptideo anti-inflamatorio', descriptionEn: 'Anti-inflammatory peptide',
+    duration: 30, category: 'peptide_therapy', active: true,
+  },
+  {
+    key: 'dihexa', label: 'Dihexa', labelEn: 'Dihexa',
+    shortLabel: 'Dihexa', shortLabelEn: 'Dihexa',
+    description: 'Peptideo para neuroprotecao e memoria', descriptionEn: 'Peptide for neuroprotection and memory',
+    duration: 30, category: 'peptide_therapy', active: true,
+  },
+  {
+    key: 'mots_c', label: 'MOTS-c', labelEn: 'MOTS-c',
+    shortLabel: 'MOTS-c', shortLabelEn: 'MOTS-c',
+    description: 'Peptideo para metabolismo e performance fisica', descriptionEn: 'Peptide for metabolism and physical performance',
+    duration: 30, category: 'peptide_therapy', active: true,
   },
   // Legacy types (inactive, kept for backward compatibility)
   {

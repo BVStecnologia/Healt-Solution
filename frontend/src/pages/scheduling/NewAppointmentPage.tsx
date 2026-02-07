@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { ArrowLeft, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Clock } from 'lucide-react';
+import { ArrowLeft, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Dna, Clock } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { theme } from '../../styles/GlobalStyle';
 import { useAppointments } from '../../hooks/useAppointments';
@@ -192,6 +192,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   personalized: <Brain size={16} />,
   rejuvenation: <Sparkles size={16} />,
   iv_therapy: <Droplets size={16} />,
+  peptide_therapy: <Dna size={16} />,
   general: <Stethoscope size={16} />,
 };
 

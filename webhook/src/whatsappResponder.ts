@@ -83,6 +83,18 @@ export const TYPE_LABELS: Record<string, Record<Language, string>> = {
   nutrient_testing: { pt: 'Teste Nutrientes', en: 'Nutrient Testing' },
   nad_therapy: { pt: 'NAD+', en: 'NAD+ Therapy' },
   vitamin_injections: { pt: 'Vitaminas', en: 'Vitamin Injections' },
+  iron_infusions: { pt: 'Infusão Ferro', en: 'Iron Infusions' },
+  chelation_therapy: { pt: 'Quelação', en: 'Chelation Therapy' },
+  high_cortisol: { pt: 'Cortisol Alto', en: 'High Cortisol' },
+  // Peptide Therapy
+  bpc_157: { pt: 'BPC-157', en: 'BPC-157' },
+  thymosin_alpha_1: { pt: 'Thymosin A1', en: 'Thymosin A1' },
+  cjc_1295_ipamorelin: { pt: 'CJC/Ipam.', en: 'CJC/Ipam.' },
+  pt_141: { pt: 'PT-141', en: 'PT-141' },
+  selank: { pt: 'Selank', en: 'Selank' },
+  kpv: { pt: 'KPV', en: 'KPV' },
+  dihexa: { pt: 'Dihexa', en: 'Dihexa' },
+  mots_c: { pt: 'MOTS-c', en: 'MOTS-c' },
   // Legacy types (for existing records)
   hormone_check: { pt: 'Av. Hormonal', en: 'Hormone Check' },
   lab_review: { pt: 'Rev. Exames', en: 'Lab Review' },
