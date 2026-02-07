@@ -77,4 +77,7 @@ frontend/.playwright-mcp/
 !frontend/public/*.png
 !frontend/src/**/*.png
 
+# Brand assets (originais no Google Drive)
+*.pdf
+
 # Local folders (removido Servidor/ para versionar)
