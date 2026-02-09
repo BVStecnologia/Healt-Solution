@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { theme } from '../../styles/GlobalStyle';
 import { usePatientDocuments } from '../../hooks/usePatientDocuments';
 import { DocumentCard } from '../../components/patient/DocumentCard';
-import DocumentViewerModal from '../../components/DocumentViewerModal';
+import DocumentViewerModal from '../../components/ui/DocumentViewerModal';
 import { PatientDocument } from '../../types/documents';
 import { FileText, Filter } from 'lucide-react';
 import Layout from '../../components/Layout';

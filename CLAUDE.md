@@ -102,15 +102,26 @@ ssh clinica-vps "cd /root/Clinica && docker compose up -d"
 ### Estrutura do Projeto
 ```
 Clinica/
-├── docker-compose.yml      # Compose unificado (Supabase + Evolution)
+├── CLAUDE.md               # Arquitetura completa (este arquivo)
 ├── .env                    # Variáveis ativas (não commitar)
-├── .env.local              # Template dev
+├── .env.example            # Template público
 ├── .env.production         # Template produção
 ├── frontend/               # React app
 ├── supabase/               # Configs e migrations
-├── scripts/                # migrate.sh
-└── docs/                   # Documentação
+├── webhook/                # Bot WhatsApp (Express + cron)
+├── evolution/              # Config Evolution API
+├── scripts/                # migrate.sh, backup.sh
+├── nginx/                  # Config Nginx VPS
+├── docs/                   # Documentação, referências, manual da marca
+└── Servidor/               # Espelho do estado VPS
 ```
+
+### Regras de Organização (OBRIGATÓRIO)
+- **Raiz limpa:** Na raiz só ficam: CLAUDE.md, .env*, .gitignore, e as pastas do projeto. NENHUM arquivo avulso (PDFs, HTMLs, imagens, YMLs de referência)
+- **Pastas temporárias:** Deletar `.playwright-mcp/`, `.claude-images/`, `.clipshot/` após uso
+- **Componentes:** Componentes reutilizáveis vão em `components/ui/`. Componentes de domínio vão na subpasta do domínio (`admin/`, `patient/`, `scheduling/`, `doctor/`). NADA solto na raiz de `components/` exceto Layout, ProtectedRoute, LanguageSwitcher, LoadingSpinner
+- **Documentos/referências:** PDFs, YMLs de referência, manuais → `docs/`
+- **Migrações:** Numeração sequencial SEM conflitos (nunca dois arquivos com mesmo número)
 
 ### Estrutura de Diretórios
 ```
@@ -141,10 +152,10 @@ frontend/src/
 │   ├── adminService.ts     # Serviços administrativos
 │   └── whatsappService.ts  # Envio de mensagens WhatsApp
 ├── pages/
+│   ├── auth/               # LoginPage, RegisterPage
 │   ├── admin/              # Painel Admin (ver seção Rotas)
+│   ├── patient/            # ProfilePage, SettingsPage, PatientDocumentsPage
 │   ├── scheduling/         # Agendamento do paciente
-│   ├── LoginPage.tsx
-│   ├── RegisterPage.tsx
 │   └── Dashboard.tsx
 ├── styles/
 │   └── GlobalStyle.ts      # Theme + cores + tipografia
@@ -400,6 +411,10 @@ CREATE TABLE schema_migrations (
 | 014 | message_retry | retry_count e last_retry_at no message_logs + índice para retry |
 | 015 | add_enum_values | Novos valores nos ENUMs appointment_type (16) e patient_type (4) |
 | 016 | treatment_types | Tabela treatment_types + fix duração no create_appointment + elegibilidade novos patient_types |
+| 017 | add_new_treatments_enum | Novos ENUMs: high_cortisol, iron_infusions, chelation_therapy + 8 peptide types |
+| 018 | new_treatments_data | Dados dos novos tratamentos na tabela treatment_types |
+| 019 | provider_view_patients | RLS para providers verem pacientes |
+| 020 | patient_documents | Tabela patient_documents + Storage bucket + RLS |
 
 ### Aplicar Migrações
 

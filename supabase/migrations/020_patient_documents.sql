@@ -1,4 +1,4 @@
--- Migration 017: Patient Documents
+-- Migration 020: Patient Documents
 -- Tabela para documentos do paciente (exames, receitas, planos, etc.)
 
 BEGIN;
@@ -105,7 +105,7 @@ CREATE POLICY "Admins can delete document files"
 
 -- Registro da migração
 INSERT INTO schema_migrations (version, name)
-VALUES ('017', 'patient_documents')
+VALUES ('020', 'patient_documents')
 ON CONFLICT (version) DO NOTHING;
 
 COMMIT;

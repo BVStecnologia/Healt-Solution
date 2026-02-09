@@ -51,7 +51,7 @@ import i18n from 'i18next';
 import { useAdminDocuments } from '../../hooks/admin/useAdminDocuments';
 import { DocumentCard } from '../../components/patient/DocumentCard';
 import DocumentUploadModal from '../../components/admin/DocumentUploadModal';
-import DocumentViewerModal from '../../components/DocumentViewerModal';
+import DocumentViewerModal from '../../components/ui/DocumentViewerModal';
 import { PatientDocument } from '../../types/documents';
 
 // ============================================

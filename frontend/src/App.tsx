@@ -9,8 +9,8 @@ import LoadingSpinner from './components/LoadingSpinner';
 import LanguageSwitcher from './components/LanguageSwitcher';
 
 // Lazy loading das páginas - Portal do Paciente
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const AppointmentsPage = lazy(() => import('./pages/scheduling/AppointmentsPage'));
 const NewAppointmentPage = lazy(() => import('./pages/scheduling/NewAppointmentPage'));
