@@ -935,7 +935,7 @@ const ProfilePage: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file || !profile) return;
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       alert(t('profile.avatarTooLarge'));
       return;
     }
