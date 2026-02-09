@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { X, Download, ChevronLeft, ChevronRight, FileText, AlertCircle, Loader } from 'lucide-react';
-import { theme } from '../styles/GlobalStyle';
+import { theme } from '../../styles/GlobalStyle';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
