@@ -24,10 +24,32 @@
 | 11 | Confiabilidade WhatsApp (retry + monitoramento) | ✅ Completo | - |
 | 12 | Tratamentos reais do site (18 tipos + categorias) | ✅ Completo | - |
 | 13 | Brand Identity (manual da marca WABOO) | 🔄 Em progresso | ⬜ Active |
-| 14 | Upload de documentos/exames | 🔄 Em progresso | - |
-| 15 | IA/Chatbot WhatsApp | ❌ Pendente | - |
-| 16 | E-commerce (produtos) | ❌ Pendente | - |
-| 17 | Integrações externas (OptiMantra) | ❌ Pendente | - |
+| 14 | Deploy producao (dominio + SSL + Nginx) | ✅ Completo | - |
+| 15 | i18n completo (PT/EN/ES) | 🔄 Em progresso | - |
+| 16 | Analise OptiMantra (gap analysis) | ✅ Completo | - |
+
+### Proximas Fases (baseado na analise do OptiMantra)
+
+| # | Feature | Prioridade | Status |
+|---|---------|------------|--------|
+| 17 | Perfil completo do paciente (endereco, emergency, insurance) | 🔴 Alta | Pendente |
+| 18 | Servicos faltantes + precos (19 tipos novos do OptiMantra) | 🔴 Alta | Pendente |
+| 19 | Pagamento com cartao (Stripe POS) | 🔴 Alta | Pendente |
+| 20 | Superbill / Faturamento basico | 🔴 Alta | Pendente |
+| 21 | Telehealth (flag In-Office vs Telehealth) | 🟡 Media | Pendente |
+| 22 | Upload de documentos/exames | 🟡 Media | Em progresso |
+| 23 | Modulo de exames (labs) | 🟡 Media | Pendente |
+| 24 | Inventario (suplementos/meds - 73 itens) | 🟡 Media | Pendente |
+| 25 | Analytics / Relatorios financeiros | 🟡 Media | Pendente |
+| 26 | Email notifications (alem do WhatsApp) | 🟡 Media | Pendente |
+| 27 | Intake/Consent forms digitais | 🟡 Media | Pendente |
+| 28 | Chatbot IA WhatsApp | 🟢 Baixa | Pendente |
+| 29 | E-commerce (produtos/suplementos) | 🟢 Baixa | Pendente |
+| 30 | AI Scribe (Plaud → SOAP → OptiMantra) | 🟢 Baixa | Pendente |
+| 31 | Charting/EMR (SOAP notes) | 🟢 Baixa | Pendente |
+| 32 | SMS 2-way (Twilio) | 🟢 Baixa | Pendente |
+| 33 | Memberships/assinaturas | 🟢 Baixa | Pendente |
+| 34 | Nurturing sequences (follow-up 7/30/90 dias) | 🟢 Baixa | Pendente |
 
 ---
 
@@ -184,15 +206,15 @@
 
 ---
 
-## URLs de Produção
+## URLs de Producao
 
-| Serviço | URL |
+| Servico | URL |
 |---------|-----|
-| Frontend | http://217.216.81.92:3000 |
-| Supabase API | http://217.216.81.92:8000 |
-| Supabase Studio | http://217.216.81.92:3001 |
-| Evolution API | http://217.216.81.92:8082 |
+| **Frontend** | https://portal.essencemedicalclinic.com |
+| **Supabase API** | https://portal.essencemedicalclinic.com/rest/v1/ |
+| **Evolution API** | https://portal.essencemedicalclinic.com/evolution/ |
 | Portainer | http://217.216.81.92:9000 |
+| Supabase Studio | http://217.216.81.92:3001 (interno) |
 
 ---
 
@@ -211,38 +233,56 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 ---
 
-## Pendente (Fase 2+)
+## Dados Reais do OptiMantra (09/02/2026)
 
-| # | Feature | Prioridade | Depende de |
-|---|---------|------------|------------|
-| 1 | ~~Google OAuth na VPS~~ | ✅ Feito | nip.io (217-216-81-92.nip.io) |
-| 2 | Upload de documentos/exames | 🔄 Em progresso | Supabase Storage + DocumentViewerModal |
-| 3 | Tratamentos faltantes (Cortisol, Iron, Chelation, Peptides) | 🟡 Média | Confirmação do cliente |
-| 4 | Chatbot IA WhatsApp | 🟡 Média | Claude API + treinamento |
-| 5 | Sistema de pagamentos/depósitos | 🟡 Média | Stripe/Square |
-| 6 | E-commerce (produtos/suplementos) | 🟡 Média | Pagamentos + inventário |
-| 7 | Integração OptiMantra (EMR) | 🟡 Média | Automação browser (sem API disponível) |
-| 8 | AI Scribe (Plaud → SOAP → OptiMantra) | 🟡 Média | OptiMantra integration |
-| 9 | Domínio + SSL (HTTPS) | 🟡 Média | Cliente compra domínio |
-| 10 | Memberships/assinaturas | 🟢 Baixa | E-commerce + pagamentos |
-| 11 | Nurturing sequences (follow-up 7/30/90 dias) | 🟢 Baixa | Nada |
-| 12 | SMS/Email (Twilio + Resend) | 🟢 Baixa | Nada |
-| 13 | Relatórios e analytics | 🟢 Baixa | Nada |
-| 14 | Testes automatizados + CI/CD | 🟢 Baixa | Nada |
+> Analise completa em `docs/ANALISE_OPTIMANTRA.md`
+
+| Dado | Valor |
+|------|-------|
+| **Pacientes** | 1.138 |
+| **Servicos** | 65 (10 consultas, 21 procedimentos, 30 labs, 4 outros) |
+| **Inventario** | 73 itens (56 com estoque baixo) |
+| **Practitioners** | Rosane Nunes, MD + Registered Nurse |
+| **Faturamento diario** | ~$1,800/dia (cartao) |
+| **Gateway pagamento** | Configurado no OptiMantra (Fiserv/Stripe/Authorize.Net disponiveis) |
+| **Insurance** | Sim (pacientes com plano ex: OSCAR SILVER SIMPLE) |
+| **Telehealth** | Sim (In-Office + Telehealth) |
+| **Comunicacao** | SMS (99+), Email, Fax, Office Chat, Notifications (99+) |
+
+### Servicos do OptiMantra que NAO temos ainda:
+- Weight Loss Injection ($75), Male Pellet ($850), Female Pellet ($450)
+- Testosterone/Nandrolone Injection ($25-30), Tirzepatide ($300-375)
+- Inbody ($50), Calorimetry ($70), Nutritionist Consult ($120)
+- Mid-Level Consultation ($200), Office Visit generico ($125)
+- 5 tipos especificos de IV ($180-250 cada)
+- Morpheus8 Session ($1,000 - 120min)
+- 30+ exames laboratoriais individuais com precos
+
+### Campos do paciente que NAO temos:
+- Endereco completo (address, city, state, zip)
+- Emergency contact (name, phone, relation)
+- Sex at birth, Race, Ethnicity, Gender Identity, Pronoun
+- Preferred name, Middle name
+- Marital status, Occupation, Referred by
+- Insurance (plano, ID, copay, deductible)
+- Cartao de pagamento no arquivo
+- Patient notes (campo livre)
+- Primary Care Physician, Guardian
 
 ---
 
 ## Arquivos Importantes
 
-| Arquivo | Função |
+| Arquivo | Funcao |
 |---------|--------|
-| `CLAUDE.md` | Documentação técnica completa (arquitetura, DB, rotas, padrões) |
+| `CLAUDE.md` | Documentacao tecnica completa (arquitetura, DB, rotas, padroes) |
 | `docs/requisitos-cliente.md` | Requisitos originais do cliente (6 pilares) |
-| `docs/ANALISE_SISTEMA.md` | Análise completa: site + OptiMantra + gap analysis |
+| `docs/ANALISE_OPTIMANTRA.md` | **Analise detalhada do OptiMantra**: 65 servicos com precos, campos paciente, gap analysis |
+| `docs/ANALISE_SISTEMA.md` | Analise geral: site + OptiMantra + mapeamento 6 pilares |
 | `docs/DEPLOY.md` | Guia de deploy passo a passo |
-| `docs/WHATSAPP.md` | Arquitetura WhatsApp completa (médico + paciente) |
+| `docs/WHATSAPP.md` | Arquitetura WhatsApp completa (medico + paciente) |
 | `docs/PLANO_DE_TESTES.md` | 85 casos de teste organizados |
-| `Servidor/` | Espelho do estado de produção |
+| `Servidor/` | Espelho do estado de producao |
 
 ---
 
@@ -278,21 +318,28 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 | Agendar consultas (portal) | ✅ | 18 tipos reais do site, 5 categorias |
 | Histórico de consultas | ✅ | Completo com detalhes |
 | Brand identity | 🔄 | Satoshi, logos, linhas, login pages redesigned |
+| Deploy producao (dominio + SSL) | ✅ | portal.essencemedicalclinic.com + Let's Encrypt |
+| i18n (PT/EN) | 🔄 | Em progresso (ES removido - nao necessario) |
 | Upload de documentos | 🔄 | Em desenvolvimento (Supabase Storage + viewer modal) |
-| Gestão de depósitos | ❌ | Precisa Stripe/Square |
-| Recomendações personalizadas | ❌ | Plano pós-consulta |
-| E-commerce (produtos) | ❌ | Stripe + inventário |
-| Prescrições | ❌ | Integração OptiMantra/SureScripts |
-| Vendas/Upsells inteligentes | ❌ | Motor de recomendação por perfil |
-| Memberships/assinaturas | ❌ | Planos mensais |
-| AI Scribe (Plaud) | ❌ | Notas áudio → SOAP → OptiMantra |
-| Chatbot IA WhatsApp | ❌ | Claude API (temos menu interativo, não IA) |
-| Integração OptiMantra | ❌ | Sem API pública — automação browser |
+| Perfil completo paciente | ❌ | Endereco, insurance, emergency contact, notes |
+| Servicos faltantes + precos | ❌ | 19 tipos novos + campo price/cost |
+| Pagamento cartao (Stripe POS) | ❌ | ~$1,800/dia processado no OptiMantra |
+| Superbill / Faturamento | ❌ | Recibo por consulta |
+| Telehealth | ❌ | Flag In-Office vs Telehealth |
+| Modulo exames/labs | ❌ | 30+ exames individuais Labcorp |
+| Inventario | ❌ | 73 produtos (suplementos/meds) |
+| Analytics/Relatorios | ❌ | Dashboard financeiro |
+| Gestao de depositos | ❌ | Precisa Stripe |
+| E-commerce (produtos) | ❌ | Stripe + inventario |
+| Intake/Consent forms | ❌ | Formularios digitais pre-consulta |
+| Chatbot IA WhatsApp | ❌ | Claude API (temos menu interativo, nao IA) |
+| AI Scribe (Plaud) | ❌ | Notas audio → SOAP → OptiMantra |
 | SMS/Email | ❌ | Twilio + Resend planejados |
-| Nurturing sequences | ❌ | Follow-up 7/30/90 dias pós-consulta |
+| Memberships/assinaturas | ❌ | Planos mensais |
+| Nurturing sequences | ❌ | Follow-up 7/30/90 dias pos-consulta |
 
-> **Análise detalhada:** Ver `docs/ANALISE_SISTEMA.md` para mapeamento completo dos 6 pilares do cliente
+> **Analise detalhada:** Ver `docs/ANALISE_OPTIMANTRA.md` para servicos, precos e campos completos do OptiMantra
 
 ---
 
-*Atualizado: 07/02/2026 (v4 - Tratamentos, Brand Identity, Análise Sistema)*
+*Atualizado: 09/02/2026 (v5 - Deploy producao, Analise OptiMantra, Gap Analysis)*

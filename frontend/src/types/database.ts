@@ -53,6 +53,29 @@ export interface Profile {
   no_show_count: number;
   created_at: string;
   updated_at: string;
+  // Extended profile fields (migration 021)
+  preferred_name: string | null;
+  date_of_birth: string | null;
+  sex_at_birth: string | null;
+  gender_identity: string | null;
+  pronoun: string | null;
+  race: string | null;
+  ethnicity: string | null;
+  marital_status: string | null;
+  occupation: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
+  country: string | null;
+  alternative_phone: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  emergency_contact_relation: string | null;
+  referred_by: string | null;
+  primary_care_physician: string | null;
+  patient_notes: string | null;
 }
 
 export interface Provider {
@@ -116,6 +139,28 @@ export type Database = {
           labs_completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          preferred_name?: string | null;
+          date_of_birth?: string | null;
+          sex_at_birth?: string | null;
+          gender_identity?: string | null;
+          pronoun?: string | null;
+          race?: string | null;
+          ethnicity?: string | null;
+          marital_status?: string | null;
+          occupation?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip_code?: string | null;
+          country?: string | null;
+          alternative_phone?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          emergency_contact_relation?: string | null;
+          referred_by?: string | null;
+          primary_care_physician?: string | null;
+          patient_notes?: string | null;
         };
         Update: {
           id?: string;
@@ -131,6 +176,28 @@ export type Database = {
           last_visit_at?: string | null;
           labs_completed_at?: string | null;
           updated_at?: string;
+          preferred_name?: string | null;
+          date_of_birth?: string | null;
+          sex_at_birth?: string | null;
+          gender_identity?: string | null;
+          pronoun?: string | null;
+          race?: string | null;
+          ethnicity?: string | null;
+          marital_status?: string | null;
+          occupation?: string | null;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip_code?: string | null;
+          country?: string | null;
+          alternative_phone?: string | null;
+          emergency_contact_name?: string | null;
+          emergency_contact_phone?: string | null;
+          emergency_contact_relation?: string | null;
+          referred_by?: string | null;
+          primary_care_physician?: string | null;
+          patient_notes?: string | null;
         };
         Relationships: [];
       };

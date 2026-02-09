@@ -18,6 +18,8 @@ import {
   X,
   Save,
   Camera,
+  MapPin,
+  UserCheck,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import Layout from '../../components/Layout';
@@ -533,11 +535,14 @@ const ModalContainer = styled.div`
   background: ${theme.colors.surface};
   border-radius: 24px;
   width: 100%;
-  max-width: 520px;
+  max-width: 640px;
+  max-height: 90vh;
   box-shadow: ${theme.shadows.xl};
   overflow: hidden;
   animation: ${slideIn} 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   &::before {
     content: '';
@@ -549,6 +554,7 @@ const ModalContainer = styled.div`
     background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight}, ${theme.colors.primary});
     background-size: 200% 100%;
     animation: ${shimmer} 3s linear infinite;
+    z-index: 1;
   }
 `;
 
@@ -604,6 +610,8 @@ const CloseButton = styled.button`
 
 const ModalBody = styled.div`
   padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
 `;
 
 const FormGrid = styled.div`
@@ -655,6 +663,54 @@ const FormInput = styled.input`
     background: ${theme.colors.background};
     color: ${theme.colors.textSecondary};
     cursor: not-allowed;
+  }
+`;
+
+const FormSelect = styled.select`
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 12px;
+  font-size: 15px;
+  color: ${theme.colors.text};
+  background: ${theme.colors.surface};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238C8B8B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primaryA40};
+  }
+`;
+
+const ProfileSectionDivider = styled.div`
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${theme.colors.borderLight};
+  }
+
+  span {
+    font-size: 11px;
+    font-weight: 600;
+    color: ${theme.colors.primary};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
   }
 `;
 
@@ -820,9 +876,10 @@ const ProfilePage: React.FC = () => {
   // Edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    first_name: '',
-    last_name: '',
-    phone: '',
+    first_name: '', last_name: '', preferred_name: '', phone: '', alternative_phone: '',
+    date_of_birth: '', sex_at_birth: '', pronoun: '', occupation: '',
+    address_line1: '', address_line2: '', city: '', state: '', zip_code: '',
+    emergency_contact_name: '', emergency_contact_phone: '', emergency_contact_relation: '',
   });
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -893,7 +950,21 @@ const ProfilePage: React.FC = () => {
       setEditForm({
         first_name: profile.first_name,
         last_name: profile.last_name,
+        preferred_name: profile.preferred_name || '',
         phone: profile.phone || '',
+        alternative_phone: profile.alternative_phone || '',
+        date_of_birth: profile.date_of_birth || '',
+        sex_at_birth: profile.sex_at_birth || '',
+        pronoun: profile.pronoun || '',
+        occupation: profile.occupation || '',
+        address_line1: profile.address_line1 || '',
+        address_line2: profile.address_line2 || '',
+        city: profile.city || '',
+        state: profile.state || '',
+        zip_code: profile.zip_code || '',
+        emergency_contact_name: profile.emergency_contact_name || '',
+        emergency_contact_phone: profile.emergency_contact_phone || '',
+        emergency_contact_relation: profile.emergency_contact_relation || '',
       });
       setSaveSuccess(false);
       setIsEditModalOpen(true);
@@ -914,7 +985,21 @@ const ProfilePage: React.FC = () => {
         .update({
           first_name: editForm.first_name,
           last_name: editForm.last_name,
+          preferred_name: editForm.preferred_name || null,
           phone: editForm.phone || null,
+          alternative_phone: editForm.alternative_phone || null,
+          date_of_birth: editForm.date_of_birth || null,
+          sex_at_birth: editForm.sex_at_birth || null,
+          pronoun: editForm.pronoun || null,
+          occupation: editForm.occupation || null,
+          address_line1: editForm.address_line1 || null,
+          address_line2: editForm.address_line2 || null,
+          city: editForm.city || null,
+          state: editForm.state || null,
+          zip_code: editForm.zip_code || null,
+          emergency_contact_name: editForm.emergency_contact_name || null,
+          emergency_contact_phone: editForm.emergency_contact_phone || null,
+          emergency_contact_relation: editForm.emergency_contact_relation || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', profile.id);
@@ -1075,7 +1160,7 @@ const ProfilePage: React.FC = () => {
             <InfoGrid>
               <InfoItem>
                 <InfoLabel>{t('profile.fullName')}</InfoLabel>
-                <InfoValue>{profile.first_name} {profile.last_name}</InfoValue>
+                <InfoValue>{profile.first_name} {profile.last_name}{profile.preferred_name ? ` (${profile.preferred_name})` : ''}</InfoValue>
               </InfoItem>
               <InfoItem>
                 <InfoLabel>{t('profile.email')}</InfoLabel>
@@ -1086,8 +1171,16 @@ const ProfilePage: React.FC = () => {
                 <InfoValue>{profile.phone || '-'}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>{t('profile.preferredLanguage')}</InfoLabel>
-                <InfoValue>{profile.preferred_language === 'en' ? 'English' : 'Português'}</InfoValue>
+                <InfoLabel>{t('profile.dateOfBirth')}</InfoLabel>
+                <InfoValue>{profile.date_of_birth ? formatDate(profile.date_of_birth) : '-'}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>{t('profile.sexAtBirth')}</InfoLabel>
+                <InfoValue>{profile.sex_at_birth || '-'}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>{t('profile.pronoun')}</InfoLabel>
+                <InfoValue>{profile.pronoun || '-'}</InfoValue>
               </InfoItem>
             </InfoGrid>
           </Card>
@@ -1115,6 +1208,56 @@ const ProfilePage: React.FC = () => {
               <InfoItem>
                 <InfoLabel>{t('profile.registeredAt')}</InfoLabel>
                 <InfoValue>{formatDate(profile.created_at)}</InfoValue>
+              </InfoItem>
+            </InfoGrid>
+          </Card>
+
+          <Card $delay={520} $borderColor="#C4836A">
+            <CardHeader>
+              <CardTitle>
+                <MapPin />
+                {t('profile.address')}
+              </CardTitle>
+            </CardHeader>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>{t('profile.addressLine1')}</InfoLabel>
+                <InfoValue>{profile.address_line1 || '-'}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>{t('profile.city')} / {t('profile.state')}</InfoLabel>
+                <InfoValue>
+                  {profile.city || profile.state
+                    ? `${profile.city || ''}${profile.city && profile.state ? ', ' : ''}${profile.state || ''} ${profile.zip_code || ''}`
+                    : '-'}
+                </InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>{t('profile.alternativePhone')}</InfoLabel>
+                <InfoValue>{profile.alternative_phone || '-'}</InfoValue>
+              </InfoItem>
+            </InfoGrid>
+          </Card>
+
+          <Card $delay={540} $borderColor="#D4A574">
+            <CardHeader>
+              <CardTitle>
+                <UserCheck />
+                {t('profile.emergencyContact')}
+              </CardTitle>
+            </CardHeader>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>{t('profile.emergencyContactName')}</InfoLabel>
+                <InfoValue>{profile.emergency_contact_name || '-'}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>{t('profile.emergencyContactPhone')}</InfoLabel>
+                <InfoValue>{profile.emergency_contact_phone || '-'}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>{t('profile.emergencyContactRelation')}</InfoLabel>
+                <InfoValue>{profile.emergency_contact_relation || '-'}</InfoValue>
               </InfoItem>
             </InfoGrid>
           </Card>
@@ -1219,43 +1362,153 @@ const ProfilePage: React.FC = () => {
               )}
 
               <FormGrid>
+                {/* Personal */}
+                <ProfileSectionDivider><span>{t('profile.personalData')}</span></ProfileSectionDivider>
                 <FormGroup>
-                  <FormLabel>{t('profile.firstName')}</FormLabel>
+                  <FormLabel>{t('profile.firstName')} *</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.first_name}
                     onChange={e => setEditForm(prev => ({ ...prev, first_name: e.target.value }))}
-                    placeholder={t('profile.firstName')}
                   />
                 </FormGroup>
-
                 <FormGroup>
-                  <FormLabel>{t('profile.lastName')}</FormLabel>
+                  <FormLabel>{t('profile.lastName')} *</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.last_name}
                     onChange={e => setEditForm(prev => ({ ...prev, last_name: e.target.value }))}
-                    placeholder={t('profile.lastName')}
                   />
                 </FormGroup>
-
                 <FormGroup $fullWidth>
-                  <FormLabel>{t('profile.email')}</FormLabel>
+                  <FormLabel>{t('profile.preferredName')}</FormLabel>
                   <FormInput
-                    type="email"
-                    value={profile?.email || ''}
-                    disabled
-                    placeholder={t('profile.emailReadonly')}
+                    type="text"
+                    value={editForm.preferred_name}
+                    onChange={e => setEditForm(prev => ({ ...prev, preferred_name: e.target.value }))}
                   />
                 </FormGroup>
-
-                <FormGroup $fullWidth>
+                <FormGroup>
                   <FormLabel>{t('profile.phone')}</FormLabel>
                   <FormInput
                     type="tel"
                     value={editForm.phone}
                     onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
                     placeholder={t('profile.phonePlaceholder')}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('profile.alternativePhone')}</FormLabel>
+                  <FormInput
+                    type="tel"
+                    value={editForm.alternative_phone}
+                    onChange={e => setEditForm(prev => ({ ...prev, alternative_phone: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('profile.dateOfBirth')}</FormLabel>
+                  <FormInput
+                    type="date"
+                    value={editForm.date_of_birth}
+                    onChange={e => setEditForm(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('profile.sexAtBirth')}</FormLabel>
+                  <FormSelect
+                    value={editForm.sex_at_birth}
+                    onChange={e => setEditForm(prev => ({ ...prev, sex_at_birth: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    <option value="male">{t('patient.sexMale')}</option>
+                    <option value="female">{t('patient.sexFemale')}</option>
+                    <option value="intersex">{t('patient.sexIntersex')}</option>
+                    <option value="prefer_not">{t('patient.sexPreferNot')}</option>
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('profile.pronoun')}</FormLabel>
+                  <FormSelect
+                    value={editForm.pronoun}
+                    onChange={e => setEditForm(prev => ({ ...prev, pronoun: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    <option value="he/him">he/him</option>
+                    <option value="she/her">she/her</option>
+                    <option value="they/them">they/them</option>
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup $fullWidth>
+                  <FormLabel>{t('profile.occupation')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.occupation}
+                    onChange={e => setEditForm(prev => ({ ...prev, occupation: e.target.value }))}
+                  />
+                </FormGroup>
+
+                {/* Address */}
+                <ProfileSectionDivider><span>{t('profile.address')}</span></ProfileSectionDivider>
+                <FormGroup $fullWidth>
+                  <FormLabel>{t('profile.addressLine1')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.address_line1}
+                    onChange={e => setEditForm(prev => ({ ...prev, address_line1: e.target.value }))}
+                    placeholder="2000 NE 44th ST, Suite 101B"
+                  />
+                </FormGroup>
+                <FormGroup $fullWidth>
+                  <FormLabel>{t('profile.addressLine2')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.address_line2}
+                    onChange={e => setEditForm(prev => ({ ...prev, address_line2: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('profile.city')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.city}
+                    onChange={e => setEditForm(prev => ({ ...prev, city: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('profile.state')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.state}
+                    onChange={e => setEditForm(prev => ({ ...prev, state: e.target.value }))}
+                    placeholder="FL"
+                  />
+                </FormGroup>
+
+                {/* Emergency Contact */}
+                <ProfileSectionDivider><span>{t('profile.emergencyContact')}</span></ProfileSectionDivider>
+                <FormGroup>
+                  <FormLabel>{t('profile.emergencyContactName')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.emergency_contact_name}
+                    onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_name: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('profile.emergencyContactPhone')}</FormLabel>
+                  <FormInput
+                    type="tel"
+                    value={editForm.emergency_contact_phone}
+                    onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_phone: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup $fullWidth>
+                  <FormLabel>{t('profile.emergencyContactRelation')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.emergency_contact_relation}
+                    onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_relation: e.target.value }))}
+                    placeholder="Spouse, Parent, Sibling..."
                   />
                 </FormGroup>
               </FormGrid>

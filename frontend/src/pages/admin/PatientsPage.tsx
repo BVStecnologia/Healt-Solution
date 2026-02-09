@@ -845,7 +845,8 @@ const PatientsPage: React.FC = () => {
     phone: '',
     password: '',
     patient_type: 'new' as PatientType,
-    preferred_language: 'pt' as PreferredLanguage
+    preferred_language: 'pt' as PreferredLanguage,
+    date_of_birth: '',
   });
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -906,7 +907,8 @@ const PatientsPage: React.FC = () => {
         phone: patient.phone || '',
         password: '',
         patient_type: patient.patient_type || 'general',
-        preferred_language: patient.preferred_language || 'pt'
+        preferred_language: patient.preferred_language || 'pt',
+        date_of_birth: patient.date_of_birth || '',
       });
     } else {
       setEditingPatient(null);
@@ -917,7 +919,8 @@ const PatientsPage: React.FC = () => {
         phone: '',
         password: '',
         patient_type: 'new',
-        preferred_language: 'pt'
+        preferred_language: 'pt',
+        date_of_birth: '',
       });
     }
     setError('');
@@ -935,7 +938,8 @@ const PatientsPage: React.FC = () => {
       phone: '',
       password: '',
       patient_type: 'new',
-      preferred_language: 'pt'
+      preferred_language: 'pt',
+      date_of_birth: '',
     });
     setError('');
     setSuccess('');
@@ -964,6 +968,7 @@ const PatientsPage: React.FC = () => {
             phone: formData.phone || null,
             patient_type: formData.patient_type,
             preferred_language: formData.preferred_language,
+            date_of_birth: formData.date_of_birth || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingPatient.id);
@@ -1043,6 +1048,7 @@ const PatientsPage: React.FC = () => {
               role: 'patient',
               patient_type: formData.patient_type,
               preferred_language: formData.preferred_language,
+              date_of_birth: formData.date_of_birth || null,
             });
 
           // Restaurar sessão do admin após criar o paciente
@@ -1389,6 +1395,15 @@ const PatientsPage: React.FC = () => {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="(11) 99999-9999"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <label>{t('patients.dateOfBirth')}</label>
+                  <FormInput
+                    type="date"
+                    value={formData.date_of_birth}
+                    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
                   />
                 </FormGroup>
 

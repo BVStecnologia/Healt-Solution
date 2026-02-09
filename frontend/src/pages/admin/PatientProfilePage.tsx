@@ -34,6 +34,9 @@ import {
   CalendarCheck,
   AlertTriangle,
   Globe,
+  MapPin,
+  UserCheck,
+  BookOpen,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -611,11 +614,14 @@ const ModalContainer = styled.div`
   background: ${theme.colors.surface};
   border-radius: ${theme.borderRadius.xl};
   width: 100%;
-  max-width: 520px;
+  max-width: 720px;
+  max-height: 90vh;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   animation: ${slideIn} 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   &::before {
     content: '';
@@ -623,6 +629,7 @@ const ModalContainer = styled.div`
     top: 0; left: 0; right: 0;
     height: 3px;
     background: linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primaryLight});
+    z-index: 1;
   }
 `;
 
@@ -670,12 +677,18 @@ const CloseBtn = styled.button`
 
 const ModalBody = styled.div`
   padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
 `;
 
 const FormGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
 
   @media (max-width: 500px) {
     grid-template-columns: 1fr;
@@ -740,6 +753,51 @@ const FormSelect = styled.select`
     outline: none;
     border-color: ${theme.colors.primary};
     box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+`;
+
+const FormTextarea = styled.textarea`
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.borderRadius.md};
+  font-size: 14px;
+  color: ${theme.colors.text};
+  background: white;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.primary};
+    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+  }
+`;
+
+const SectionDivider = styled.div`
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${theme.colors.borderLight};
+  }
+
+  span {
+    font-size: 11px;
+    font-weight: 600;
+    color: ${theme.colors.primary};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
   }
 `;
 
@@ -892,9 +950,14 @@ const PatientProfilePage: React.FC = () => {
   // Edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({
-    first_name: '', last_name: '', phone: '',
+    first_name: '', last_name: '', preferred_name: '', phone: '', alternative_phone: '',
     patient_type: 'general' as PatientType,
     preferred_language: 'pt' as 'pt' | 'en',
+    date_of_birth: '', sex_at_birth: '', gender_identity: '', pronoun: '',
+    race: '', ethnicity: '', marital_status: '', occupation: '',
+    address_line1: '', address_line2: '', city: '', state: '', zip_code: '', country: 'US',
+    emergency_contact_name: '', emergency_contact_phone: '', emergency_contact_relation: '',
+    referred_by: '', primary_care_physician: '', patient_notes: '',
   });
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -1018,9 +1081,31 @@ const PatientProfilePage: React.FC = () => {
       setEditForm({
         first_name: patient.first_name,
         last_name: patient.last_name,
+        preferred_name: patient.preferred_name || '',
         phone: patient.phone || '',
+        alternative_phone: patient.alternative_phone || '',
         patient_type: patient.patient_type || 'general',
         preferred_language: patient.preferred_language || 'pt',
+        date_of_birth: patient.date_of_birth || '',
+        sex_at_birth: patient.sex_at_birth || '',
+        gender_identity: patient.gender_identity || '',
+        pronoun: patient.pronoun || '',
+        race: patient.race || '',
+        ethnicity: patient.ethnicity || '',
+        marital_status: patient.marital_status || '',
+        occupation: patient.occupation || '',
+        address_line1: patient.address_line1 || '',
+        address_line2: patient.address_line2 || '',
+        city: patient.city || '',
+        state: patient.state || '',
+        zip_code: patient.zip_code || '',
+        country: patient.country || 'US',
+        emergency_contact_name: patient.emergency_contact_name || '',
+        emergency_contact_phone: patient.emergency_contact_phone || '',
+        emergency_contact_relation: patient.emergency_contact_relation || '',
+        referred_by: patient.referred_by || '',
+        primary_care_physician: patient.primary_care_physician || '',
+        patient_notes: patient.patient_notes || '',
       });
       setSaveSuccess(false);
       setIsEditModalOpen(true);
@@ -1036,29 +1121,45 @@ const PatientProfilePage: React.FC = () => {
     if (!patient) return;
     setSaving(true);
     try {
+      const updateData = {
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        preferred_name: editForm.preferred_name || null,
+        phone: editForm.phone || null,
+        alternative_phone: editForm.alternative_phone || null,
+        patient_type: editForm.patient_type,
+        preferred_language: editForm.preferred_language,
+        date_of_birth: editForm.date_of_birth || null,
+        sex_at_birth: editForm.sex_at_birth || null,
+        gender_identity: editForm.gender_identity || null,
+        pronoun: editForm.pronoun || null,
+        race: editForm.race || null,
+        ethnicity: editForm.ethnicity || null,
+        marital_status: editForm.marital_status || null,
+        occupation: editForm.occupation || null,
+        address_line1: editForm.address_line1 || null,
+        address_line2: editForm.address_line2 || null,
+        city: editForm.city || null,
+        state: editForm.state || null,
+        zip_code: editForm.zip_code || null,
+        country: editForm.country || null,
+        emergency_contact_name: editForm.emergency_contact_name || null,
+        emergency_contact_phone: editForm.emergency_contact_phone || null,
+        emergency_contact_relation: editForm.emergency_contact_relation || null,
+        referred_by: editForm.referred_by || null,
+        primary_care_physician: editForm.primary_care_physician || null,
+        patient_notes: editForm.patient_notes || null,
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          first_name: editForm.first_name,
-          last_name: editForm.last_name,
-          phone: editForm.phone || null,
-          patient_type: editForm.patient_type,
-          preferred_language: editForm.preferred_language,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', patient.id);
 
       if (error) throw error;
 
-      setPatient(prev => prev ? {
-        ...prev,
-        first_name: editForm.first_name,
-        last_name: editForm.last_name,
-        phone: editForm.phone || null,
-        patient_type: editForm.patient_type,
-        preferred_language: editForm.preferred_language,
-        updated_at: new Date().toISOString(),
-      } as Profile : null);
+      setPatient(prev => prev ? { ...prev, ...updateData } as Profile : null);
 
       setSaveSuccess(true);
       setTimeout(() => closeEditModal(), 1500);
@@ -1174,7 +1275,7 @@ const PatientProfilePage: React.FC = () => {
               <InfoGrid>
                 <InfoItem>
                   <InfoLabel>{t('patient.fullName')}</InfoLabel>
-                  <InfoValue>{patient.first_name} {patient.last_name}</InfoValue>
+                  <InfoValue>{patient.first_name} {patient.last_name}{patient.preferred_name ? ` (${patient.preferred_name})` : ''}</InfoValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>{t('patient.email')}</InfoLabel>
@@ -1185,12 +1286,24 @@ const PatientProfilePage: React.FC = () => {
                   <InfoValue>{patient.phone || '-'}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>{t('patient.patientType')}</InfoLabel>
-                  <InfoValue>{t('patientType.' + (patient.patient_type === 'iv_therapy' ? 'ivTherapy' : (patient.patient_type || 'general')))}</InfoValue>
+                  <InfoLabel>{t('patient.dateOfBirth')}</InfoLabel>
+                  <InfoValue>{patient.date_of_birth ? formatDate(patient.date_of_birth) : '-'}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>{t('patient.preferredLanguage')}</InfoLabel>
-                  <InfoValue>{patient.preferred_language === 'en' ? t('patient.languageEn') : t('patient.languagePt')}</InfoValue>
+                  <InfoLabel>{t('patient.sexAtBirth')}</InfoLabel>
+                  <InfoValue>{patient.sex_at_birth ? t(`patient.sex${patient.sex_at_birth.charAt(0).toUpperCase() + patient.sex_at_birth.slice(1)}` as any, patient.sex_at_birth) : '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.pronoun')}</InfoLabel>
+                  <InfoValue>{patient.pronoun || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.maritalStatus')}</InfoLabel>
+                  <InfoValue>{patient.marital_status || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.occupation')}</InfoLabel>
+                  <InfoValue>{patient.occupation || '-'}</InfoValue>
                 </InfoItem>
               </InfoGrid>
             </CardBody>
@@ -1202,6 +1315,14 @@ const PatientProfilePage: React.FC = () => {
             </CardHeader>
             <CardBody>
               <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>{t('patient.patientType')}</InfoLabel>
+                  <InfoValue>{t('patientType.' + (patient.patient_type === 'iv_therapy' ? 'ivTherapy' : (patient.patient_type || 'general')))}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.preferredLanguage')}</InfoLabel>
+                  <InfoValue>{patient.preferred_language === 'en' ? t('patient.languageEn') : t('patient.languagePt')}</InfoValue>
+                </InfoItem>
                 <InfoItem>
                   <InfoLabel>{t('patient.lastVisit')}</InfoLabel>
                   <InfoValue>{formatDate(patient.last_visit_at)}</InfoValue>
@@ -1220,6 +1341,76 @@ const PatientProfilePage: React.FC = () => {
                   <InfoLabel>{t('patient.registeredAt')}</InfoLabel>
                   <InfoValue>{formatDate(patient.created_at)}</InfoValue>
                 </InfoItem>
+              </InfoGrid>
+            </CardBody>
+          </Card>
+        </SectionGrid>
+
+        <SectionGrid>
+          <Card $delay={420}>
+            <CardHeader>
+              <CardTitle><MapPin /> {t('patient.addressContact')}</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>{t('patient.address')}</InfoLabel>
+                  <InfoValue>
+                    {patient.address_line1
+                      ? `${patient.address_line1}${patient.address_line2 ? `, ${patient.address_line2}` : ''}`
+                      : '-'}
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.city')} / {t('patient.state')}</InfoLabel>
+                  <InfoValue>
+                    {patient.city || patient.state
+                      ? `${patient.city || ''}${patient.city && patient.state ? ', ' : ''}${patient.state || ''} ${patient.zip_code || ''}`
+                      : '-'}
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.alternativePhone')}</InfoLabel>
+                  <InfoValue>{patient.alternative_phone || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.emergencyContact')}</InfoLabel>
+                  <InfoValue>
+                    {patient.emergency_contact_name
+                      ? `${patient.emergency_contact_name}${patient.emergency_contact_relation ? ` (${patient.emergency_contact_relation})` : ''}`
+                      : '-'}
+                  </InfoValue>
+                </InfoItem>
+                {patient.emergency_contact_phone && (
+                  <InfoItem>
+                    <InfoLabel>{t('patient.emergencyContactPhone')}</InfoLabel>
+                    <InfoValue>{patient.emergency_contact_phone}</InfoValue>
+                  </InfoItem>
+                )}
+              </InfoGrid>
+            </CardBody>
+          </Card>
+
+          <Card $delay={460}>
+            <CardHeader>
+              <CardTitle><BookOpen /> {t('patient.references')}</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>{t('patient.referredBy')}</InfoLabel>
+                  <InfoValue>{patient.referred_by || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.primaryCarePhysician')}</InfoLabel>
+                  <InfoValue>{patient.primary_care_physician || '-'}</InfoValue>
+                </InfoItem>
+                {patient.patient_notes && (
+                  <InfoItem style={{ gridColumn: '1 / -1' }}>
+                    <InfoLabel>{t('patient.patientNotes')}</InfoLabel>
+                    <InfoValue style={{ whiteSpace: 'pre-wrap' }}>{patient.patient_notes}</InfoValue>
+                  </InfoItem>
+                )}
               </InfoGrid>
             </CardBody>
           </Card>
@@ -1380,27 +1571,31 @@ const PatientProfilePage: React.FC = () => {
               )}
 
               <FormGrid>
+                {/* — Section: Personal — */}
+                <SectionDivider><span>{t('patient.sectionPersonal')}</span></SectionDivider>
                 <FormGroup>
-                  <FormLabel>{t('patients.firstName')}</FormLabel>
+                  <FormLabel>{t('patients.firstName')} *</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.first_name}
                     onChange={e => setEditForm(prev => ({ ...prev, first_name: e.target.value }))}
-                    placeholder={t('patients.firstName')}
                   />
                 </FormGroup>
                 <FormGroup>
-                  <FormLabel>{t('patients.lastName')}</FormLabel>
+                  <FormLabel>{t('patients.lastName')} *</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.last_name}
                     onChange={e => setEditForm(prev => ({ ...prev, last_name: e.target.value }))}
-                    placeholder={t('patients.lastName')}
                   />
                 </FormGroup>
-                <FormGroup $full>
-                  <FormLabel>{t('patients.email')}</FormLabel>
-                  <FormInput type="email" value={patient?.email || ''} disabled />
+                <FormGroup>
+                  <FormLabel>{t('patient.preferredName')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.preferred_name}
+                    onChange={e => setEditForm(prev => ({ ...prev, preferred_name: e.target.value }))}
+                  />
                 </FormGroup>
                 <FormGroup>
                   <FormLabel>{t('patients.phone')}</FormLabel>
@@ -1411,6 +1606,175 @@ const PatientProfilePage: React.FC = () => {
                     placeholder="+1 (954) 000-0000"
                   />
                 </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.alternativePhone')}</FormLabel>
+                  <FormInput
+                    type="tel"
+                    value={editForm.alternative_phone}
+                    onChange={e => setEditForm(prev => ({ ...prev, alternative_phone: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.dateOfBirth')}</FormLabel>
+                  <FormInput
+                    type="date"
+                    value={editForm.date_of_birth}
+                    onChange={e => setEditForm(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.sexAtBirth')}</FormLabel>
+                  <FormSelect
+                    value={editForm.sex_at_birth}
+                    onChange={e => setEditForm(prev => ({ ...prev, sex_at_birth: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    <option value="male">{t('patient.sexMale')}</option>
+                    <option value="female">{t('patient.sexFemale')}</option>
+                    <option value="intersex">{t('patient.sexIntersex')}</option>
+                    <option value="prefer_not">{t('patient.sexPreferNot')}</option>
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.pronoun')}</FormLabel>
+                  <FormSelect
+                    value={editForm.pronoun}
+                    onChange={e => setEditForm(prev => ({ ...prev, pronoun: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    <option value="he/him">he/him</option>
+                    <option value="she/her">she/her</option>
+                    <option value="they/them">they/them</option>
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.genderIdentity')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.gender_identity}
+                    onChange={e => setEditForm(prev => ({ ...prev, gender_identity: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.race')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.race}
+                    onChange={e => setEditForm(prev => ({ ...prev, race: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.ethnicity')}</FormLabel>
+                  <FormSelect
+                    value={editForm.ethnicity}
+                    onChange={e => setEditForm(prev => ({ ...prev, ethnicity: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    <option value="hispanic">{t('patient.ethnicityHispanic')}</option>
+                    <option value="not_hispanic">{t('patient.ethnicityNotHispanic')}</option>
+                    <option value="prefer_not">{t('patient.ethnicityPreferNot')}</option>
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.maritalStatus')}</FormLabel>
+                  <FormSelect
+                    value={editForm.marital_status}
+                    onChange={e => setEditForm(prev => ({ ...prev, marital_status: e.target.value }))}
+                  >
+                    <option value="">—</option>
+                    <option value="single">{t('patient.maritalSingle')}</option>
+                    <option value="married">{t('patient.maritalMarried')}</option>
+                    <option value="divorced">{t('patient.maritalDivorced')}</option>
+                    <option value="widowed">{t('patient.maritalWidowed')}</option>
+                    <option value="partnership">{t('patient.maritalPartnership')}</option>
+                    <option value="separated">{t('patient.maritalSeparated')}</option>
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.occupation')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.occupation}
+                    onChange={e => setEditForm(prev => ({ ...prev, occupation: e.target.value }))}
+                  />
+                </FormGroup>
+
+                {/* — Section: Address — */}
+                <SectionDivider><span>{t('patient.sectionAddress')}</span></SectionDivider>
+                <FormGroup $full>
+                  <FormLabel>{t('patient.addressLine1')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.address_line1}
+                    onChange={e => setEditForm(prev => ({ ...prev, address_line1: e.target.value }))}
+                    placeholder="2000 NE 44th ST, Suite 101B"
+                  />
+                </FormGroup>
+                <FormGroup $full>
+                  <FormLabel>{t('patient.addressLine2')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.address_line2}
+                    onChange={e => setEditForm(prev => ({ ...prev, address_line2: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.city')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.city}
+                    onChange={e => setEditForm(prev => ({ ...prev, city: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.state')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.state}
+                    onChange={e => setEditForm(prev => ({ ...prev, state: e.target.value }))}
+                    placeholder="FL"
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.zipCode')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.zip_code}
+                    onChange={e => setEditForm(prev => ({ ...prev, zip_code: e.target.value }))}
+                    placeholder="33308"
+                  />
+                </FormGroup>
+
+                {/* — Section: Emergency Contact — */}
+                <SectionDivider><span>{t('patient.sectionEmergency')}</span></SectionDivider>
+                <FormGroup>
+                  <FormLabel>{t('patient.emergencyContactName')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.emergency_contact_name}
+                    onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_name: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.emergencyContactPhone')}</FormLabel>
+                  <FormInput
+                    type="tel"
+                    value={editForm.emergency_contact_phone}
+                    onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_phone: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.emergencyContactRelation')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.emergency_contact_relation}
+                    onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_relation: e.target.value }))}
+                    placeholder="Spouse, Parent, Sibling..."
+                  />
+                </FormGroup>
+
+                {/* — Section: Admin & References — */}
+                <SectionDivider><span>{t('patient.sectionAdmin')}</span></SectionDivider>
                 <FormGroup>
                   <FormLabel>{t('patient.patientType')}</FormLabel>
                   <FormSelect
@@ -1431,6 +1795,30 @@ const PatientProfilePage: React.FC = () => {
                     <option value="pt">{t('patient.languagePt')}</option>
                     <option value="en">{t('patient.languageEn')}</option>
                   </FormSelect>
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.referredBy')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.referred_by}
+                    onChange={e => setEditForm(prev => ({ ...prev, referred_by: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup $full>
+                  <FormLabel>{t('patient.primaryCarePhysician')}</FormLabel>
+                  <FormInput
+                    type="text"
+                    value={editForm.primary_care_physician}
+                    onChange={e => setEditForm(prev => ({ ...prev, primary_care_physician: e.target.value }))}
+                  />
+                </FormGroup>
+                <FormGroup $full>
+                  <FormLabel>{t('patient.patientNotes')}</FormLabel>
+                  <FormTextarea
+                    value={editForm.patient_notes}
+                    onChange={e => setEditForm(prev => ({ ...prev, patient_notes: e.target.value }))}
+                    placeholder="Internal notes (admin only)..."
+                  />
                 </FormGroup>
               </FormGrid>
             </ModalBody>
