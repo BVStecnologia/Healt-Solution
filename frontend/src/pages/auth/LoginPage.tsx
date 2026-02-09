@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Leaf } from 'lucide-react';
-import { theme } from '../styles/GlobalStyle';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import { supabase } from '../lib/supabaseClient';
-import EssenceLogo from '../components/ui/EssenceLogo';
+import { theme } from '../../styles/GlobalStyle';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { supabase } from '../../lib/supabaseClient';
+import EssenceLogo from '../../components/ui/EssenceLogo';
 
 /* ═══════════════════════════════
    ANIMATIONS

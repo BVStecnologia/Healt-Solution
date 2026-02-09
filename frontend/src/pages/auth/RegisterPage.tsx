@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, CheckCircle, UserPlus } from 'lucide-react';
-import { theme } from '../styles/GlobalStyle';
-import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import EssenceLogo from '../components/ui/EssenceLogo';
+import { theme } from '../../styles/GlobalStyle';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import EssenceLogo from '../../components/ui/EssenceLogo';
 
 /* ═══════════════════════════════
    ANIMATIONS
