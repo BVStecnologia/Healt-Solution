@@ -940,6 +940,17 @@ const PatientProfilePage: React.FC = () => {
     return statusKeyMap[status] ? t(statusKeyMap[status]) : status;
   };
 
+  const getSelectLabel = (field: string, value: string | null | undefined): string => {
+    if (!value) return '-';
+    const keyMap: Record<string, Record<string, string>> = {
+      sex_at_birth: { male: 'patient.sexMale', female: 'patient.sexFemale', intersex: 'patient.sexIntersex', prefer_not: 'patient.sexPreferNot' },
+      marital_status: { single: 'patient.maritalSingle', married: 'patient.maritalMarried', divorced: 'patient.maritalDivorced', widowed: 'patient.maritalWidowed', partnership: 'patient.maritalPartnership', separated: 'patient.maritalSeparated' },
+      ethnicity: { hispanic: 'patient.ethnicityHispanic', not_hispanic: 'patient.ethnicityNotHispanic', prefer_not: 'patient.ethnicityPreferNot' },
+    };
+    const key = keyMap[field]?.[value];
+    return key ? t(key as any) : value;
+  };
+
   const handleBack = () => goBack('/admin/patients');
 
   const [patient, setPatient] = useState<Profile | null>(null);
@@ -1291,7 +1302,7 @@ const PatientProfilePage: React.FC = () => {
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>{t('patient.sexAtBirth')}</InfoLabel>
-                  <InfoValue>{patient.sex_at_birth ? t(`patient.sex${patient.sex_at_birth.charAt(0).toUpperCase() + patient.sex_at_birth.slice(1)}` as any, patient.sex_at_birth) : '-'}</InfoValue>
+                  <InfoValue>{getSelectLabel('sex_at_birth', patient.sex_at_birth)}</InfoValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>{t('patient.pronoun')}</InfoLabel>
@@ -1299,7 +1310,7 @@ const PatientProfilePage: React.FC = () => {
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>{t('patient.maritalStatus')}</InfoLabel>
-                  <InfoValue>{patient.marital_status || '-'}</InfoValue>
+                  <InfoValue>{getSelectLabel('marital_status', patient.marital_status)}</InfoValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>{t('patient.occupation')}</InfoLabel>

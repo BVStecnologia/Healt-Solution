@@ -869,6 +869,16 @@ const ProfilePage: React.FC = () => {
     return statusMap[status] || status;
   };
 
+  const getSelectLabel = (field: string, value: string | null | undefined): string => {
+    if (!value) return '-';
+    const keyMap: Record<string, Record<string, string>> = {
+      sex_at_birth: { male: 'patient.sexMale', female: 'patient.sexFemale', intersex: 'patient.sexIntersex', prefer_not: 'patient.sexPreferNot' },
+      marital_status: { single: 'patient.maritalSingle', married: 'patient.maritalMarried', divorced: 'patient.maritalDivorced', widowed: 'patient.maritalWidowed', partnership: 'patient.maritalPartnership', separated: 'patient.maritalSeparated' },
+    };
+    const key = keyMap[field]?.[value];
+    return key ? t(key as any) : value;
+  };
+
   const [appointments, setAppointments] = useState<AppointmentWithProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, completed: 0, upcoming: 0 });
@@ -1176,7 +1186,7 @@ const ProfilePage: React.FC = () => {
               </InfoItem>
               <InfoItem>
                 <InfoLabel>{t('profile.sexAtBirth')}</InfoLabel>
-                <InfoValue>{profile.sex_at_birth || '-'}</InfoValue>
+                <InfoValue>{getSelectLabel('sex_at_birth', profile.sex_at_birth)}</InfoValue>
               </InfoItem>
               <InfoItem>
                 <InfoLabel>{t('profile.pronoun')}</InfoLabel>
