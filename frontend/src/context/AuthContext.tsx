@@ -110,8 +110,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
-      // Atualizar avatar_url do Google OAuth se disponível e diferente
-      if (user?.user_metadata?.avatar_url && data.avatar_url !== user.user_metadata.avatar_url) {
+      // Atualizar avatar_url do Google OAuth somente se o perfil ainda não tiver avatar
+      if (user?.user_metadata?.avatar_url && !data.avatar_url) {
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ avatar_url: user.user_metadata.avatar_url })
