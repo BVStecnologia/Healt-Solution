@@ -23,7 +23,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import {
   DndContext,
   DragOverlay,
@@ -1372,7 +1372,7 @@ const ProviderFilterSelect = styled.select`
 `;
 
 const AdminAppointmentsPage: React.FC = () => {
-  const navigate = useNavigate();
+  const { navigateTo } = useSmartNavigation();
   const { providerId, isProvider, isAdmin } = useCurrentProvider();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1940,7 +1940,7 @@ const AdminAppointmentsPage: React.FC = () => {
                               getInitials={getInitials}
                               onApprove={handleApprove}
                               onReject={handleReject}
-                              onViewProfile={(id) => navigate(`/admin/patients/${id}`, { state: { from: '/admin/appointments' } })}
+                              onViewProfile={(id) => navigateTo(`/admin/patients/${id}`)}
                               processingId={processingId}
                             />
                           ))

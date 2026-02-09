@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { AppointmentType, ProviderBlock } from '../../types/database';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import HelpTip from '../../components/ui/HelpTip';
@@ -1591,6 +1592,7 @@ interface ProviderOption {
 const CalendarPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { navigateTo } = useSmartNavigation();
   const { providerId, isProvider, isAdmin } = useCurrentProvider();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -2025,7 +2027,7 @@ const CalendarPage: React.FC = () => {
   const handleViewPatient = () => {
     if (selectedEvent?.patientId) {
       closeModal();
-      navigate(`/admin/patients/${selectedEvent.patientId}`, { state: { from: '/admin/calendar' } });
+      navigateTo(`/admin/patients/${selectedEvent.patientId}`);
     }
   };
 

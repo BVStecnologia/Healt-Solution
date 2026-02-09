@@ -32,6 +32,7 @@ import {
   Bar,
 } from 'recharts';
 import { useLocation } from 'react-router-dom';
+import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
@@ -427,6 +428,7 @@ const PendingItem = styled.div`
   border-radius: 14px;
   transition: all 0.25s ease;
   border: 1px solid transparent;
+  cursor: pointer;
 
   &:hover {
     background: ${luxuryColors.beige};
@@ -716,9 +718,11 @@ const TodayItem = styled.div`
   background: ${luxuryColors.beigeLight};
   border-radius: 12px;
   transition: all 0.2s ease;
+  cursor: pointer;
 
   &:hover {
     background: ${luxuryColors.beige};
+    transform: translateX(4px);
   }
 `;
 
@@ -811,6 +815,7 @@ interface PendingAppointment {
 
 interface TodayAppointment {
   id: string;
+  patient_id: string;
   patient_name: string;
   time: string;
   type: string;
@@ -835,6 +840,7 @@ const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_
 // ============================================
 const AdminDashboard: React.FC = () => {
   const location = useLocation();
+  const { navigateTo } = useSmartNavigation();
   const { providerId, isProvider: isProviderRole, isAdmin: isAdminRole } = useCurrentProvider();
 
   // Detectar ambiente pela URL (environment switcher)
@@ -1041,6 +1047,7 @@ const AdminDashboard: React.FC = () => {
         .from('appointments')
         .select(`
           id,
+          patient_id,
           scheduled_at,
           type,
           status,
@@ -1061,6 +1068,7 @@ const AdminDashboard: React.FC = () => {
 
       const formatted = (data || []).map((apt: any) => ({
         id: apt.id,
+        patient_id: apt.patient_id,
         patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
         time: new Date(apt.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         type: apt.type,
@@ -1462,7 +1470,7 @@ const AdminDashboard: React.FC = () => {
             {pendingAppointments.length > 0 ? (
               <PendingList>
                 {pendingAppointments.map(apt => (
-                  <PendingItem key={apt.id}>
+                  <PendingItem key={apt.id} onClick={() => navigateTo(`/admin/patients/${apt.patient_id}`)}>
                     <PendingAvatar>
                       {getInitials(apt.patient_name)}
                     </PendingAvatar>
@@ -1478,7 +1486,7 @@ const AdminDashboard: React.FC = () => {
                     <PendingActions>
                       <ActionButton
                         $variant="approve"
-                        onClick={() => handleApprove(apt)}
+                        onClick={(e) => { e.stopPropagation(); handleApprove(apt); }}
                         title="Aprovar"
                         disabled={processingId === apt.id}
                       >
@@ -1486,7 +1494,7 @@ const AdminDashboard: React.FC = () => {
                       </ActionButton>
                       <ActionButton
                         $variant="reject"
-                        onClick={() => handleReject(apt)}
+                        onClick={(e) => { e.stopPropagation(); handleReject(apt); }}
                         title="Rejeitar"
                         disabled={processingId === apt.id}
                       >
@@ -1518,7 +1526,7 @@ const AdminDashboard: React.FC = () => {
             {todayAppointments.length > 0 ? (
               <TodayList>
                 {todayAppointments.map(apt => (
-                  <TodayItem key={apt.id}>
+                  <TodayItem key={apt.id} onClick={() => navigateTo(`/admin/patients/${apt.patient_id}`)}>
                     <TodayTime>{apt.time}</TodayTime>
                     <TodayInfo>
                       <div className="name">{apt.patient_name}</div>

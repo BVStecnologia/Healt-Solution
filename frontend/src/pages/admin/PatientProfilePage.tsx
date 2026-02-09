@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import {
   ArrowLeft,
   Edit3,
@@ -875,18 +876,9 @@ const PATIENT_TYPE_OPTIONS: { value: PatientType; label: string }[] = ACTIVE_PAT
 const PatientProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { goBack } = useSmartNavigation();
 
-  const handleBack = () => {
-    const from = (location.state as { from?: string })?.from;
-    if (from) {
-      navigate(from);
-    } else if (window.history.length > 2) {
-      navigate(-1);
-    } else {
-      navigate('/admin/patients');
-    }
-  };
+  const handleBack = () => goBack('/admin/patients');
 
   const [patient, setPatient] = useState<Profile | null>(null);
   const [appointments, setAppointments] = useState<AppointmentWithProvider[]>([]);

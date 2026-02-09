@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import {
   Users, UserPlus, Search, Edit2, Check, AlertCircle,
   Crown, Activity, Phone, Mail, ChevronLeft, ChevronRight, X,
@@ -827,7 +828,7 @@ const ITEMS_PER_PAGE = 8;
 // ============================================
 const PatientsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const { navigateTo } = useSmartNavigation();
   const [patients, setPatients] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -939,7 +940,7 @@ const PatientsPage: React.FC = () => {
   };
 
   const handleViewPatient = (patient: Profile) => {
-    navigate(`/admin/patients/${patient.id}`, { state: { from: '/admin/patients' } });
+    navigateTo(`/admin/patients/${patient.id}`);
   };
 
   const handleSave = async () => {
