@@ -389,7 +389,7 @@
   "profile.emailReadonly": "Email cannot be changed",
   "profile.phonePlaceholder": "+1 (555) 000-0000",
   "profile.dataSaved": "Data saved successfully!",
-  "profile.avatarTooLarge": "Image too large. Maximum 2MB.",
+  "profile.avatarTooLarge": "Image too large. Maximum 5MB.",
   "profile.avatarUploadError": "Error uploading image. Please try again.",
 
   "providers.title": "Providers",
