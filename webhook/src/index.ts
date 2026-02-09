@@ -206,59 +206,8 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
   }
 });
 
-// Auto-configure webhook on Evolution API instances
-async function setupEvolutionWebhooks(): Promise<void> {
-  const webhookUrl = `http://webhook-server:${config.port}${config.webhookPath}`;
-
-  try {
-    // Fetch connected instances
-    const response = await fetch(`${config.evolutionApiUrl}/instance/fetchInstances`, {
-      headers: { 'apikey': config.evolutionApiKey },
-    });
-
-    if (!response.ok) {
-      console.warn('[Setup] Could not fetch Evolution instances:', response.status);
-      return;
-    }
-
-    const instances = await response.json() as any[];
-
-    for (const inst of instances) {
-      const name = inst.instance?.instanceName || inst.instanceName || inst.name;
-      console.log(`[Setup] Found instance: ${name || 'UNKNOWN'}`, JSON.stringify(Object.keys(inst)));
-      if (!name) continue;
-
-      try {
-        const setResponse = await fetch(`${config.evolutionApiUrl}/webhook/set/${name}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': config.evolutionApiKey,
-          },
-          body: JSON.stringify({
-            webhook: {
-              enabled: true,
-              url: webhookUrl,
-              webhookByEvents: true,
-              events: ['MESSAGES_UPSERT'],
-            },
-          }),
-        });
-
-        if (setResponse.ok) {
-          console.log(`[Setup] Webhook configured for instance "${name}"`);
-        } else {
-          const body = await setResponse.text();
-          console.warn(`[Setup] Failed to set webhook for "${name}": ${setResponse.status} - ${body}`);
-        }
-      } catch (err) {
-        console.warn(`[Setup] Error setting webhook for "${name}":`, err);
-      }
-    }
-  } catch (error) {
-    console.warn('[Setup] Could not connect to Evolution API (will retry on next startup):', error);
-  }
-}
+// NOTE: Instance-level webhook removed — using global webhook from Evolution docker-compose
+// (WEBHOOK_GLOBAL_URL env var). This avoids duplicate message processing.
 
 // Start server
 app.listen(config.port, async () => {
@@ -266,10 +215,8 @@ app.listen(config.port, async () => {
   console.log(`[Webhook Server] Endpoint: ${config.webhookPath}`);
   console.log(`[Webhook Server] Shortener: ${config.shortenerBaseUrl}/go/:code`);
 
-  // Wait a bit for Evolution API to be ready, then configure webhooks
-  setTimeout(() => {
-    setupEvolutionWebhooks();
-  }, 5000);
+  // Webhook is configured globally via Evolution docker-compose env vars
+  // No need to set per-instance webhooks (would cause duplicate messages)
 
   // Start reminder scheduler (cron every 5 minutes)
   startReminderScheduler();
