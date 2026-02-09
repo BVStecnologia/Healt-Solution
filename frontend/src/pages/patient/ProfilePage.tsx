@@ -943,7 +943,7 @@ const ProfilePage: React.FC = () => {
     setUploadingAvatar(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const filePath = `avatars/${profile.id}.${fileExt}`;
+      const filePath = `${profile.id}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
