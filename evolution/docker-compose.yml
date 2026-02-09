@@ -29,6 +29,11 @@ services:
       - WEBSOCKET_ENABLED=true
       - WEBSOCKET_GLOBAL_EVENTS=false
       - CONFIG_SESSION_PHONE_VERSION=
+      # Webhook global - aponta para o webhook server na rede Docker
+      - WEBHOOK_GLOBAL_ENABLED=true
+      - WEBHOOK_GLOBAL_URL=http://webhook-server:3001/webhook/messages
+      - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=true
+      - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
     volumes:
       - evolution_instances:/evolution/instances
     depends_on:
