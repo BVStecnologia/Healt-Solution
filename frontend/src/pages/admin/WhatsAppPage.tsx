@@ -552,6 +552,7 @@ const WhatsAppPage: React.FC = () => {
                 ...inst,
                 status: isConnected ? 'connected' : 'disconnected',
                 phoneNumber: data.instance?.owner || data.ownerJid || inst.phoneNumber,
+                qrCode: isConnected ? null : inst.qrCode,
               }
             : inst
         ));
@@ -657,14 +658,14 @@ const WhatsAppPage: React.FC = () => {
               </InstanceHeader>
 
               <InstanceBody>
-                {instance.status === 'connected' && instance.phoneNumber ? (
+                {instance.status === 'connected' ? (
                   <PhoneNumber>
                     <div className="phone-icon">
                       <Smartphone />
                     </div>
                     <div className="phone-details">
                       <div className="label">{t('whatsapp.connectedNumber')}</div>
-                      <div className="number">{formatPhone(instance.phoneNumber)}</div>
+                      <div className="number">{instance.phoneNumber ? formatPhone(instance.phoneNumber) : t('whatsapp.connected')}</div>
                     </div>
                   </PhoneNumber>
                 ) : instance.qrCode ? (
