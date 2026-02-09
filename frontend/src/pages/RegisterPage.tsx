@@ -1,89 +1,293 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, User, CheckCircle } from 'lucide-react';
+import styled, { keyframes, css } from 'styled-components';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User, CheckCircle, UserPlus } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import EssenceLogo from '../components/ui/EssenceLogo';
 
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ═══════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════ */
+
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
 `;
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const accentReveal = keyframes`
+  from { width: 0; opacity: 0; }
+  to { width: 48px; opacity: 1; }
+`;
+
+const glowPulse = keyframes`
+  0%, 100% { opacity: 0.6; filter: blur(0px); }
+  50% { opacity: 1; filter: blur(1px); }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+`;
+
+const stagger = (i: number) => css`
+  animation: ${fadeUp} 0.6s cubic-bezier(0.22, 1, 0.36, 1) ${0.15 + i * 0.08}s both;
+`;
+
+/* ═══════════════════════════════
+   LAYOUT
+   ═══════════════════════════════ */
 
 const Container = styled.div`
   min-height: 100vh;
   display: flex;
-  background: linear-gradient(135deg, ${theme.colors.background} 0%, #F4E7DE 100%);
+  position: relative;
+  overflow: hidden;
+  background: #FFFFFF;
 `;
 
 const LeftPanel = styled.div`
-  flex: 1;
+  flex: 1.15;
   display: none;
-  background: url('/images/brand-bg-2.jpg');
-  background-size: cover;
-  background-position: center;
+  position: relative;
+  overflow: hidden;
 
   @media (min-width: ${theme.breakpoints.lg}) {
     display: block;
   }
-`;
 
-const WelcomeText = styled.div`
-  text-align: center;
-  margin-bottom: ${theme.spacing.lg};
-  animation: ${fadeIn} 0.5s ease-out;
-
-  h1 {
-    font-size: ${theme.typography.sizes.xxl};
-    font-weight: ${theme.typography.weights.bold};
-    color: ${theme.colors.text};
-    margin-bottom: ${theme.spacing.sm};
-    line-height: 1.2;
-  }
-
-  p {
-    font-size: ${theme.typography.sizes.md};
-    line-height: 1.5;
-    color: ${theme.colors.textSecondary};
-    max-width: 360px;
-    margin: 0 auto;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(80, 70, 60, 0.05) 0%,
+      rgba(60, 50, 40, 0.10) 30%,
+      rgba(40, 30, 22, 0.45) 55%,
+      rgba(30, 22, 16, 0.75) 75%,
+      rgba(20, 14, 10, 0.92) 100%
+    );
+    z-index: 1;
   }
 `;
+
+const LeftImage = styled.div`
+  position: absolute;
+  inset: 0;
+  background: url('/images/brand-bg-spheres.jpg');
+  background-size: cover;
+  background-position: center;
+  animation: ${fadeIn} 1.2s ease-out;
+  filter: sepia(0.5) saturate(1.6) brightness(0.55) hue-rotate(-5deg);
+`;
+
+const LeftOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 56px;
+`;
+
+const AccentLine = styled.div`
+  height: 2px;
+  width: 48px;
+  background: linear-gradient(90deg, #C4896B, #92563E);
+  margin-bottom: 24px;
+  animation: ${accentReveal} 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+  border-radius: 1px;
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px -4px;
+    background: linear-gradient(90deg, rgba(196, 137, 107, 0.5), rgba(146, 86, 62, 0.3));
+    filter: blur(6px);
+    border-radius: 2px;
+    animation: ${glowPulse} 3s ease-in-out infinite;
+  }
+`;
+
+const OverlayBrand = styled.div`
+  ${stagger(0)}
+`;
+
+const OverlayQuote = styled.p`
+  ${stagger(1)}
+  margin-top: 32px;
+  font-size: 15px;
+  line-height: 1.85;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 400px;
+  font-style: italic;
+  border-left: 2px solid rgba(196, 137, 107, 0.6);
+  padding-left: 20px;
+  text-shadow:
+    0 1px 12px rgba(0, 0, 0, 0.9),
+    0 2px 24px rgba(0, 0, 0, 0.5);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+`;
+
+/* ═══════════════════════════════
+   RIGHT PANEL
+   ═══════════════════════════════ */
 
 const RightPanel = styled.div`
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: ${theme.spacing.lg};
+  position: relative;
   overflow-y: auto;
 
   @media (min-width: ${theme.breakpoints.lg}) {
-    padding: ${theme.spacing.xxl};
-  }
-
-  > div {
-    width: 100%;
-    max-width: 420px;
+    padding: ${theme.spacing.xxl} ${theme.spacing.xxxl};
   }
 `;
 
-const Card = styled.div`
+const RightDecorativeLines = styled.div`
+  position: absolute;
+  left: -15%;
+  right: -15%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 360px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.28;
+  overflow: hidden;
+  mask-image: radial-gradient(ellipse 70% 80% at center, black 20%, transparent 65%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 80% at center, black 20%, transparent 65%);
+
+  img {
+    width: 130%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+`;
+
+const LeftDecorativeLines = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 40%;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.5;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+`;
+
+const ContentWrapper = styled.div`
   width: 100%;
   max-width: 420px;
-  background: ${theme.colors.surface};
+  position: relative;
+  z-index: 1;
+`;
+
+/* ═══════════════════════════════
+   WELCOME HEADER
+   ═══════════════════════════════ */
+
+const WelcomeSection = styled.div`
+  text-align: center;
+  margin-bottom: ${theme.spacing.lg};
+  ${stagger(0)}
+`;
+
+const WelcomeTag = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: ${theme.borderRadius.full};
+  background: rgba(146, 86, 62, 0.08);
+  border: 1px solid rgba(146, 86, 62, 0.15);
+  color: #92563E;
+  font-size: 11px;
+  font-weight: ${theme.typography.weights.semibold};
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: ${theme.spacing.md};
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
+const WelcomeTitle = styled.h1`
+  font-family: ${theme.typography.fontFamilyHeading};
+  font-size: 28px;
+  font-weight: 400;
+  color: #2D2420;
+  margin-bottom: ${theme.spacing.sm};
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+
+  @media (min-width: ${theme.breakpoints.md}) {
+    font-size: 32px;
+  }
+`;
+
+const WelcomeSubtitle = styled.p`
+  font-size: ${theme.typography.sizes.md};
+  line-height: 1.6;
+  color: #8C8B8B;
+  max-width: 340px;
+  margin: 0 auto;
+`;
+
+/* ═══════════════════════════════
+   CARD
+   ═══════════════════════════════ */
+
+const Card = styled.div`
+  width: 100%;
+  background: white;
   border-radius: ${theme.borderRadius.xxl};
-  box-shadow: ${theme.shadows.card};
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   padding: ${theme.spacing.xl} ${theme.spacing.lg};
-  animation: ${fadeIn} 0.5s ease-out;
+  ${stagger(1)}
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      #92563E 50%,
+      transparent 100%
+    );
+    opacity: 0.6;
+  }
 
   @media (min-width: ${theme.breakpoints.md}) {
     padding: ${theme.spacing.xxl};
@@ -92,22 +296,12 @@ const Card = styled.div`
 
 const Logo = styled.div`
   text-align: center;
-  margin-bottom: ${theme.spacing.xl};
-
-  h1 {
-    font-size: ${theme.typography.sizes.xxl};
-    font-weight: ${theme.typography.weights.bold};
-    color: ${theme.colors.primary};
-    margin: 0 0 ${theme.spacing.xs};
-    letter-spacing: -0.5px;
-  }
-
-  p {
-    color: ${theme.colors.textSecondary};
-    margin: 0;
-    font-size: ${theme.typography.sizes.sm};
-  }
+  margin-bottom: ${theme.spacing.lg};
 `;
+
+/* ═══════════════════════════════
+   FORM
+   ═══════════════════════════════ */
 
 const Form = styled.form`
   display: flex;
@@ -119,101 +313,113 @@ const NameRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${theme.spacing.md};
+  ${stagger(2)}
 `;
 
-const InputGroup = styled.div`
+const InputGroup = styled.div<{ $index?: number }>`
   position: relative;
+  ${p => p.$index !== undefined && stagger(p.$index + 2)}
 `;
 
 const InputIcon = styled.div`
   position: absolute;
-  left: ${theme.spacing.md};
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: ${theme.colors.textMuted};
-  transition: color ${theme.transitions.fast};
+  color: #8C8B8B;
+  transition: color 0.25s ease, transform 0.25s ease;
+  z-index: 1;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
   }
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 14px 14px 14px 46px;
-  border: 1.5px solid ${theme.colors.border};
+  padding: 15px 15px 15px 46px;
+  border: 1.5px solid #e8e4e0;
   border-radius: ${theme.borderRadius.lg};
   font-size: ${theme.typography.sizes.md};
-  color: ${theme.colors.text};
-  background: ${theme.colors.surface};
-  transition: all ${theme.transitions.normal};
+  color: #2D2420;
+  background: #FAF8F6;
+  transition: all 0.25s ease;
 
   &:hover {
-    border-color: ${theme.colors.secondary};
+    border-color: #d4cec8;
   }
 
   &:focus {
     outline: none;
-    border-color: ${theme.colors.primary};
-    box-shadow: 0 0 0 3px ${theme.colors.primarySoft};
+    border-color: #92563E;
+    box-shadow: 0 0 0 3px rgba(146, 86, 62, 0.1), 0 2px 8px rgba(146, 86, 62, 0.08);
+    background: white;
+  }
 
-    & + ${InputIcon}, & ~ ${InputIcon} {
-      color: ${theme.colors.primary};
-    }
+  &:focus ~ ${InputIcon} {
+    color: #92563E;
+    transform: translateY(-50%) scale(1.05);
   }
 
   &::placeholder {
-    color: ${theme.colors.textMuted};
+    color: #b0a9a2;
+    font-weight: 300;
   }
+`;
+
+const SmallInput = styled(Input)`
+  padding-left: 14px;
 `;
 
 const PasswordToggle = styled.button`
   position: absolute;
-  right: ${theme.spacing.md};
+  right: 14px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: ${theme.colors.textMuted};
+  color: #8C8B8B;
   cursor: pointer;
   padding: 4px;
   border-radius: ${theme.borderRadius.sm};
-  transition: all ${theme.transitions.fast};
+  transition: all 0.2s ease;
+  z-index: 1;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
   }
 
   &:hover {
-    color: ${theme.colors.text};
-    background: ${theme.colors.borderLight};
+    color: #92563E;
   }
 `;
 
 const ErrorMessage = styled.div`
-  background: ${theme.colors.errorLight};
-  border: 1px solid ${theme.colors.errorA30};
-  color: ${theme.colors.error};
-  padding: ${theme.spacing.md};
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};
   font-size: ${theme.typography.sizes.sm};
   display: flex;
   align-items: center;
   gap: ${theme.spacing.sm};
+  animation: ${fadeUp} 0.3s ease-out;
 `;
 
 const SuccessMessage = styled.div`
-  background: ${theme.colors.successLight};
-  border: 1px solid ${theme.colors.successA30};
-  color: ${theme.colors.success};
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
   padding: ${theme.spacing.md};
   border-radius: ${theme.borderRadius.md};
   font-size: ${theme.typography.sizes.sm};
   display: flex;
   align-items: center;
   gap: ${theme.spacing.sm};
+  animation: ${fadeUp} 0.3s ease-out;
 
   svg {
     width: 18px;
@@ -222,27 +428,54 @@ const SuccessMessage = styled.div`
   }
 `;
 
+/* ═══════════════════════════════
+   BUTTONS
+   ═══════════════════════════════ */
+
 const SubmitButton = styled.button<{ $loading?: boolean }>`
   width: 100%;
-  padding: 14px ${theme.spacing.lg};
-  background: ${theme.colors.primary};
+  padding: 15px ${theme.spacing.lg};
+  background: linear-gradient(135deg, #92563E 0%, #7A4833 100%);
   color: white;
   border: none;
   border-radius: ${theme.borderRadius.lg};
   font-size: ${theme.typography.sizes.md};
   font-weight: ${theme.typography.weights.semibold};
   cursor: pointer;
-  transition: all ${theme.transitions.normal};
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: ${theme.spacing.sm};
   margin-top: ${theme.spacing.sm};
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.3px;
+  ${stagger(6)}
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: ${shimmer} 3s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   &:hover:not(:disabled) {
-    background: ${theme.colors.primaryHover};
-    box-shadow: ${theme.shadows.primary};
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(146, 86, 62, 0.35);
+
+    &::before {
+      opacity: 1;
+    }
   }
 
   &:active:not(:disabled) {
@@ -255,34 +488,13 @@ const SubmitButton = styled.button<{ $loading?: boolean }>`
   }
 
   svg {
-    width: 18px;
-    height: 18px;
-    transition: transform ${theme.transitions.fast};
+    width: 17px;
+    height: 17px;
+    transition: transform 0.3s ease;
   }
 
   &:hover:not(:disabled) svg {
-    transform: translateX(3px);
-  }
-`;
-
-const Footer = styled.div`
-  text-align: center;
-  margin-top: ${theme.spacing.xl};
-  padding-top: ${theme.spacing.lg};
-  border-top: 1px solid ${theme.colors.borderLight};
-
-  p {
-    color: ${theme.colors.textSecondary};
-    font-size: ${theme.typography.sizes.sm};
-
-    a {
-      color: ${theme.colors.primary};
-      font-weight: ${theme.typography.weights.medium};
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
+    transform: translateX(4px);
   }
 `;
 
@@ -295,11 +507,37 @@ const Spinner = styled.div`
   animation: spin 0.8s linear infinite;
 
   @keyframes spin {
-    to {
-      transform: rotate(360deg);
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const Footer = styled.div`
+  text-align: center;
+  margin-top: ${theme.spacing.md};
+  padding-top: ${theme.spacing.md};
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+  ${stagger(7)}
+
+  p {
+    color: #8C8B8B;
+    font-size: ${theme.typography.sizes.sm};
+
+    a {
+      color: #92563E;
+      font-weight: ${theme.typography.weights.semibold};
+      text-decoration: none;
+      transition: all 0.2s ease;
+
+      &:hover {
+        opacity: 0.8;
+      }
     }
   }
 `;
+
+/* ═══════════════════════════════
+   COMPONENT
+   ═══════════════════════════════ */
 
 const RegisterPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
@@ -321,7 +559,6 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    // Validations
     if (password.length < 6) {
       setError(t('register.passwordTooShort'));
       return;
@@ -335,7 +572,6 @@ const RegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Passa o idioma atual da interface como preferência do paciente
       const preferredLang = language as 'pt' | 'en';
       const { error: signUpError } = await signUp(email, password, firstName, lastName, preferredLang);
 
@@ -357,14 +593,37 @@ const RegisterPage: React.FC = () => {
 
   return (
     <Container>
-      <LeftPanel />
+      <LeftPanel>
+        <LeftImage />
+        <LeftDecorativeLines>
+          <img src="/images/lines/lines3-dourado.svg" alt="" />
+        </LeftDecorativeLines>
+        <LeftOverlay>
+          <AccentLine />
+          <OverlayBrand>
+            <EssenceLogo variant="horizontal" size="xl" color="light" />
+          </OverlayBrand>
+          <OverlayQuote>
+            Your health begins with your essence. Balance is the new beauty.
+          </OverlayQuote>
+        </LeftOverlay>
+      </LeftPanel>
 
       <RightPanel>
-        <div>
-          <WelcomeText>
-            <h1>{t('register.title')}</h1>
-            <p>{t('register.subtitle')}</p>
-          </WelcomeText>
+        <RightDecorativeLines>
+          <img src="/images/lines/lines2-marrom.svg" alt="" />
+        </RightDecorativeLines>
+
+        <ContentWrapper>
+          <WelcomeSection>
+            <WelcomeTag>
+              <UserPlus size={14} />
+              {t('register.title')}
+            </WelcomeTag>
+            <WelcomeTitle>{t('register.title')}</WelcomeTitle>
+            <WelcomeSubtitle>{t('register.subtitle')}</WelcomeSubtitle>
+          </WelcomeSection>
+
           <Card>
             <Logo>
               <EssenceLogo variant="horizontal" size="sm" color="dark" />
@@ -394,18 +653,17 @@ const RegisterPage: React.FC = () => {
                   </InputGroup>
 
                   <InputGroup>
-                    <Input
+                    <SmallInput
                       type="text"
                       placeholder={t('register.lastName')}
                       value={lastName}
                       onChange={e => setLastName(e.target.value)}
                       required
-                      style={{ paddingLeft: '14px' }}
                     />
                   </InputGroup>
                 </NameRow>
 
-                <InputGroup>
+                <InputGroup $index={1}>
                   <Input
                     type="email"
                     placeholder={t('register.email')}
@@ -418,7 +676,7 @@ const RegisterPage: React.FC = () => {
                   </InputIcon>
                 </InputGroup>
 
-                <InputGroup>
+                <InputGroup $index={2}>
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     placeholder={t('register.password')}
@@ -437,7 +695,7 @@ const RegisterPage: React.FC = () => {
                   </PasswordToggle>
                 </InputGroup>
 
-                <InputGroup>
+                <InputGroup $index={3}>
                   <Input
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder={t('register.confirmPassword')}
@@ -473,7 +731,7 @@ const RegisterPage: React.FC = () => {
               </p>
             </Footer>
           </Card>
-        </div>
+        </ContentWrapper>
       </RightPanel>
     </Container>
   );
