@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
@@ -48,10 +49,11 @@ const HomeDashboard: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   const { loading } = useAuth();
 
   if (loading) {
-    return <LoadingSpinner fullScreen message="Carregando..." />;
+    return <LoadingSpinner fullScreen message={t('common.loading')} />;
   }
 
   return (

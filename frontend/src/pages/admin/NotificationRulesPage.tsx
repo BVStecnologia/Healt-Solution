@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import {
   Bell, Plus, Trash2, Check, AlertCircle, X, Clock, Edit2,
@@ -744,45 +745,50 @@ function formatMinutes(minutes: number): string {
   return `${minutes}min`;
 }
 
-function formatMinutesLong(minutes: number): string {
-  if (minutes >= 1440) {
-    const days = Math.round(minutes / 1440);
-    return `${days} dia(s) antes`;
-  }
-  if (minutes >= 60) {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return m > 0 ? `${h}h ${m}min antes` : `${h} hora(s) antes`;
-  }
-  return `${minutes} minutos antes`;
-}
+// formatMinutesLong is now inside the component to access t()
 
 const TEMPLATE_OPTIONS = [
-  { value: 'reminder_24h', label: 'Lembrete 24h (paciente)' },
-  { value: 'reminder_1h', label: 'Lembrete 1h (paciente)' },
-  { value: 'provider_reminder_2h', label: 'Lembrete 2h (medico)' },
-  { value: 'provider_reminder_15min', label: 'Lembrete 15min (medico)' },
-  { value: 'reminder_daily_provider', label: 'Resumo diario (medico)' },
+  { value: 'reminder_24h', labelKey: 'notifications.template.reminder24h' },
+  { value: 'reminder_1h', labelKey: 'notifications.template.reminder1h' },
+  { value: 'provider_reminder_2h', labelKey: 'notifications.template.providerReminder2h' },
+  { value: 'provider_reminder_15min', labelKey: 'notifications.template.providerReminder15min' },
+  { value: 'reminder_daily_provider', labelKey: 'notifications.template.dailyProvider' },
 ];
 
 const MINUTES_PRESETS = [
-  { value: 15, label: '15 minutos' },
-  { value: 30, label: '30 minutos' },
-  { value: 60, label: '1 hora' },
-  { value: 120, label: '2 horas' },
-  { value: 360, label: '6 horas' },
-  { value: 720, label: '12 horas' },
-  { value: 1440, label: '24 horas (1 dia)' },
-  { value: 2880, label: '48 horas (2 dias)' },
-  { value: 0, label: 'Personalizado...' },
+  { value: 15, labelKey: 'notifications.preset.15min' },
+  { value: 30, labelKey: 'notifications.preset.30min' },
+  { value: 60, labelKey: 'notifications.preset.1h' },
+  { value: 120, labelKey: 'notifications.preset.2h' },
+  { value: 360, labelKey: 'notifications.preset.6h' },
+  { value: 720, labelKey: 'notifications.preset.12h' },
+  { value: 1440, labelKey: 'notifications.preset.24h' },
+  { value: 2880, labelKey: 'notifications.preset.48h' },
+  { value: 0, labelKey: 'notifications.customTime' },
 ];
 
 // ============================================
 // COMPONENT
 // ============================================
 const NotificationRulesPage: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const { providerId, isAdmin, isProvider } = useCurrentProvider();
+
+  const formatMinutesLong = (minutes: number): string => {
+    if (minutes >= 1440) {
+      const days = Math.round(minutes / 1440);
+      return t('notifications.formatDaysBefore', { count: days });
+    }
+    if (minutes >= 60) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return m > 0
+        ? t('notifications.formatHoursMinBefore', { h, m })
+        : t('notifications.formatHoursBefore', { count: h });
+    }
+    return t('notifications.formatMinutesBefore', { count: minutes });
+  };
   const isDoctorView = location.pathname.startsWith('/doctor');
 
   const [rules, setRules] = useState<NotificationRule[]>([]);
@@ -856,13 +862,13 @@ const NotificationRulesPage: React.FC = () => {
           const profile = Array.isArray(p.profile) ? p.profile[0] : p.profile;
           return {
             id: p.id,
-            name: profile ? `Dr(a). ${profile.first_name} ${profile.last_name}` : 'Desconhecido',
+            name: profile ? `${t('common.drPrefix')} ${profile.first_name} ${profile.last_name}` : t('notifications.unknown'),
           };
         }));
       }
     } catch (err: any) {
       console.error('Error fetching data:', err);
-      setError(err.message || 'Erro ao carregar dados');
+      setError(err.message || t('notifications.errorLoadData'));
     } finally {
       setLoading(false);
     }
@@ -937,12 +943,12 @@ const NotificationRulesPage: React.FC = () => {
       : parseInt(formData.custom_minutes, 10);
 
     if (!minutes || minutes <= 0) {
-      setError('Informe um tempo valido');
+      setError(t('notifications.errorInvalidTime'));
       return;
     }
 
     if (!formData.template_name) {
-      setError('Selecione um template');
+      setError(t('notifications.errorSelectTemplate'));
       return;
     }
 
@@ -967,7 +973,7 @@ const NotificationRulesPage: React.FC = () => {
 
         if (error) {
           if (error.code === '23505') {
-            setError('Ja existe uma regra com esse mesmo destinatario, medico e tempo.');
+            setError(t('notifications.errorDuplicate'));
           } else {
             throw error;
           }
@@ -975,7 +981,7 @@ const NotificationRulesPage: React.FC = () => {
         }
 
         setRules(prev => prev.map(r => r.id === editingRule.id ? data : r));
-        setSuccess('Regra atualizada com sucesso!');
+        setSuccess(t('notifications.successUpdate'));
       } else {
         // Create new
         const { data, error } = await supabaseAdmin
@@ -992,7 +998,7 @@ const NotificationRulesPage: React.FC = () => {
 
         if (error) {
           if (error.code === '23505') {
-            setError('Ja existe uma regra com esse mesmo destinatario, medico e tempo.');
+            setError(t('notifications.errorDuplicate'));
           } else {
             throw error;
           }
@@ -1000,19 +1006,19 @@ const NotificationRulesPage: React.FC = () => {
         }
 
         setRules(prev => [...prev, data]);
-        setSuccess('Regra criada com sucesso!');
+        setSuccess(t('notifications.successCreate'));
       }
       setTimeout(() => setShowModal(false), 1000);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar regra');
+      setError(err.message || t('notifications.errorSave'));
     } finally {
       setSaving(false);
     }
   };
 
   const getProviderName = (providerId: string | null): string => {
-    if (!providerId) return 'Global (todos)';
-    return providers.find(p => p.id === providerId)?.name || 'Desconhecido';
+    if (!providerId) return t('notifications.globalAll');
+    return providers.find(p => p.id === providerId)?.name || t('notifications.unknown');
   };
 
   const patientRules = rules.filter(r => r.target_role === 'patient');
@@ -1039,37 +1045,37 @@ const NotificationRulesPage: React.FC = () => {
       </TimeBadge>
       {!isDoctorView && rule.target_role === 'provider' && (
         <ProviderBadge>
-          {rule.provider_id ? getProviderName(rule.provider_id) : 'Global (todos)'}
+          {rule.provider_id ? getProviderName(rule.provider_id) : t('notifications.globalAll')}
         </ProviderBadge>
       )}
       {canEdit ? (
         <RuleActions>
-          <IconButton onClick={() => handleOpenModal(rule)} title="Editar">
+          <IconButton onClick={() => handleOpenModal(rule)} title={t('common.edit')}>
             <Edit2 size={15} />
           </IconButton>
           <IconButton
             $variant={rule.is_active ? 'success' : 'muted'}
             onClick={() => handleToggle(rule)}
-            title={rule.is_active ? 'Desativar' : 'Ativar'}
+            title={rule.is_active ? t('notifications.deactivate') : t('notifications.activate')}
           >
             {rule.is_active ? <ToggleRight size={17} /> : <ToggleLeft size={17} />}
           </IconButton>
-          <IconButton $variant="danger" onClick={() => handleDelete(rule)} title="Excluir">
+          <IconButton $variant="danger" onClick={() => handleDelete(rule)} title={t('common.delete')}>
             <Trash2 size={15} />
           </IconButton>
         </RuleActions>
       ) : (
         <RuleActions>
-          <ProviderBadge style={{ marginTop: 0 }}>Padrao da clinica</ProviderBadge>
+          <ProviderBadge style={{ marginTop: 0 }}>{t('notifications.clinicDefault')}</ProviderBadge>
         </RuleActions>
       )}
     </RuleCard>
   );
 
-  const pageTitle = isDoctorView ? 'Meus Lembretes' : 'Notificacoes';
+  const pageTitle = isDoctorView ? t('notifications.titleDoctor') : t('notifications.title');
   const pageSubtitle = isDoctorView
-    ? 'Configure quando deseja receber lembretes de consulta via WhatsApp'
-    : 'Configure os lembretes automaticos de consulta via WhatsApp';
+    ? t('notifications.subtitleDoctor')
+    : t('notifications.subtitle');
 
   return (
     <AdminLayout>
@@ -1081,22 +1087,12 @@ const NotificationRulesPage: React.FC = () => {
           </div>
           <AddButton onClick={() => handleOpenModal()}>
             <Plus size={18} />
-            Nova Regra
+            {t('notifications.newTitle')}
           </AddButton>
         </Header>
 
         <InfoBox>
-          {isDoctorView ? (
-            <>
-              <strong>Como funciona:</strong> Crie regras para receber lembretes via WhatsApp antes das suas consultas.
-              Cada lembrete e enviado apenas uma vez (sem duplicatas).
-            </>
-          ) : (
-            <>
-              <strong>Como funciona:</strong> O sistema verifica a cada 5 minutos se ha consultas confirmadas
-              que se encaixam nas regras abaixo. Cada lembrete e enviado apenas uma vez (sem duplicatas).
-            </>
-          )}
+          <strong>{t('notifications.howItWorks')}</strong> {isDoctorView ? t('notifications.howItWorksDoctor') : t('notifications.howItWorksAdmin')}
         </InfoBox>
 
         {/* ===== ADMIN VIEW: Patient + Provider rules ===== */}
@@ -1104,18 +1100,17 @@ const NotificationRulesPage: React.FC = () => {
           <>
             <SectionTitle>
               <Users size={22} />
-              Lembretes para Pacientes
+              {t('notifications.patientReminders')}
             </SectionTitle>
 
             {patientRules.length === 0 ? (
               <EmptyState>
                 <Bell />
-                <h3>Nenhuma regra de paciente</h3>
-                <p>Defina quando o paciente recebe um lembrete por WhatsApp antes da consulta.<br />
-                Ex: 24 horas antes, 1 hora antes.</p>
+                <h3>{t('notifications.emptyPatient')}</h3>
+                <p>{t('notifications.emptyPatientHint')}</p>
                 <EmptyStateCTA onClick={() => handleOpenModal()}>
                   <Plus size={16} />
-                  Criar Regra
+                  {t('notifications.createButton')}
                 </EmptyStateCTA>
               </EmptyState>
             ) : (
@@ -1126,18 +1121,17 @@ const NotificationRulesPage: React.FC = () => {
 
             <SectionTitle>
               <Stethoscope size={22} />
-              Lembretes para Medicos
+              {t('notifications.providerReminders')}
             </SectionTitle>
 
             {providerRules.length === 0 ? (
               <EmptyState>
                 <Bell />
-                <h3>Nenhuma regra de medico</h3>
-                <p>Envie lembretes por WhatsApp aos medicos antes de cada consulta.<br />
-                Cada medico pode personalizar seus proprios lembretes no painel.</p>
+                <h3>{t('notifications.emptyProvider')}</h3>
+                <p>{t('notifications.emptyProviderHint')}</p>
                 <EmptyStateCTA onClick={() => handleOpenModal()}>
                   <Plus size={16} />
-                  Criar Regra
+                  {t('notifications.createButton')}
                 </EmptyStateCTA>
               </EmptyState>
             ) : (
@@ -1153,18 +1147,17 @@ const NotificationRulesPage: React.FC = () => {
           <>
             <SectionTitle>
               <Bell size={22} />
-              Meus Lembretes
+              {t('notifications.titleDoctor')}
             </SectionTitle>
 
             {myProviderRules.length === 0 ? (
               <EmptyState>
                 <Bell />
-                <h3>Nenhum lembrete configurado</h3>
-                <p>Receba avisos por WhatsApp antes das suas consultas.<br />
-                Escolha quanto tempo antes deseja ser lembrado (ex: 2 horas, 15 minutos).</p>
+                <h3>{t('notifications.emptyMyReminders')}</h3>
+                <p>{t('notifications.emptyMyRemindersHint')}</p>
                 <EmptyStateCTA onClick={() => handleOpenModal()}>
                   <Plus size={16} />
-                  Criar Lembrete
+                  {t('notifications.createReminder')}
                 </EmptyStateCTA>
               </EmptyState>
             ) : (
@@ -1177,10 +1170,10 @@ const NotificationRulesPage: React.FC = () => {
               <>
                 <SectionTitle style={{ marginTop: 32, opacity: 0.7 }}>
                   <Users size={22} />
-                  Lembretes Padrao da Clinica
+                  {t('notifications.clinicDefaultReminders')}
                 </SectionTitle>
                 <p style={{ fontSize: 13, color: luxuryTheme.textSecondary, margin: '-16px 0 20px', opacity: 0.6 }}>
-                  Regras configuradas pela administracao — aplicam-se a todos os medicos
+                  {t('notifications.clinicDefaultHint')}
                 </p>
                 <RulesGrid>
                   {globalProviderRules.map((rule, index) => renderRuleCard(rule, index, false))}
@@ -1198,20 +1191,20 @@ const NotificationRulesPage: React.FC = () => {
                 <ConfirmIconCircle>
                   <AlertTriangle size={28} />
                 </ConfirmIconCircle>
-                <ConfirmTitle>Excluir Regra</ConfirmTitle>
+                <ConfirmTitle>{t('notifications.deleteTitle')}</ConfirmTitle>
                 <ConfirmText>
-                  Tem certeza que deseja excluir a regra <ConfirmName>{confirmDeleteRule.template_name.replace(/_/g, ' ')}</ConfirmName>?
+                  {t('notifications.deleteConfirm')} <ConfirmName>{confirmDeleteRule.template_name.replace(/_/g, ' ')}</ConfirmName>?
                 </ConfirmText>
                 <ConfirmText style={{ fontSize: 13, opacity: 0.7 }}>
-                  O lembrete de {formatMinutesLong(confirmDeleteRule.minutes_before)} nao sera mais enviado.
+                  {t('notifications.deleteHint', { time: formatMinutesLong(confirmDeleteRule.minutes_before) })}
                 </ConfirmText>
               </ConfirmBody>
               <ConfirmFooter>
                 <ConfirmBtn onClick={() => setConfirmDeleteRule(null)}>
-                  Cancelar
+                  {t('common.cancel')}
                 </ConfirmBtn>
                 <ConfirmBtn $danger onClick={confirmDelete}>
-                  Excluir
+                  {t('common.delete')}
                 </ConfirmBtn>
               </ConfirmFooter>
             </ConfirmCard>
@@ -1225,7 +1218,7 @@ const NotificationRulesPage: React.FC = () => {
               <ModalHeader>
                 <h2>
                   <Bell size={22} />
-                  {editingRule ? 'Editar Regra' : 'Nova Regra'}
+                  {editingRule ? t('notifications.editTitle') : t('notifications.newTitle')}
                 </h2>
                 <CloseButton onClick={() => setShowModal(false)}>
                   <X size={18} />
@@ -1249,18 +1242,18 @@ const NotificationRulesPage: React.FC = () => {
 
                 {!isDoctorView && (
                   <FormGroup>
-                    <label>Destinatario <span>*</span></label>
+                    <label>{t('notifications.recipient')} <span>*</span></label>
                     <SelectWrapper ref={el => { selectRefs.current['target_role'] = el; }}>
                       <SelectTrigger
                         type="button"
                         $open={openSelect === 'target_role'}
                         onClick={() => setOpenSelect(openSelect === 'target_role' ? null : 'target_role')}
                       >
-                        {formData.target_role === 'patient' ? 'Paciente' : 'Medico'}
+                        {formData.target_role === 'patient' ? t('notifications.targetPatient') : t('notifications.targetProvider')}
                         <ChevronDown size={16} />
                       </SelectTrigger>
                       <SelectMenu $open={openSelect === 'target_role'}>
-                        {[{ value: 'patient', label: 'Paciente' }, { value: 'provider', label: 'Medico' }].map(opt => (
+                        {[{ value: 'patient', labelKey: 'notifications.targetPatient' }, { value: 'provider', labelKey: 'notifications.targetProvider' }].map(opt => (
                           <SelectOption
                             key={opt.value}
                             type="button"
@@ -1270,7 +1263,7 @@ const NotificationRulesPage: React.FC = () => {
                               setOpenSelect(null);
                             }}
                           >
-                            {opt.label}
+                            {t(opt.labelKey)}
                           </SelectOption>
                         ))}
                       </SelectMenu>
@@ -1280,7 +1273,7 @@ const NotificationRulesPage: React.FC = () => {
 
                 {!isDoctorView && formData.target_role === 'provider' && (
                   <FormGroup>
-                    <label>Medico especifico</label>
+                    <label>{t('notifications.specificProvider')}</label>
                     <SelectWrapper ref={el => { selectRefs.current['provider_id'] = el; }}>
                       <SelectTrigger
                         type="button"
@@ -1288,8 +1281,8 @@ const NotificationRulesPage: React.FC = () => {
                         onClick={() => setOpenSelect(openSelect === 'provider_id' ? null : 'provider_id')}
                       >
                         {formData.provider_id
-                          ? providers.find(p => p.id === formData.provider_id)?.name || 'Selecionar'
-                          : 'Global (todos os medicos)'}
+                          ? providers.find(p => p.id === formData.provider_id)?.name || t('notifications.selectLabel')
+                          : t('notifications.globalAllProviders')}
                         <ChevronDown size={16} />
                       </SelectTrigger>
                       <SelectMenu $open={openSelect === 'provider_id'}>
@@ -1301,7 +1294,7 @@ const NotificationRulesPage: React.FC = () => {
                             setOpenSelect(null);
                           }}
                         >
-                          Global (todos os medicos)
+                          {t('notifications.globalAllProviders')}
                         </SelectOption>
                         {providers.map(p => (
                           <SelectOption
@@ -1318,12 +1311,12 @@ const NotificationRulesPage: React.FC = () => {
                         ))}
                       </SelectMenu>
                     </SelectWrapper>
-                    <small>Regras especificas de um medico substituem as regras globais</small>
+                    <small>{t('notifications.overrideHint')}</small>
                   </FormGroup>
                 )}
 
                 <FormGroup>
-                  <label>Tempo antes da consulta <span>*</span></label>
+                  <label>{t('notifications.timeBefore')} <span>*</span></label>
                   <SelectWrapper ref={el => { selectRefs.current['minutes'] = el; }}>
                     <SelectTrigger
                       type="button"
@@ -1331,8 +1324,8 @@ const NotificationRulesPage: React.FC = () => {
                       onClick={() => setOpenSelect(openSelect === 'minutes' ? null : 'minutes')}
                     >
                       {formData.use_preset
-                        ? MINUTES_PRESETS.find(p => p.value === formData.minutes_before)?.label || 'Selecionar'
-                        : 'Personalizado...'}
+                        ? (MINUTES_PRESETS.find(p => p.value === formData.minutes_before) ? t(MINUTES_PRESETS.find(p => p.value === formData.minutes_before)!.labelKey) : t('notifications.selectLabel'))
+                        : t('notifications.customTime')}
                       <ChevronDown size={16} />
                     </SelectTrigger>
                     <SelectMenu $open={openSelect === 'minutes'}>
@@ -1350,7 +1343,7 @@ const NotificationRulesPage: React.FC = () => {
                             setOpenSelect(null);
                           }}
                         >
-                          {p.label}
+                          {t(p.labelKey)}
                         </SelectOption>
                       ))}
                     </SelectMenu>
@@ -1359,61 +1352,61 @@ const NotificationRulesPage: React.FC = () => {
 
                 {!formData.use_preset && (
                   <FormGroup>
-                    <label>Minutos antes <span>*</span></label>
+                    <label>{t('notifications.minutesBefore')} <span>*</span></label>
                     <FormInput
                       type="number"
                       min="1"
                       value={formData.custom_minutes}
                       onChange={(e) => setFormData({ ...formData, custom_minutes: e.target.value })}
-                      placeholder="Ex: 90 (1h30)"
+                      placeholder={t('notifications.customPlaceholder')}
                     />
                   </FormGroup>
                 )}
 
                 <FormGroup>
-                  <label>Template da mensagem <span>*</span></label>
+                  <label>{t('notifications.templateLabel')} <span>*</span></label>
                   <SelectWrapper ref={el => { selectRefs.current['template'] = el; }}>
                     <SelectTrigger
                       type="button"
                       $open={openSelect === 'template'}
                       onClick={() => setOpenSelect(openSelect === 'template' ? null : 'template')}
                     >
-                      {TEMPLATE_OPTIONS.find(t => t.value === formData.template_name)?.label || 'Selecionar'}
+                      {(() => { const tpl = TEMPLATE_OPTIONS.find(tp => tp.value === formData.template_name); return tpl ? t(tpl.labelKey) : t('notifications.selectLabel'); })()}
                       <ChevronDown size={16} />
                     </SelectTrigger>
                     <SelectMenu $open={openSelect === 'template'}>
                       {TEMPLATE_OPTIONS
-                        .filter(t => isDoctorView
-                          ? t.value.includes('provider')
+                        .filter(tpl => isDoctorView
+                          ? tpl.value.includes('provider')
                           : !isDoctorView && formData.target_role === 'patient'
-                            ? !t.value.includes('provider')
+                            ? !tpl.value.includes('provider')
                             : true
                         )
-                        .map(t => (
+                        .map(tpl => (
                           <SelectOption
-                            key={t.value}
+                            key={tpl.value}
                             type="button"
-                            $selected={formData.template_name === t.value}
+                            $selected={formData.template_name === tpl.value}
                             onClick={() => {
-                              setFormData({ ...formData, template_name: t.value });
+                              setFormData({ ...formData, template_name: tpl.value });
                               setOpenSelect(null);
                             }}
                           >
-                            {t.label}
+                            {t(tpl.labelKey)}
                           </SelectOption>
                         ))}
                     </SelectMenu>
                   </SelectWrapper>
-                  <small>O template determina o conteudo da mensagem enviada</small>
+                  <small>{t('notifications.templateHint')}</small>
                 </FormGroup>
               </ModalBody>
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={() => setShowModal(false)}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button $variant="primary" onClick={handleSave} disabled={saving}>
-                  {saving ? 'Salvando...' : editingRule ? 'Salvar' : 'Criar Regra'}
+                  {saving ? t('common.saving') : editingRule ? t('common.save') : t('notifications.createButton')}
                 </Button>
               </ModalFooter>
             </ModalContent>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { Calendar, Plus, Clock, CheckCircle } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { useAuth } from '../context/AuthContext';
@@ -123,6 +124,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { appointments, loading } = useAppointments();
+  const { t } = useTranslation();
 
   // Filtrar próximas consultas
   const upcomingAppointments = appointments
@@ -142,7 +144,7 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <LoadingSpinner fullScreen={false} message="Carregando dados..." />
+        <LoadingSpinner fullScreen={false} message={t('dashboard.loadingData')} />
       </Layout>
     );
   }
@@ -151,14 +153,14 @@ const Dashboard: React.FC = () => {
     <Layout>
       <PageHeader>
         <div>
-          <Title>Dashboard</Title>
+          <Title>{t('dashboard.title')}</Title>
           <Greeting>
-            Olá, {profile?.first_name}! Bem-vindo ao portal.
+            {t('dashboard.greeting', { name: profile?.first_name })}
           </Greeting>
         </div>
         <Button onClick={() => navigate('/appointments/new')}>
           <Plus size={18} />
-          Nova Consulta
+          {t('dashboard.newAppointment')}
         </Button>
       </PageHeader>
 
@@ -169,7 +171,7 @@ const Dashboard: React.FC = () => {
           </StatIcon>
           <StatInfo>
             <StatValue>{stats.upcoming}</StatValue>
-            <StatLabel>Consultas agendadas</StatLabel>
+            <StatLabel>{t('dashboard.scheduledAppointments')}</StatLabel>
           </StatInfo>
         </StatCard>
 
@@ -179,7 +181,7 @@ const Dashboard: React.FC = () => {
           </StatIcon>
           <StatInfo>
             <StatValue>{stats.completed}</StatValue>
-            <StatLabel>Consultas realizadas</StatLabel>
+            <StatLabel>{t('dashboard.completedAppointments')}</StatLabel>
           </StatInfo>
         </StatCard>
 
@@ -189,20 +191,20 @@ const Dashboard: React.FC = () => {
           </StatIcon>
           <StatInfo>
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Total de consultas</StatLabel>
+            <StatLabel>{t('dashboard.totalPatientAppointments')}</StatLabel>
           </StatInfo>
         </StatCard>
       </StatsGrid>
 
       <Section>
         <SectionHeader>
-          <SectionTitle>Próximas Consultas</SectionTitle>
+          <SectionTitle>{t('dashboard.upcomingAppointments')}</SectionTitle>
           <Button
             variant="ghost"
             size="small"
             onClick={() => navigate('/appointments')}
           >
-            Ver todas
+            {t('common.all')}
           </Button>
         </SectionHeader>
 
@@ -210,9 +212,9 @@ const Dashboard: React.FC = () => {
           <Card padding="large">
             <EmptyState>
               <Calendar />
-              <p>Você não tem consultas agendadas</p>
+              <p>{t('dashboard.noAppointments')}</p>
               <Button onClick={() => navigate('/appointments/new')}>
-                Agendar Consulta
+                {t('dashboard.newAppointment')}
               </Button>
             </EmptyState>
           </Card>

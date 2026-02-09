@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { Calendar } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AppointmentCard from './AppointmentCard';
@@ -56,19 +57,21 @@ const SectionTitle = styled.h3`
 const AppointmentList: React.FC<AppointmentListProps> = ({
   appointments,
   loading = false,
-  emptyMessage = 'Nenhuma consulta encontrada',
+  emptyMessage,
   onAppointmentClick,
   onCancelClick,
 }) => {
+  const { t } = useTranslation();
+
   if (loading) {
-    return <LoadingSpinner message="Carregando consultas..." />;
+    return <LoadingSpinner message={t('appointments.loadingList')} />;
   }
 
   if (appointments.length === 0) {
     return (
       <EmptyState>
         <Calendar />
-        <p>{emptyMessage}</p>
+        <p>{emptyMessage || t('appointments.emptyDefault')}</p>
       </EmptyState>
     );
   }
@@ -88,7 +91,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
     <Container>
       {upcoming.length > 0 && (
         <>
-          <SectionTitle>Próximas Consultas</SectionTitle>
+          <SectionTitle>{t('patient.upcomingAppointments')}</SectionTitle>
           {upcoming.map(appointment => (
             <AppointmentCard
               key={appointment.id}
@@ -102,7 +105,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
 
       {past.length > 0 && (
         <>
-          <SectionTitle>Histórico</SectionTitle>
+          <SectionTitle>{t('profile.historyTitle')}</SectionTitle>
           {past.map(appointment => (
             <AppointmentCard
               key={appointment.id}

@@ -1,7 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 import { Calendar, Clock, User, MoreVertical } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import Card from '../ui/Card';
@@ -89,11 +91,13 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   onClick,
   onCancel,
 }) => {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt' ? ptBR : enUS;
   const { variant, label } = getAppointmentStatusBadge(appointment.status);
   const scheduledDate = new Date(appointment.scheduled_at);
   const providerName = appointment.provider?.profile
-    ? `Dr(a). ${appointment.provider.profile.first_name} ${appointment.provider.profile.last_name}`
-    : 'Médico não definido';
+    ? `${t('common.drPrefix')} ${appointment.provider.profile.first_name} ${appointment.provider.profile.last_name}`
+    : t('appointments.card.providerUnknown');
 
   const canCancel = ['pending', 'confirmed'].includes(appointment.status);
 
@@ -102,7 +106,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       <Header>
         <div>
           <TypeLabel>
-            {getTreatmentLabel(appointment.type)}
+            {getTreatmentLabel(appointment.type, i18n.language as 'pt' | 'en')}
           </TypeLabel>
         </div>
         <Badge variant={variant}>{label}</Badge>
@@ -116,7 +120,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       <DateTime>
         <InfoRow>
           <Calendar />
-          {format(scheduledDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
+          {format(scheduledDate, "EEEE, d MMMM", { locale: dateLocale })}
         </InfoRow>
         <InfoRow>
           <Clock />
@@ -134,12 +138,12 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <Actions onClick={e => e.stopPropagation()}>
           {onClick && (
             <ActionButton onClick={onClick}>
-              Ver Detalhes
+              {t('appointments.card.viewDetails')}
             </ActionButton>
           )}
           {canCancel && onCancel && (
             <ActionButton $variant="danger" onClick={onCancel}>
-              Cancelar
+              {t('appointments.card.cancel')}
             </ActionButton>
           )}
         </Actions>

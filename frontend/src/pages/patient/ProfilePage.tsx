@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import {
   Edit3,
   Calendar,
@@ -756,23 +758,12 @@ const getStatusIcon = (status: AppointmentStatus) => {
   }
 };
 
-const getStatusLabel = (status: AppointmentStatus): string => {
-  switch (status) {
-    case 'completed': return 'Concluída';
-    case 'confirmed': return 'Confirmada';
-    case 'pending': return 'Pendente';
-    case 'cancelled': return 'Cancelada';
-    case 'no_show': return 'Não Compareceu';
-    case 'checked_in': return 'Check-in';
-    case 'in_progress': return 'Em Andamento';
-    default: return status;
-  }
-};
+// getStatusLabel moved inside component to access t()
 
 
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
+  return new Date(dateStr).toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -780,7 +771,7 @@ const formatDate = (dateStr: string | null): string => {
 };
 
 const formatDateTime = (dateStr: string): string => {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
+  return new Date(dateStr).toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -807,6 +798,20 @@ interface AppointmentWithProvider {
 const ProfilePage: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
+
+  const getStatusLabel = (status: AppointmentStatus): string => {
+    const statusMap: Record<string, string> = {
+      completed: t('status.completed'),
+      confirmed: t('status.confirmed'),
+      pending: t('status.pending'),
+      cancelled: t('status.cancelled'),
+      no_show: t('status.noShow'),
+      checked_in: t('status.checkedIn'),
+      in_progress: t('status.inProgress'),
+    };
+    return statusMap[status] || status;
+  };
 
   const [appointments, setAppointments] = useState<AppointmentWithProvider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -931,7 +936,7 @@ const ProfilePage: React.FC = () => {
     if (!file || !profile) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      alert('Imagem muito grande. Máximo 2MB.');
+      alert(t('profile.avatarTooLarge'));
       return;
     }
 
@@ -960,7 +965,7 @@ const ProfilePage: React.FC = () => {
       await refreshProfile();
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
-      alert('Erro ao enviar imagem. Tente novamente.');
+      alert(t('profile.avatarUploadError'));
     } finally {
       setUploadingAvatar(false);
     }
@@ -971,7 +976,7 @@ const ProfilePage: React.FC = () => {
       <Layout>
         <LoadingState>
           <Activity />
-          <p>Carregando perfil...</p>
+          <p>{t('profile.loading')}</p>
         </LoadingState>
       </Layout>
     );
@@ -994,7 +999,7 @@ const ProfilePage: React.FC = () => {
               </AvatarImage>
               <AvatarUploadOverlay
                 onClick={() => fileInputRef.current?.click()}
-                title="Alterar foto"
+                title={t('profile.changePhoto')}
               >
                 <Camera />
               </AvatarUploadOverlay>
@@ -1013,11 +1018,11 @@ const ProfilePage: React.FC = () => {
               <PatientMeta>
                 <TypeBadge>
                   <Sparkles size={14} />
-                  {getPatientTypeLabel(profile.patient_type || 'new')}
+                  {t('patientType.' + (profile.patient_type === 'iv_therapy' ? 'ivTherapy' : (profile.patient_type || 'new')))}
                 </TypeBadge>
                 <MetaItem>
                   <Clock />
-                  Desde {formatDate(profile.created_at)}
+                  {t('profile.since', { date: formatDate(profile.created_at) })}
                 </MetaItem>
               </PatientMeta>
 
@@ -1038,7 +1043,7 @@ const ProfilePage: React.FC = () => {
             <HeaderActions>
               <ActionButton onClick={openEditModal}>
                 <Edit3 />
-                Editar
+                {t('common.edit')}
               </ActionButton>
             </HeaderActions>
           </HeaderContent>
@@ -1047,15 +1052,15 @@ const ProfilePage: React.FC = () => {
         <StatsRow>
           <StatCard $color="#92563E" $delay={100}>
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Total de Consultas</StatLabel>
+            <StatLabel>{t('profile.totalAppointments')}</StatLabel>
           </StatCard>
           <StatCard $color="#B48F7A" $delay={200}>
             <StatValue>{stats.completed}</StatValue>
-            <StatLabel>Consultas Realizadas</StatLabel>
+            <StatLabel>{t('profile.completedAppointments')}</StatLabel>
           </StatCard>
           <StatCard $color="#C4836A" $delay={300}>
             <StatValue>{stats.upcoming}</StatValue>
-            <StatLabel>Próximas Consultas</StatLabel>
+            <StatLabel>{t('profile.upcomingAppointments')}</StatLabel>
           </StatCard>
         </StatsRow>
 
@@ -1064,24 +1069,24 @@ const ProfilePage: React.FC = () => {
             <CardHeader>
               <CardTitle>
                 <User />
-                Dados Pessoais
+                {t('profile.personalData')}
               </CardTitle>
             </CardHeader>
             <InfoGrid>
               <InfoItem>
-                <InfoLabel>Nome Completo</InfoLabel>
+                <InfoLabel>{t('profile.fullName')}</InfoLabel>
                 <InfoValue>{profile.first_name} {profile.last_name}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Email</InfoLabel>
+                <InfoLabel>{t('profile.email')}</InfoLabel>
                 <InfoValue>{profile.email}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Telefone</InfoLabel>
+                <InfoLabel>{t('profile.phone')}</InfoLabel>
                 <InfoValue>{profile.phone || '-'}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Idioma Preferido</InfoLabel>
+                <InfoLabel>{t('profile.preferredLanguage')}</InfoLabel>
                 <InfoValue>{profile.preferred_language === 'en' ? 'English' : 'Português'}</InfoValue>
               </InfoItem>
             </InfoGrid>
@@ -1091,24 +1096,24 @@ const ProfilePage: React.FC = () => {
             <CardHeader>
               <CardTitle>
                 <Activity />
-                Informações Médicas
+                {t('profile.medicalInfo')}
               </CardTitle>
             </CardHeader>
             <InfoGrid>
               <InfoItem>
-                <InfoLabel>Tipo de Paciente</InfoLabel>
-                <InfoValue>{getPatientTypeLabel(profile.patient_type || 'new')}</InfoValue>
+                <InfoLabel>{t('profile.patientType')}</InfoLabel>
+                <InfoValue>{t('patientType.' + (profile.patient_type === 'iv_therapy' ? 'ivTherapy' : (profile.patient_type || 'new')))}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Última Visita</InfoLabel>
+                <InfoLabel>{t('profile.lastVisit')}</InfoLabel>
                 <InfoValue>{formatDate(profile.last_visit_at)}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Exames Realizados</InfoLabel>
+                <InfoLabel>{t('profile.labsCompleted')}</InfoLabel>
                 <InfoValue>{formatDate(profile.labs_completed_at)}</InfoValue>
               </InfoItem>
               <InfoItem>
-                <InfoLabel>Cadastrado em</InfoLabel>
+                <InfoLabel>{t('profile.registeredAt')}</InfoLabel>
                 <InfoValue>{formatDate(profile.created_at)}</InfoValue>
               </InfoItem>
             </InfoGrid>
@@ -1119,7 +1124,7 @@ const ProfilePage: React.FC = () => {
               <CardHeader>
                 <CardTitle>
                   <Calendar />
-                  Próximas Consultas
+                  {t('profile.upcomingTitle')}
                 </CardTitle>
               </CardHeader>
               <AppointmentList>
@@ -1129,13 +1134,13 @@ const ProfilePage: React.FC = () => {
                       {getStatusIcon(apt.status)}
                     </AppointmentIcon>
                     <AppointmentInfo>
-                      <AppointmentTitle>{getTreatmentLabel(apt.type)}</AppointmentTitle>
+                      <AppointmentTitle>{getTreatmentLabel(apt.type, i18n.language as 'pt' | 'en')}</AppointmentTitle>
                       <AppointmentMeta>
                         <span>{formatDateTime(apt.scheduled_at)}</span>
                         <span>·</span>
                         <span>
                           {apt.provider?.profile
-                            ? `Dr(a). ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
+                            ? `${t('common.drPrefix')} ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
                             : 'N/A'}
                         </span>
                       </AppointmentMeta>
@@ -1153,7 +1158,7 @@ const ProfilePage: React.FC = () => {
             <CardHeader>
               <CardTitle>
                 <FileText />
-                Histórico de Consultas
+                {t('profile.historyTitle')}
               </CardTitle>
             </CardHeader>
             {pastAppointments.length > 0 ? (
@@ -1164,13 +1169,13 @@ const ProfilePage: React.FC = () => {
                       {getStatusIcon(apt.status)}
                     </AppointmentIcon>
                     <AppointmentInfo>
-                      <AppointmentTitle>{getTreatmentLabel(apt.type)}</AppointmentTitle>
+                      <AppointmentTitle>{getTreatmentLabel(apt.type, i18n.language as 'pt' | 'en')}</AppointmentTitle>
                       <AppointmentMeta>
                         <span>{formatDateTime(apt.scheduled_at)}</span>
                         <span>·</span>
                         <span>
                           {apt.provider?.profile
-                            ? `Dr(a). ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
+                            ? `${t('common.drPrefix')} ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
                             : 'N/A'}
                         </span>
                       </AppointmentMeta>
@@ -1184,7 +1189,7 @@ const ProfilePage: React.FC = () => {
             ) : (
               <EmptyState>
                 <FileText />
-                <p>Nenhuma consulta no histórico</p>
+                <p>{t('profile.noHistory')}</p>
               </EmptyState>
             )}
           </FullWidthCard>
@@ -1198,7 +1203,7 @@ const ProfilePage: React.FC = () => {
             <ModalHeader>
               <ModalTitle>
                 <Edit3 />
-                Editar Perfil
+                {t('profile.editTitle')}
               </ModalTitle>
               <CloseButton onClick={closeEditModal}>
                 <X />
@@ -1209,48 +1214,48 @@ const ProfilePage: React.FC = () => {
               {saveSuccess && (
                 <SuccessMessage>
                   <CheckCircle />
-                  Dados salvos com sucesso!
+                  {t('profile.dataSaved')}
                 </SuccessMessage>
               )}
 
               <FormGrid>
                 <FormGroup>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>{t('profile.firstName')}</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.first_name}
                     onChange={e => setEditForm(prev => ({ ...prev, first_name: e.target.value }))}
-                    placeholder="Nome"
+                    placeholder={t('profile.firstName')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Sobrenome</FormLabel>
+                  <FormLabel>{t('profile.lastName')}</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.last_name}
                     onChange={e => setEditForm(prev => ({ ...prev, last_name: e.target.value }))}
-                    placeholder="Sobrenome"
+                    placeholder={t('profile.lastName')}
                   />
                 </FormGroup>
 
                 <FormGroup $fullWidth>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('profile.email')}</FormLabel>
                   <FormInput
                     type="email"
                     value={profile?.email || ''}
                     disabled
-                    placeholder="Email não pode ser alterado"
+                    placeholder={t('profile.emailReadonly')}
                   />
                 </FormGroup>
 
                 <FormGroup $fullWidth>
-                  <FormLabel>Telefone</FormLabel>
+                  <FormLabel>{t('profile.phone')}</FormLabel>
                   <FormInput
                     type="tel"
                     value={editForm.phone}
                     onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="(11) 99999-9999"
+                    placeholder={t('profile.phonePlaceholder')}
                   />
                 </FormGroup>
               </FormGrid>
@@ -1258,7 +1263,7 @@ const ProfilePage: React.FC = () => {
 
             <ModalFooter>
               <ModalButton $variant="secondary" onClick={closeEditModal}>
-                Cancelar
+                {t('common.cancel')}
               </ModalButton>
               <ModalButton
                 $variant="primary"
@@ -1266,11 +1271,11 @@ const ProfilePage: React.FC = () => {
                 disabled={saving || !editForm.first_name || !editForm.last_name}
               >
                 {saving ? (
-                  <>Salvando...</>
+                  <>{t('common.saving')}</>
                 ) : (
                   <>
                     <Save />
-                    Salvar
+                    {t('common.save')}
                   </>
                 )}
               </ModalButton>

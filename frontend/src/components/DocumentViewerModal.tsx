@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { X, Download, ChevronLeft, ChevronRight, FileText, AlertCircle, Loader } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -492,6 +493,7 @@ const ErrorContainer = styled.div`
 // SUB-VIEWERS
 // ============================================
 const PdfViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
+  const { t } = useTranslation();
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(1);
 
@@ -508,13 +510,13 @@ const PdfViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
         loading={
           <LoadingContainer>
             <Loader />
-            Carregando PDF...
+            {t('documents.viewer.loadingPdf')}
           </LoadingContainer>
         }
         error={
           <ErrorContainer>
             <AlertCircle />
-            <p>Erro ao carregar o PDF.</p>
+            <p>{t('documents.viewer.errorPdf')}</p>
           </ErrorContainer>
         }
       >
@@ -534,7 +536,7 @@ const PdfViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
             <ChevronLeft />
           </PdfNavBtn>
           <PdfPageInfo>
-            Pagina {pageNumber} de {numPages}
+            {t('documents.viewer.pageInfo', { pageNumber, numPages })}
           </PdfPageInfo>
           <PdfNavBtn
             onClick={() => setPageNumber(p => Math.min(numPages, p + 1))}
@@ -555,6 +557,7 @@ const ImageViewer: React.FC<{ fileUrl: string; title: string }> = ({ fileUrl, ti
 );
 
 const DocxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
+  const { t } = useTranslation();
   const [html, setHtml] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -588,7 +591,7 @@ const DocxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
     return (
       <LoadingContainer>
         <Loader />
-        Convertendo documento...
+        {t('documents.viewer.convertingDoc')}
       </LoadingContainer>
     );
   }
@@ -597,7 +600,7 @@ const DocxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
     return (
       <ErrorContainer>
         <AlertCircle />
-        <p>Erro ao converter documento DOCX.</p>
+        <p>{t('documents.viewer.errorDoc')}</p>
       </ErrorContainer>
     );
   }
@@ -606,6 +609,7 @@ const DocxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
 };
 
 const XlsxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
+  const { t } = useTranslation();
   const [sheets, setSheets] = useState<{ name: string; data: string[][] }[]>([]);
   const [activeSheet, setActiveSheet] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -648,7 +652,7 @@ const XlsxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
     return (
       <LoadingContainer>
         <Loader />
-        Carregando planilha...
+        {t('documents.viewer.loadingSheet')}
       </LoadingContainer>
     );
   }
@@ -657,7 +661,7 @@ const XlsxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
     return (
       <ErrorContainer>
         <AlertCircle />
-        <p>Erro ao carregar a planilha.</p>
+        <p>{t('documents.viewer.errorSheet')}</p>
       </ErrorContainer>
     );
   }
@@ -706,12 +710,13 @@ const XlsxViewer: React.FC<{ fileUrl: string }> = ({ fileUrl }) => {
 };
 
 const FallbackViewer: React.FC<{ fileName: string }> = ({ fileName }) => {
-  const ext = getFileExtension(fileName).toUpperCase() || 'Desconhecido';
+  const { t } = useTranslation();
+  const ext = getFileExtension(fileName).toUpperCase() || t('documents.viewer.unknown');
   return (
     <FallbackContainer>
       <FileText />
-      <p>Preview indisponivel para arquivos .{ext}</p>
-      <small>Use o botao "Baixar" para visualizar o documento.</small>
+      <p>{t('documents.viewer.previewUnavailable', { ext })}</p>
+      <small>{t('documents.viewer.downloadHint')}</small>
     </FallbackContainer>
   );
 };
@@ -726,6 +731,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
   fileName,
   title,
 }) => {
+  const { t } = useTranslation();
   const fileType = detectFileType(fileName);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -781,7 +787,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
           <div />
           <DownloadBtn href={fileUrl} download={fileName} target="_blank" rel="noopener noreferrer">
             <Download />
-            Baixar
+            {t('documents.viewer.download')}
           </DownloadBtn>
         </ModalFooter>
       </ModalContainer>

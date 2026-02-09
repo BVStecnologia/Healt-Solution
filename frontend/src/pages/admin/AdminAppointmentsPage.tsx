@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import styled, { keyframes, css } from 'styled-components';
 import {
   Search,
@@ -1118,14 +1120,14 @@ interface StatusCount {
 }
 
 // ============================================
-// KANBAN COLUMN CONFIG
+// KANBAN COLUMN CONFIG (icons + colors only; titles come from i18n inside component)
 // ============================================
-const kanbanColumns = [
-  { id: 'pending', title: 'Pendente', icon: AlertCircle, color: luxuryColors.warning },
-  { id: 'confirmed', title: 'Confirmada', icon: CheckCircle, color: luxuryColors.success },
-  { id: 'checked_in', title: 'Check-in', icon: User, color: luxuryColors.info },
-  { id: 'in_progress', title: 'Em Atendimento', icon: Stethoscope, color: luxuryColors.primary },
-  { id: 'completed', title: 'Concluída', icon: CheckCheck, color: luxuryColors.gold },
+const kanbanColumnsDef = [
+  { id: 'pending', titleKey: 'appointments.kanbanPending', icon: AlertCircle, color: luxuryColors.warning },
+  { id: 'confirmed', titleKey: 'appointments.kanbanConfirmed', icon: CheckCircle, color: luxuryColors.success },
+  { id: 'checked_in', titleKey: 'appointments.kanbanCheckedIn', icon: User, color: luxuryColors.info },
+  { id: 'in_progress', titleKey: 'appointments.kanbanInProgress', icon: Stethoscope, color: luxuryColors.primary },
+  { id: 'completed', titleKey: 'appointments.kanbanCompleted', icon: CheckCheck, color: luxuryColors.gold },
 ];
 
 // ============================================
@@ -1154,6 +1156,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
   onViewProfile,
   processingId,
 }) => {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -1203,7 +1206,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
           <Stethoscope />
           <span>
             {appointment.provider?.profile
-              ? `Dr(a). ${appointment.provider.profile.first_name}`
+              ? `${t('common.drPrefix')} ${appointment.provider.profile.first_name}`
               : 'N/A'}
           </span>
         </div>
@@ -1222,14 +1225,14 @@ const SortableCard: React.FC<SortableCardProps> = ({
               onClick={(e) => { e.stopPropagation(); onApprove(appointment); }}
               disabled={processingId === appointment.id}
             >
-              <CheckCircle /> Aprovar
+              <CheckCircle /> {t('dashboard.approve')}
             </KanbanActionBtn>
             <KanbanActionBtn
               $variant="reject"
               onClick={(e) => { e.stopPropagation(); onReject(appointment); }}
               disabled={processingId === appointment.id}
             >
-              <XCircle /> Rejeitar
+              <XCircle /> {t('dashboard.reject')}
             </KanbanActionBtn>
           </>
         )}
@@ -1237,7 +1240,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
           $variant="view"
           onClick={(e) => { e.stopPropagation(); onViewProfile(appointment.patient_id); }}
         >
-          <Eye /> Perfil
+          <Eye /> {t('calendar.modal.viewProfile')}
         </KanbanActionBtn>
       </KanbanCardActions>
     </KanbanCard>
@@ -1255,6 +1258,7 @@ interface DroppableColumnProps {
 }
 
 const DroppableColumn: React.FC<DroppableColumnProps> = ({ id, children, totalItems, visibleItems }) => {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${id}`,
     data: {
@@ -1332,7 +1336,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({ id, children, totalIt
       {scrollInfo.hiddenBelow > 0 && (
         <MoreIndicator $visible={true}>
           <ChevronDown />
-          +{scrollInfo.hiddenBelow} {scrollInfo.hiddenBelow === 1 ? 'consulta' : 'consultas'}
+          {t('common.moreCount', { count: scrollInfo.hiddenBelow })}
         </MoreIndicator>
       )}
     </ColumnContentWrapper>
@@ -1372,6 +1376,7 @@ const ProviderFilterSelect = styled.select`
 `;
 
 const AdminAppointmentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { navigateTo } = useSmartNavigation();
   const { providerId, isProvider, isAdmin } = useCurrentProvider();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -1538,7 +1543,7 @@ const AdminAppointmentsPage: React.FC = () => {
           const prof = Array.isArray(p.profile) ? p.profile[0] : p.profile;
           return {
             id: p.id,
-            name: prof ? `Dr(a). ${prof.first_name} ${prof.last_name}` : p.id,
+            name: prof ? `${t('common.drPrefix')} ${prof.first_name} ${prof.last_name}` : p.id,
           };
         });
         setProviderOptions(options);
@@ -1649,14 +1654,14 @@ const AdminAppointmentsPage: React.FC = () => {
           patientName: `${apt.patient.first_name} ${apt.patient.last_name}`,
           patientPhone: apt.patient.phone,
           patientId: apt.patient_id,
-          providerName: apt.provider?.profile ? `Dr(a). ${apt.provider.profile.first_name}` : 'N/A',
+          providerName: apt.provider?.profile ? `${t('common.drPrefix')} ${apt.provider.profile.first_name}` : 'N/A',
           appointmentType: formatType(apt.type),
-          appointmentDate: date.toLocaleDateString('pt-BR'),
-          appointmentTime: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          appointmentDate: date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US'),
+          appointmentTime: date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
           appointmentId: apt.id,
         });
         if (!result.success) {
-          window.alert(`Consulta confirmada, mas a notificação WhatsApp falhou: ${result.error || 'Erro desconhecido'}`);
+          window.alert(`${t('dashboard.confirmWhatsappFail')} ${result.error || t('dashboard.unknownError')}`);
         }
       }
 
@@ -1671,8 +1676,8 @@ const AdminAppointmentsPage: React.FC = () => {
 
   const handleReject = async (apt: Appointment) => {
     const reason = window.prompt(
-      'Motivo da rejeição:\n\n• Horário não disponível\n• Médico indisponível\n• Outro motivo',
-      'Horário não disponível'
+      t('dashboard.rejectionPrompt'),
+      t('dashboard.rejectionDefault')
     );
     if (reason === null) return; // Cancelou o prompt
 
@@ -1682,7 +1687,7 @@ const AdminAppointmentsPage: React.FC = () => {
         .from('appointments')
         .update({
           status: 'cancelled',
-          cancellation_reason: reason || 'Horário não disponível',
+          cancellation_reason: reason || t('dashboard.rejectionDefault'),
           cancelled_at: new Date().toISOString(),
         })
         .eq('id', apt.id);
@@ -1697,20 +1702,20 @@ const AdminAppointmentsPage: React.FC = () => {
           patientName: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : '',
           patientPhone: apt.patient?.phone || '',
           patientId: apt.patient_id,
-          providerName: providerProfile ? `Dr(a). ${providerProfile.first_name} ${providerProfile.last_name}` : 'N/A',
+          providerName: providerProfile ? `${t('common.drPrefix')} ${providerProfile.first_name} ${providerProfile.last_name}` : 'N/A',
           providerPhone: providerProfile?.phone || '',
           providerUserId: providerProfile?.id,
           appointmentType: formatType(apt.type),
           appointmentDate: `${String(date.getUTCDate()).padStart(2, '0')}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${date.getUTCFullYear()}`,
           appointmentTime: `${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`,
           appointmentId: apt.id,
-          reason: reason || 'Horário não disponível',
+          reason: reason || t('dashboard.rejectionDefault'),
         }, 'admin');
         const failedParts: string[] = [];
-        if (cancelResult.patient && !cancelResult.patient.success) failedParts.push('paciente');
-        if (cancelResult.provider && !cancelResult.provider.success) failedParts.push('médico');
+        if (cancelResult.patient && !cancelResult.patient.success) failedParts.push(t('notifications.targetPatient').toLowerCase());
+        if (cancelResult.provider && !cancelResult.provider.success) failedParts.push(t('notifications.targetProvider').toLowerCase());
         if (failedParts.length > 0) {
-          window.alert(`Consulta cancelada, mas a notificação WhatsApp para ${failedParts.join(' e ')} falhou.`);
+          window.alert(t('dashboard.cancelWhatsappFail', { parts: failedParts.join(` ${t('common.and') || 'e'} `) }));
         }
       }
 
@@ -1723,19 +1728,19 @@ const AdminAppointmentsPage: React.FC = () => {
     }
   };
 
-  const formatType = (type: string) => getTreatmentLabel(type);
+  const formatType = (type: string) => getTreatmentLabel(type, i18n.language as 'pt' | 'en');
 
   const formatStatus = (status: string) => {
-    const statuses: Record<string, string> = {
-      pending: 'Pendente',
-      confirmed: 'Confirmada',
-      checked_in: 'Check-in',
-      in_progress: 'Em Andamento',
-      completed: 'Concluída',
-      cancelled: 'Cancelada',
-      no_show: 'Não Compareceu',
+    const statusKeys: Record<string, string> = {
+      pending: 'status.pending',
+      confirmed: 'status.confirmed',
+      checked_in: 'status.checkedIn',
+      in_progress: 'status.inProgress',
+      completed: 'status.completed',
+      cancelled: 'status.cancelled',
+      no_show: 'status.noShow',
     };
-    return statuses[status] || status;
+    return statusKeys[status] ? t(statusKeys[status]) : status;
   };
 
   const getStatusIcon = (status: string) => {
@@ -1753,7 +1758,7 @@ const AdminAppointmentsPage: React.FC = () => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', {
+    return date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -1762,7 +1767,7 @@ const AdminAppointmentsPage: React.FC = () => {
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleTimeString('pt-BR', {
+    return date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -1799,20 +1804,20 @@ const AdminAppointmentsPage: React.FC = () => {
   }, [appointments, statusFilter, searchQuery]);
 
   const statusTabs = [
-    { key: 'all', label: 'Todas', count: totalCount, icon: CalendarDays },
-    { key: 'pending', label: 'Pendentes', count: getStatusCount('pending'), icon: AlertCircle },
-    { key: 'confirmed', label: 'Confirmadas', count: getStatusCount('confirmed'), icon: CheckCircle },
-    { key: 'in_progress', label: 'Em Andamento', count: getStatusCount('in_progress'), icon: Loader2 },
-    { key: 'completed', label: 'Concluídas', count: getStatusCount('completed'), icon: CheckCheck },
-    { key: 'cancelled', label: 'Canceladas', count: getStatusCount('cancelled'), icon: XOctagon, color: `${luxuryColors.textMuted}18` },
+    { key: 'all', label: t('appointments.filterAll'), count: totalCount, icon: CalendarDays },
+    { key: 'pending', label: t('appointments.filterPending'), count: getStatusCount('pending'), icon: AlertCircle },
+    { key: 'confirmed', label: t('appointments.filterConfirmed'), count: getStatusCount('confirmed'), icon: CheckCircle },
+    { key: 'in_progress', label: t('appointments.filterInProgress'), count: getStatusCount('in_progress'), icon: Loader2 },
+    { key: 'completed', label: t('appointments.filterCompleted'), count: getStatusCount('completed'), icon: CheckCheck },
+    { key: 'cancelled', label: t('appointments.filterCancelled'), count: getStatusCount('cancelled'), icon: XOctagon, color: `${luxuryColors.textMuted}18` },
   ];
 
   return (
     <AdminLayout>
       <PageWrapper>
         <Header>
-          <h1>{isProvider ? 'Minhas Consultas' : 'Consultas'}</h1>
-          <p>{isProvider ? 'Gerencie suas consultas agendadas' : 'Gerencie todas as consultas da clínica'}</p>
+          <h1>{isProvider ? t('appointments.adminTitleProvider') : t('appointments.adminTitle')}</h1>
+          <p>{isProvider ? t('appointments.adminSubtitleProvider') : t('appointments.adminSubtitle')}</p>
         </Header>
 
         <StatsBar>
@@ -1836,7 +1841,7 @@ const AdminAppointmentsPage: React.FC = () => {
           <SearchBox>
             <input
               type="text"
-              placeholder="Buscar por nome do paciente..."
+              placeholder={t('appointments.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -1847,7 +1852,7 @@ const AdminAppointmentsPage: React.FC = () => {
               value={providerFilter}
               onChange={(e) => setProviderFilter(e.target.value)}
             >
-              <option value="all">Todos os médicos</option>
+              <option value="all">{t('calendar.allProviders')}</option>
               {providerOptions.map(p => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
@@ -1885,7 +1890,7 @@ const AdminAppointmentsPage: React.FC = () => {
                 $visible={canScrollLeft}
                 $direction="left"
                 onClick={() => canScrollLeft && scrollKanban('left')}
-                aria-label="Scroll para esquerda"
+                aria-label={t('appointments.scrollLeft')}
               >
                 <div className="dots">
                   <span className="dot" />
@@ -1901,7 +1906,7 @@ const AdminAppointmentsPage: React.FC = () => {
               </ScrollNavButton>
 
               <KanbanContainer ref={kanbanContainerRef}>
-              {kanbanColumns.map(column => {
+              {kanbanColumnsDef.map(column => {
                 const columnAppointments = getAppointmentsByStatus(column.id);
                 const ColumnIcon = column.icon;
 
@@ -1910,7 +1915,7 @@ const AdminAppointmentsPage: React.FC = () => {
                     <ColumnHeader>
                       <div className="title">
                         <ColumnIcon />
-                        {column.title}
+                        {t(column.titleKey)}
                       </div>
                       <span className="count">{columnAppointments.length}</span>
                     </ColumnHeader>
@@ -1927,7 +1932,7 @@ const AdminAppointmentsPage: React.FC = () => {
                         {columnAppointments.length === 0 ? (
                           <EmptyColumn>
                             <CalendarDays />
-                            <span>Nenhuma consulta</span>
+                            <span>{t('appointments.empty')}</span>
                           </EmptyColumn>
                         ) : (
                           columnAppointments.map(apt => (
@@ -1957,7 +1962,7 @@ const AdminAppointmentsPage: React.FC = () => {
                 $visible={canScrollRight}
                 $direction="right"
                 onClick={() => canScrollRight && scrollKanban('right')}
-                aria-label="Scroll para direita"
+                aria-label={t('appointments.scrollRight')}
               >
                 <div className="dots">
                   <span className="dot" />

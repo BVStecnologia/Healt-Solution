@@ -1,8 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { User, Check } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import type { Provider } from '../../types/database';
+import { getSpecialtyKey } from '../../constants/treatments';
 
 interface ProviderSelectProps {
   providers: Provider[];
@@ -102,22 +104,24 @@ const ProviderSelect: React.FC<ProviderSelectProps> = ({
   onSelect,
   loading = false,
 }) => {
+  const { t } = useTranslation();
+
   if (loading) {
-    return <EmptyState>Carregando médicos...</EmptyState>;
+    return <EmptyState>{t('booking.loadingProviders')}</EmptyState>;
   }
 
   if (providers.length === 0) {
-    return <EmptyState>Nenhum médico disponível</EmptyState>;
+    return <EmptyState>{t('booking.noProviders')}</EmptyState>;
   }
 
   return (
     <Container>
-      <Label>Selecione o médico</Label>
+      <Label>{t('booking.selectProvider')}</Label>
       {providers.map(provider => {
         const isSelected = provider.id === selectedId;
         const name = provider.profile
-          ? `Dr(a). ${provider.profile.first_name} ${provider.profile.last_name}`
-          : 'Médico';
+          ? `${t('common.drPrefix')} ${provider.profile.first_name} ${provider.profile.last_name}`
+          : t('providers.unknown');
 
         return (
           <ProviderCard
@@ -131,7 +135,7 @@ const ProviderSelect: React.FC<ProviderSelectProps> = ({
             </Avatar>
             <Info>
               <Name>{name}</Name>
-              <Specialty>{provider.specialty}</Specialty>
+              <Specialty>{t(getSpecialtyKey(provider.specialty))}</Specialty>
             </Info>
             {isSelected && (
               <CheckIcon>

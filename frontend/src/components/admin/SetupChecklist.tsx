@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle2, Circle, MessageCircle, Stethoscope,
   Clock, Bell, ChevronRight, ChevronDown, Sparkles, X
@@ -293,6 +294,7 @@ interface SetupChecklistProps {
 
 const SetupChecklist: React.FC<SetupChecklistProps> = ({ whatsappConnected, totalProviders }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
   const [hasSchedules, setHasSchedules] = useState(false);
   const [hasRules, setHasRules] = useState(false);
@@ -334,32 +336,32 @@ const SetupChecklist: React.FC<SetupChecklistProps> = ({ whatsappConnected, tota
   const steps: SetupStep[] = [
     {
       id: 'whatsapp',
-      title: 'Conectar WhatsApp',
-      description: 'Envie notificações automáticas aos pacientes',
+      title: t('setup.connectWhatsapp'),
+      description: t('setup.connectWhatsappDesc'),
       completed: whatsappConnected,
       route: '/admin/whatsapp',
       icon: <MessageCircle />,
     },
     {
       id: 'providers',
-      title: 'Cadastrar médicos',
-      description: 'Adicione os profissionais da clínica',
+      title: t('setup.registerProviders'),
+      description: t('setup.registerProvidersDesc'),
       completed: totalProviders > 0,
       route: '/admin/providers',
       icon: <Stethoscope />,
     },
     {
       id: 'schedules',
-      title: 'Configurar horários',
-      description: 'Defina quando cada médico atende',
+      title: t('setup.configureSchedules'),
+      description: t('setup.configureSchedulesDesc'),
       completed: hasSchedules,
       route: '/admin/my-schedule',
       icon: <Clock />,
     },
     {
       id: 'rules',
-      title: 'Ativar lembretes',
-      description: 'Configure lembretes automáticos por WhatsApp',
+      title: t('setup.activateReminders'),
+      description: t('setup.activateRemindersDesc'),
       completed: hasRules,
       route: '/admin/notifications',
       icon: <Bell />,
@@ -377,9 +379,9 @@ const SetupChecklist: React.FC<SetupChecklistProps> = ({ whatsappConnected, tota
         <CompletedCard>
           <CompletedContent>
             <CompletedIcon><CheckCircle2 /></CompletedIcon>
-            <h3>Sistema configurado!</h3>
-            <p>Tudo pronto para receber agendamentos.</p>
-            <CompletedDismiss onClick={handleDismiss}>Entendi</CompletedDismiss>
+            <h3>{t('setup.allDone')}</h3>
+            <p>{t('setup.allDoneText')}</p>
+            <CompletedDismiss onClick={handleDismiss}>{t('setup.allDoneDismiss')}</CompletedDismiss>
           </CompletedContent>
         </CompletedCard>
       </Wrapper>
@@ -393,13 +395,13 @@ const SetupChecklist: React.FC<SetupChecklistProps> = ({ whatsappConnected, tota
           <HeaderLeft>
             <IconBadge><Sparkles /></IconBadge>
             <div>
-              <h3>Configure sua clínica</h3>
-              <div className="subtitle">Complete os passos abaixo para começar</div>
+              <h3>{t('setup.title')}</h3>
+              <div className="subtitle">{t('setup.subtitle')}</div>
             </div>
           </HeaderLeft>
           <HeaderActions>
             <ProgressPill>{completedCount}/{steps.length}</ProgressPill>
-            <DismissButton onClick={handleDismiss} title="Minimizar">
+            <DismissButton onClick={handleDismiss} title={t('setup.minimize')}>
               <X />
             </DismissButton>
           </HeaderActions>

@@ -13,6 +13,7 @@ import {
   WifiOff,
   Smartphone,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import HelpTip from '../../components/ui/HelpTip';
@@ -423,6 +424,7 @@ const EVOLUTION_API_URL = process.env.REACT_APP_EVOLUTION_API_URL || 'http://loc
 const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_evolution_aqui';
 
 const WhatsAppPage: React.FC = () => {
+  const { t } = useTranslation();
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -564,7 +566,7 @@ const WhatsAppPage: React.FC = () => {
   };
 
   const deleteInstance = async (instanceName: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta instância?')) return;
+    if (!window.confirm(t('whatsapp.deleteConfirm'))) return;
 
     try {
       await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
@@ -599,30 +601,28 @@ const WhatsAppPage: React.FC = () => {
     <AdminLayout>
       <Header>
         <div>
-          <h1>WhatsApp</h1>
-          <p>Gerencie suas instâncias do WhatsApp</p>
+          <h1>{t('whatsapp.title')}</h1>
+          <p>{t('whatsapp.subtitle')}</p>
         </div>
         <Button $variant="primary" onClick={() => setModalOpen(true)}>
           <Plus />
-          Nova Instância
+          {t('whatsapp.newInstance')}
         </Button>
       </Header>
 
       <HelpTip id="whatsapp">
-        <strong>Como funciona:</strong> Crie uma instancia, escaneie o QR Code com o WhatsApp Business da clinica e
-        pronto — lembretes de consulta e notificacoes serao enviados automaticamente. Use apenas um numero por instancia.
+        <strong>{t('notifications.howItWorks')}</strong> {t('whatsapp.helpTipText')}
       </HelpTip>
 
       <Grid>
         {instances.length === 0 && !loading ? (
           <EmptyState>
             <MessageCircle />
-            <h3>Conecte o WhatsApp da clinica</h3>
-            <p>Crie uma instancia e escaneie o QR Code com o WhatsApp Business da clinica.<br />
-            Lembretes de consulta e notificacoes serao enviados automaticamente aos pacientes.</p>
+            <h3>{t('whatsapp.emptyTitle')}</h3>
+            <p>{t('whatsapp.emptyDescription')}</p>
             <Button $variant="primary" onClick={() => setModalOpen(true)}>
               <Plus />
-              Criar Instancia
+              {t('whatsapp.createInstance')}
             </Button>
           </EmptyState>
         ) : (
@@ -652,7 +652,7 @@ const WhatsAppPage: React.FC = () => {
                 </InstanceName>
                 <Status $connected={instance.status === 'connected'}>
                   {instance.status === 'connected' ? <Wifi /> : <WifiOff />}
-                  {instance.status === 'connected' ? 'Conectado' : 'Desconectado'}
+                  {instance.status === 'connected' ? t('whatsapp.connected') : t('whatsapp.disconnected')}
                 </Status>
               </InstanceHeader>
 
@@ -663,21 +663,21 @@ const WhatsAppPage: React.FC = () => {
                       <Smartphone />
                     </div>
                     <div className="phone-details">
-                      <div className="label">Número conectado</div>
+                      <div className="label">{t('whatsapp.connectedNumber')}</div>
                       <div className="number">{formatPhone(instance.phoneNumber)}</div>
                     </div>
                   </PhoneNumber>
                 ) : instance.qrCode ? (
                   <QRCodeContainer>
                     <QRCodeImage src={instance.qrCode.startsWith('data:') ? instance.qrCode : `data:image/png;base64,${instance.qrCode}`} alt="QR Code" />
-                    <QRCodeText>Escaneie o QR Code com seu WhatsApp</QRCodeText>
+                    <QRCodeText>{t('whatsapp.scanQR')}</QRCodeText>
                   </QRCodeContainer>
                 ) : (
                   <QRCodeContainer>
                     <QRCodePlaceholder>
                       <QrCode />
                     </QRCodePlaceholder>
-                    <QRCodeText>Clique em atualizar para gerar o QR Code</QRCodeText>
+                    <QRCodeText>{t('whatsapp.clickRefreshQR')}</QRCodeText>
                   </QRCodeContainer>
                 )}
               </InstanceBody>
@@ -685,17 +685,17 @@ const WhatsAppPage: React.FC = () => {
               <InstanceActions>
                 <Button $variant="secondary" onClick={() => refreshInstance(instance.instanceName)}>
                   <RefreshCw />
-                  Atualizar
+                  {t('whatsapp.refresh')}
                 </Button>
                 {instance.status === 'connected' ? (
                   <Button $variant="danger" onClick={() => disconnectInstance(instance.instanceName)}>
                     <XCircle />
-                    Desconectar
+                    {t('whatsapp.disconnect')}
                   </Button>
                 ) : (
                   <Button $variant="danger" onClick={() => deleteInstance(instance.instanceName)}>
                     <Trash2 />
-                    Excluir
+                    {t('whatsapp.deleteButton')}
                   </Button>
                 )}
               </InstanceActions>
@@ -707,19 +707,19 @@ const WhatsAppPage: React.FC = () => {
 
       <Modal $open={modalOpen} onClick={() => setModalOpen(false)}>
         <ModalContent onClick={e => e.stopPropagation()}>
-          <ModalTitle>Nova Instância WhatsApp</ModalTitle>
+          <ModalTitle>{t('whatsapp.createTitle')}</ModalTitle>
           <Input
             type="text"
-            placeholder="Nome da instância (ex: principal)"
+            placeholder={t('whatsapp.createPlaceholder')}
             value={newInstanceName}
             onChange={e => setNewInstanceName(e.target.value)}
           />
           <ModalActions>
             <Button $variant="secondary" onClick={() => setModalOpen(false)}>
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button $variant="primary" onClick={createInstance} disabled={creating}>
-              {creating ? 'Criando...' : 'Criar'}
+              {creating ? t('whatsapp.creating') : t('whatsapp.createButton')}
             </Button>
           </ModalActions>
         </ModalContent>

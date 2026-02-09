@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { ArrowLeft, Calendar, Clock, User, MapPin, FileText } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { useAppointments } from '../../hooks/useAppointments';
-import { getTreatmentLabel } from '../../constants/treatments';
+import { getTreatmentLabel, getSpecialtyKey } from '../../constants/treatments';
 import Layout from '../../components/Layout';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -152,6 +154,8 @@ const AppointmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { cancelAppointment } = useAppointments();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt' ? ptBR : enUS;
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -195,15 +199,11 @@ const AppointmentDetailPage: React.FC = () => {
     const hoursUntil = (scheduledTime - now) / (1000 * 60 * 60);
 
     if (hoursUntil < 24 && hoursUntil > 0) {
-      const confirmed = window.confirm(
-        'Sua consulta é em menos de 24 horas.\n\n' +
-        'Cancelamentos tardios podem estar sujeitos a políticas da clínica.\n\n' +
-        'Deseja continuar com o cancelamento?'
-      );
+      const confirmed = window.confirm(t('appointments.detail.lateCancelWarning'));
       if (!confirmed) return;
     }
 
-    const reason = window.prompt('Por favor, informe o motivo do cancelamento:');
+    const reason = window.prompt(t('appointments.detail.cancelPrompt'));
     if (!reason) return;
 
     try {
@@ -220,7 +220,7 @@ const AppointmentDetailPage: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <LoadingSpinner fullScreen={false} message="Carregando detalhes..." />
+        <LoadingSpinner fullScreen={false} message={t('appointments.detail.loading')} />
       </Layout>
     );
   }
@@ -228,7 +228,7 @@ const AppointmentDetailPage: React.FC = () => {
   if (!appointment) {
     return (
       <Layout>
-        <p>Consulta não encontrada</p>
+        <p>{t('appointments.detail.notFound')}</p>
       </Layout>
     );
   }
@@ -236,8 +236,8 @@ const AppointmentDetailPage: React.FC = () => {
   const { variant, label } = getAppointmentStatusBadge(appointment.status);
   const scheduledDate = new Date(appointment.scheduled_at);
   const providerName = appointment.provider?.profile
-    ? `Dr(a). ${appointment.provider.profile.first_name} ${appointment.provider.profile.last_name}`
-    : 'Médico não definido';
+    ? `${t('common.drPrefix')} ${appointment.provider.profile.first_name} ${appointment.provider.profile.last_name}`
+    : t('appointments.detail.providerUnknown');
   const canCancel = ['pending', 'confirmed'].includes(appointment.status);
 
   return (
@@ -246,7 +246,7 @@ const AppointmentDetailPage: React.FC = () => {
         <BackButton onClick={() => navigate('/appointments')}>
           <ArrowLeft size={20} />
         </BackButton>
-        <Title>Detalhes da Consulta</Title>
+        <Title>{t('appointments.detail.title')}</Title>
         <StatusBadge>
           <Badge variant={variant}>{label}</Badge>
         </StatusBadge>
@@ -255,7 +255,7 @@ const AppointmentDetailPage: React.FC = () => {
       <DetailCard>
         <DetailHeader>
           <TypeLabel>
-            {getTreatmentLabel(appointment.type)}
+            {getTreatmentLabel(appointment.type, i18n.language as 'pt' | 'en')}
           </TypeLabel>
         </DetailHeader>
 
@@ -265,9 +265,9 @@ const AppointmentDetailPage: React.FC = () => {
               <Calendar />
             </DetailIcon>
             <DetailInfo>
-              <DetailLabel>Data</DetailLabel>
+              <DetailLabel>{t('appointments.detail.date')}</DetailLabel>
               <DetailValue>
-                {format(scheduledDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                {format(scheduledDate, "EEEE, d MMMM yyyy", { locale: dateLocale })}
               </DetailValue>
             </DetailInfo>
           </DetailRow>
@@ -277,9 +277,9 @@ const AppointmentDetailPage: React.FC = () => {
               <Clock />
             </DetailIcon>
             <DetailInfo>
-              <DetailLabel>Horário</DetailLabel>
+              <DetailLabel>{t('appointments.detail.time')}</DetailLabel>
               <DetailValue>
-                {format(scheduledDate, 'HH:mm')} - Duração: {appointment.duration} minutos
+                {format(scheduledDate, 'HH:mm')} - {t('appointments.detail.duration', { duration: appointment.duration })}
               </DetailValue>
             </DetailInfo>
           </DetailRow>
@@ -289,11 +289,11 @@ const AppointmentDetailPage: React.FC = () => {
               <User />
             </DetailIcon>
             <DetailInfo>
-              <DetailLabel>Médico</DetailLabel>
+              <DetailLabel>{t('appointments.detail.provider')}</DetailLabel>
               <DetailValue>{providerName}</DetailValue>
               {appointment.provider?.specialty && (
                 <div style={{ fontSize: '13px', color: theme.colors.textSecondary, marginTop: '4px' }}>
-                  {appointment.provider.specialty}
+                  {t(getSpecialtyKey(appointment.provider.specialty))}
                 </div>
               )}
             </DetailInfo>
@@ -305,7 +305,7 @@ const AppointmentDetailPage: React.FC = () => {
                 <FileText />
               </DetailIcon>
               <DetailInfo>
-                <DetailLabel>Observações</DetailLabel>
+                <DetailLabel>{t('appointments.detail.notes')}</DetailLabel>
                 <DetailValue>{appointment.notes}</DetailValue>
               </DetailInfo>
             </DetailRow>
@@ -313,7 +313,7 @@ const AppointmentDetailPage: React.FC = () => {
 
           {appointment.status === 'cancelled' && appointment.cancellation_reason && (
             <CancelledInfo>
-              <CancelledLabel>Motivo do cancelamento</CancelledLabel>
+              <CancelledLabel>{t('appointments.detail.cancellationReason')}</CancelledLabel>
               <CancelledReason>{appointment.cancellation_reason}</CancelledReason>
             </CancelledInfo>
           )}
@@ -325,14 +325,14 @@ const AppointmentDetailPage: React.FC = () => {
               variant="outline"
               onClick={() => navigate('/appointments/new')}
             >
-              Reagendar
+              {t('appointments.detail.reschedule')}
             </Button>
             <Button
               variant="danger"
               onClick={handleCancel}
               isLoading={cancelling}
             >
-              Cancelar Consulta
+              {t('appointments.detail.cancel')}
             </Button>
           </Actions>
         )}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { format, addDays, startOfWeek, isSameDay, isBefore, startOfDay } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import type { TimeSlot } from '../../types/database';
@@ -167,6 +168,9 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   onDateChange,
   loading = false,
 }) => {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt' ? ptBR : enUS;
+
   const [currentWeekStart, setCurrentWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
@@ -192,14 +196,14 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
 
   return (
     <Container>
-      <Label>Selecione a data e horário</Label>
+      <Label>{t('booking.selectDateTime')}</Label>
 
       <WeekNav>
         <NavButton onClick={handlePrevWeek}>
           <ChevronLeft />
         </NavButton>
         <WeekLabel>
-          {format(currentWeekStart, "MMMM 'de' yyyy", { locale: ptBR })}
+          {format(currentWeekStart, 'MMMM yyyy', { locale: dateLocale })}
         </WeekLabel>
         <NavButton onClick={handleNextWeek}>
           <ChevronRight />
@@ -225,7 +229,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
               disabled={isPast}
             >
               <DayName $selected={isSelected && !isPast} $disabled={isPast}>
-                {format(day, 'EEE', { locale: ptBR })}
+                {format(day, 'EEE', { locale: dateLocale })}
               </DayName>
               <DayNumber $selected={isSelected && !isPast} $disabled={isPast}>
                 {format(day, 'd')}
@@ -238,13 +242,13 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
       <SlotsContainer>
         <SlotsLabel>
           <Clock />
-          Horários disponíveis para {format(selectedDate, "d 'de' MMMM", { locale: ptBR })}
+          {t('booking.availableSlots', { date: format(selectedDate, 'd MMMM', { locale: dateLocale }) })}
         </SlotsLabel>
 
         {loading ? (
-          <EmptySlots>Carregando horários...</EmptySlots>
+          <EmptySlots>{t('booking.loadingSlots')}</EmptySlots>
         ) : availableSlots.length === 0 ? (
-          <EmptySlots>Nenhum horário disponível nesta data</EmptySlots>
+          <EmptySlots>{t('booking.noSlots')}</EmptySlots>
         ) : (
           <SlotsGrid>
             {slots.map(slot => {

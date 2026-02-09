@@ -23,6 +23,8 @@ import {
   Lock,
   Trash2,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { AppointmentType, ProviderBlock } from '../../types/database';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSmartNavigation } from '../../hooks/useSmartNavigation';
@@ -31,7 +33,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import HelpTip from '../../components/ui/HelpTip';
 import { supabase } from '../../lib/supabaseClient';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
-import { ACTIVE_TREATMENTS, getTreatmentLabel, getTreatmentShortLabel, getTreatmentDuration } from '../../constants/treatments';
+import { ACTIVE_TREATMENTS, getTreatmentLabel, getTreatmentShortLabel, getTreatmentDuration, getSpecialtyKey } from '../../constants/treatments';
 
 // Animações
 const fadeIn = keyframes`
@@ -1456,50 +1458,10 @@ const APPOINTMENT_TYPES = ACTIVE_TREATMENTS.map(t => ({
   duration: t.duration,
 }));
 
-const messages = {
-  today: 'Hoje',
-  previous: 'Anterior',
-  next: 'Próximo',
-  month: 'Mês',
-  week: 'Semana',
-  day: 'Dia',
-  agenda: 'Agenda',
-  date: 'Data',
-  time: 'Hora',
-  event: 'Evento',
-  noEventsInRange: 'Nenhuma consulta neste período.',
-  showMore: (total: number) => `+ ${total} mais`,
-};
 
-const formatTypeShort = (type: string): string => getTreatmentShortLabel(type);
+const formatTypeShort = (type: string): string => getTreatmentShortLabel(type, i18n.language as 'pt' | 'en');
 
-// Helper para formatar status
-const formatStatusShort = (status: string): string => {
-  const statuses: Record<string, string> = {
-    pending: 'Pendente',
-    confirmed: 'Confirmada',
-    checked_in: 'Check-in',
-    in_progress: 'Em Curso',
-    completed: 'Concluída',
-    cancelled: 'Cancelada',
-    no_show: 'Faltou',
-  };
-  return statuses[status] || status;
-};
 
-// Tooltip com informações completas do evento
-const getEventTooltip = (event: CalendarEvent): string => {
-  if (event.isBlock) return event.blockReason || 'Horário bloqueado';
-  const time = `${format(event.start, 'HH:mm')} — ${format(event.end, 'HH:mm')}`;
-  const duration = Math.round((event.end.getTime() - event.start.getTime()) / 60000);
-  return [
-    `${event.patientName}`,
-    `${formatTypeShort(event.type)} · ${duration}min`,
-    time,
-    `${event.providerName}`,
-    `Status: ${formatStatusShort(event.status)}`,
-  ].join('\n');
-};
 
 // Componente custom para eventos na week/day view
 const CustomTimeEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
@@ -1536,6 +1498,16 @@ const CustomTimeEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
 
 // Componente customizado para renderizar evento na Agenda - Versão Limpa
 const CustomAgendaEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
+  const { t } = useTranslation();
+  const statusMap: Record<string, string> = {
+    pending: t('status.pending'),
+    confirmed: t('status.confirmed'),
+    checked_in: t('status.checkedIn'),
+    in_progress: t('status.inProgressShort', 'Em Curso'),
+    completed: t('status.completed'),
+    cancelled: t('status.cancelled'),
+    no_show: t('status.noShowShort', 'Faltou'),
+  };
   return (
     <AgendaEventContent>
       <AgendaPatientName>{event.patientName}</AgendaPatientName>
@@ -1547,7 +1519,7 @@ const CustomAgendaEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
         {event.providerName}
       </AgendaProvider>
       <AgendaStatusBadge $status={event.status}>
-        {formatStatusShort(event.status)}
+        {statusMap[event.status] || event.status}
       </AgendaStatusBadge>
     </AgendaEventContent>
   );
@@ -1590,6 +1562,7 @@ interface ProviderOption {
 }
 
 const CalendarPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { navigateTo } = useSmartNavigation();
@@ -1630,6 +1603,50 @@ const CalendarPage: React.FC = () => {
   const [savingBlock, setSavingBlock] = useState(false);
   const [blockSuccess, setBlockSuccess] = useState(false);
   const [blockError, setBlockError] = useState('');
+
+  // react-big-calendar translated messages
+  const messages = useMemo(() => ({
+    today: t('calendar.today'),
+    previous: t('calendar.previous'),
+    next: t('calendar.next'),
+    month: t('calendar.month'),
+    week: t('calendar.week'),
+    day: t('calendar.day'),
+    agenda: t('calendar.agenda'),
+    date: t('calendar.date'),
+    time: t('calendar.time'),
+    event: t('calendar.event'),
+    noEventsInRange: t('calendar.noEvents'),
+    showMore: (total: number) => t('calendar.showMore', { count: total }),
+  }), [t]);
+
+  // Helper para formatar status com i18n
+  const formatStatusShort = useCallback((status: string): string => {
+    const statusMap: Record<string, string> = {
+      pending: t('status.pending'),
+      confirmed: t('status.confirmed'),
+      checked_in: t('status.checkedIn'),
+      in_progress: t('status.inProgressShort', 'Em Curso'),
+      completed: t('status.completed'),
+      cancelled: t('status.cancelled'),
+      no_show: t('status.noShowShort', 'Faltou'),
+    };
+    return statusMap[status] || status;
+  }, [t]);
+
+  // Tooltip com informações completas do evento
+  const getEventTooltip = useCallback((event: CalendarEvent): string => {
+    if (event.isBlock) return event.blockReason || t('calendar.blockedTime');
+    const time = `${format(event.start, 'HH:mm')} — ${format(event.end, 'HH:mm')}`;
+    const duration = Math.round((event.end.getTime() - event.start.getTime()) / 60000);
+    return [
+      `${event.patientName}`,
+      `${formatTypeShort(event.type)} · ${duration}min`,
+      time,
+      `${event.providerName}`,
+      `${t('calendar.modal.status')}: ${formatStatusShort(event.status)}`,
+    ].join('\n');
+  }, [t, formatStatusShort]);
 
   // Ler view da URL ou usar 'month' como padrão
   const viewFromUrl = searchParams.get('view') as View | null;
@@ -1699,7 +1716,7 @@ const CalendarPage: React.FC = () => {
           const prof = Array.isArray(p.profile) ? p.profile[0] : p.profile;
           return {
             id: p.id,
-            name: prof ? `Dr(a). ${prof.first_name} ${prof.last_name}` : p.id,
+            name: prof ? `${t('common.drPrefix')} ${prof.first_name} ${prof.last_name}` : p.id,
           };
         });
         setProviderOptions(options);
@@ -1745,7 +1762,7 @@ const CalendarPage: React.FC = () => {
         const startDate = new Date(apt.scheduled_at);
         const endDate = new Date(startDate.getTime() + (apt.duration || 30) * 60000);
         const patientName = apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A';
-        const providerName = apt.provider?.profile ? `Dr(a). ${apt.provider.profile.first_name}` : 'N/A';
+        const providerName = apt.provider?.profile ? `${t('common.drPrefix')} ${apt.provider.profile.first_name}` : 'N/A';
 
         return {
           id: apt.id,
@@ -1786,7 +1803,7 @@ const CalendarPage: React.FC = () => {
 
       const blockEvents: CalendarEvent[] = (blocksData || []).map((block: any) => {
         const providerName = block.provider?.profile
-          ? `Dr(a). ${block.provider.profile.first_name}`
+          ? `${t('common.drPrefix')} ${block.provider.profile.first_name}`
           : '';
 
         let blockStart: Date;
@@ -1801,7 +1818,7 @@ const CalendarPage: React.FC = () => {
           blockEnd = new Date(`${block.block_date}T${block.end_time}`);
         }
 
-        const label = block.reason || (!block.start_time ? 'Dia bloqueado' : 'Bloqueado');
+        const label = block.reason || (!block.start_time ? t('calendar.blockedDay') : t('calendar.blocked'));
 
         return {
           id: `block-${block.id}`,
@@ -1822,7 +1839,7 @@ const CalendarPage: React.FC = () => {
     } catch (error) {
       console.error('Error loading appointments:', error);
     }
-  }, [date, activeProviderId]);
+  }, [date, activeProviderId, t]);
 
   useEffect(() => {
     loadAppointments();
@@ -2067,17 +2084,17 @@ const CalendarPage: React.FC = () => {
     }
   };
 
-  const formatAppointmentType = (type: string) => getTreatmentLabel(type);
+  const formatAppointmentType = (type: string) => getTreatmentLabel(type, i18n.language as 'pt' | 'en');
 
   const formatStatus = (status: string) => {
     const statuses: Record<string, string> = {
-      pending: 'Pendente',
-      confirmed: 'Confirmada',
-      checked_in: 'Check-in',
-      in_progress: 'Em Andamento',
-      completed: 'Concluída',
-      cancelled: 'Cancelada',
-      no_show: 'Não Compareceu',
+      pending: t('status.pending'),
+      confirmed: t('status.confirmed'),
+      checked_in: t('status.checkedIn'),
+      in_progress: t('status.inProgress'),
+      completed: t('status.completed'),
+      cancelled: t('status.cancelled'),
+      no_show: t('status.noShow'),
     };
     return statuses[status] || status;
   };
@@ -2129,7 +2146,7 @@ const CalendarPage: React.FC = () => {
 
   const handleCreateAppointment = async () => {
     if (!newAppointmentForm.patient_id || !newAppointmentForm.provider_id) {
-      setAppointmentError('Selecione o paciente e o médico');
+      setAppointmentError(t('calendar.errorSelectBoth'));
       return;
     }
 
@@ -2165,7 +2182,7 @@ const CalendarPage: React.FC = () => {
       }, 1500);
     } catch (error: any) {
       console.error('Error creating appointment:', error);
-      setAppointmentError(error.message || 'Erro ao criar agendamento');
+      setAppointmentError(error.message || t('calendar.errorCreateAppointment'));
     } finally {
       setSavingAppointment(false);
     }
@@ -2198,7 +2215,7 @@ const CalendarPage: React.FC = () => {
 
   const handleCreateBlock = async () => {
     if (!blockForm.provider_id) {
-      setBlockError('Selecione o médico');
+      setBlockError(t('calendar.errorSelectProvider'));
       return;
     }
 
@@ -2240,7 +2257,7 @@ const CalendarPage: React.FC = () => {
       }, 1500);
     } catch (error: any) {
       console.error('Error creating block:', error);
-      setBlockError(error.message || 'Erro ao criar bloqueio');
+      setBlockError(error.message || t('calendar.errorCreateBlock'));
     } finally {
       setSavingBlock(false);
     }
@@ -2261,7 +2278,7 @@ const CalendarPage: React.FC = () => {
           <span className="calendar-icon">
             <CalendarIcon />
           </span>
-          {isProvider ? 'Minha Agenda' : 'Calendário'}
+          {isProvider ? t('calendar.myScheduleTitle') : t('calendar.title')}
         </h1>
         <HeaderActions>
           {isAdmin && providerOptions.length > 0 && (
@@ -2270,7 +2287,7 @@ const CalendarPage: React.FC = () => {
                 value={providerFilter}
                 onChange={(e) => setProviderFilter(e.target.value)}
               >
-                <option value="all">Todos os médicos</option>
+                <option value="all">{t('calendar.allProviders')}</option>
                 {providerOptions.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -2286,27 +2303,25 @@ const CalendarPage: React.FC = () => {
               </div>
             </div>
             {todayEvents.length > 0 && (
-              <span className="event-count">{todayEvents.length} consulta{todayEvents.length > 1 ? 's' : ''}</span>
+              <span className="event-count">{t('calendar.consultationCount', { count: todayEvents.length })}</span>
             )}
           </TodayInfo>
           {isAdmin && (
             <Button $variant="secondary" onClick={openBlockModal}>
               <Lock />
-              Bloquear Data
+              {t('calendar.blockDate')}
             </Button>
           )}
           <Button $variant="primary" onClick={openNewAppointmentModal}>
             <Plus />
-            Nova Consulta
+            {t('calendar.newAppointment')}
           </Button>
         </HeaderActions>
       </Header>
 
       <HelpTip id="calendar">
-        <strong>Dica:</strong> Clique em uma consulta para ver detalhes e alterar o status.
-        Use os botoes acima para alternar entre visao de mes, semana ou dia.
-        Na visao semanal/diaria, a altura de cada card representa a duracao real da consulta.
-        {isAdmin && ' Filtre por medico para ver a agenda individual.'}
+        <span dangerouslySetInnerHTML={{ __html: t('calendar.helpTip') }} />
+        {isAdmin && t('calendar.helpTipAdmin')}
       </HelpTip>
 
       <CalendarWrapper>
@@ -2356,20 +2371,20 @@ const CalendarPage: React.FC = () => {
 
         <Legend>
           <LegendItem>
-            <span className="status-badge pending">Pendente</span>
+            <span className="status-badge pending">{t('calendar.legend.pending')}</span>
           </LegendItem>
           <LegendItem>
-            <span className="status-badge confirmed">Confirmada</span>
+            <span className="status-badge confirmed">{t('calendar.legend.confirmed')}</span>
           </LegendItem>
           <LegendItem>
-            <span className="status-badge completed">Concluída</span>
+            <span className="status-badge completed">{t('calendar.legend.completed')}</span>
           </LegendItem>
           <LegendItem>
-            <span className="status-badge cancelled">Cancelada</span>
+            <span className="status-badge cancelled">{t('calendar.legend.cancelled')}</span>
           </LegendItem>
           <LegendItem>
             <span className="status-badge cancelled">
-              🔒 Bloqueado
+              {t('calendar.blocked')}
             </span>
           </LegendItem>
         </Legend>
@@ -2382,7 +2397,7 @@ const CalendarPage: React.FC = () => {
           <ModalContainer>
             <ModalHeader>
               <ModalTitle>
-                <h2>Detalhes da Consulta</h2>
+                <h2>{t('calendar.modal.appointmentDetails')}</h2>
                 <h3>{selectedEvent.patientName}</h3>
               </ModalTitle>
               <CloseButton onClick={closeModal}>
@@ -2402,7 +2417,7 @@ const CalendarPage: React.FC = () => {
                     <User />
                   </DetailIcon>
                   <DetailInfo>
-                    <div className="label">Paciente</div>
+                    <div className="label">{t('calendar.modal.patient')}</div>
                     <div className="value">{selectedEvent.patientName}</div>
                   </DetailInfo>
                 </DetailRow>
@@ -2412,7 +2427,7 @@ const CalendarPage: React.FC = () => {
                     <Stethoscope />
                   </DetailIcon>
                   <DetailInfo>
-                    <div className="label">Médico</div>
+                    <div className="label">{t('calendar.modal.provider')}</div>
                     <div className="value">{selectedEvent.providerName}</div>
                   </DetailInfo>
                 </DetailRow>
@@ -2422,7 +2437,7 @@ const CalendarPage: React.FC = () => {
                     <CalendarIcon />
                   </DetailIcon>
                   <DetailInfo>
-                    <div className="label">Data e Horário</div>
+                    <div className="label">{t('calendar.modal.dateTime')}</div>
                     <div className="value">
                       {format(selectedEvent.start, "EEEE, d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
                     </div>
@@ -2434,7 +2449,7 @@ const CalendarPage: React.FC = () => {
                     <FileText />
                   </DetailIcon>
                   <DetailInfo>
-                    <div className="label">Tipo de Consulta</div>
+                    <div className="label">{t('calendar.modal.appointmentType')}</div>
                     <div className="value">{formatAppointmentType(selectedEvent.type)}</div>
                   </DetailInfo>
                 </DetailRow>
@@ -2444,28 +2459,28 @@ const CalendarPage: React.FC = () => {
             <ModalFooter>
               <ModalButton $variant="primary" onClick={handleViewPatient}>
                 <User />
-                Ver Ficha
+                {t('calendar.modal.viewProfile')}
               </ModalButton>
               {selectedEvent.status === 'pending' && (
                 <>
                   <ModalButton $variant="success" onClick={handleConfirmAppointment}>
                     <CheckCircle />
-                    Confirmar
+                    {t('calendar.modal.confirm')}
                   </ModalButton>
                   <ModalButton $variant="danger" onClick={handleCancelAppointment}>
                     <XCircle />
-                    Cancelar
+                    {t('common.cancel')}
                   </ModalButton>
                 </>
               )}
               {selectedEvent.status === 'confirmed' && (
                 <ModalButton $variant="danger" onClick={handleCancelAppointment}>
                   <XCircle />
-                  Cancelar Consulta
+                  {t('calendar.modal.cancelAppointment')}
                 </ModalButton>
               )}
               <ModalButton $variant="secondary" onClick={closeModal}>
-                Fechar
+                {t('common.close')}
               </ModalButton>
             </ModalFooter>
           </ModalContainer>
@@ -2480,7 +2495,7 @@ const CalendarPage: React.FC = () => {
             <NewAppointmentHeader>
               <h2>
                 <Plus />
-                Nova Consulta
+                {t('calendar.newAppointment')}
               </h2>
               <CloseButton onClick={closeNewAppointmentModal}>
                 <X />
@@ -2491,7 +2506,7 @@ const CalendarPage: React.FC = () => {
               {appointmentSuccess && (
                 <SuccessMessage>
                   <CheckCircle />
-                  Consulta agendada com sucesso!
+                  {t('calendar.appointmentSuccess')}
                 </SuccessMessage>
               )}
 
@@ -2509,7 +2524,7 @@ const CalendarPage: React.FC = () => {
                   </PatientAvatar>
                   <PatientBannerInfo>
                     <div className="name">{selectedPatient.first_name} {selectedPatient.last_name}</div>
-                    <div className="label">Paciente selecionado</div>
+                    <div className="label">{t('calendar.patientSelected')}</div>
                   </PatientBannerInfo>
                 </PatientBanner>
               )}
@@ -2517,7 +2532,7 @@ const CalendarPage: React.FC = () => {
               <FormGrid>
                 {!selectedPatient && (
                   <FormGroup $fullWidth>
-                    <FormLabel>Paciente</FormLabel>
+                    <FormLabel>{t('calendar.modal.patient')}</FormLabel>
                     <FormSelect
                       value={newAppointmentForm.patient_id}
                       onChange={e => {
@@ -2527,7 +2542,7 @@ const CalendarPage: React.FC = () => {
                         setSelectedPatient(patient || null);
                       }}
                     >
-                      <option value="">Selecione o paciente</option>
+                      <option value="">{t('calendar.selectPatient')}</option>
                       {patients.map(patient => (
                         <option key={patient.id} value={patient.id}>
                           {patient.first_name} {patient.last_name}
@@ -2538,22 +2553,22 @@ const CalendarPage: React.FC = () => {
                 )}
 
                 <FormGroup $fullWidth>
-                  <FormLabel>Médico</FormLabel>
+                  <FormLabel>{t('calendar.modal.provider')}</FormLabel>
                   <FormSelect
                     value={newAppointmentForm.provider_id}
                     onChange={e => setNewAppointmentForm(prev => ({ ...prev, provider_id: e.target.value }))}
                   >
-                    <option value="">Selecione o médico</option>
+                    <option value="">{t('calendar.selectProvider')}</option>
                     {providers.map(provider => (
                       <option key={provider.id} value={provider.id}>
-                        Dr(a). {provider.profile?.first_name} {provider.profile?.last_name} - {provider.specialty}
+                        {t('common.drPrefix')} {provider.profile?.first_name} {provider.profile?.last_name} - {t(getSpecialtyKey(provider.specialty))}
                       </option>
                     ))}
                   </FormSelect>
                 </FormGroup>
 
                 <FormGroup $fullWidth>
-                  <FormLabel>Tipo de Consulta</FormLabel>
+                  <FormLabel>{t('calendar.modal.appointmentType')}</FormLabel>
                   <FormSelect
                     value={newAppointmentForm.type}
                     onChange={e => setNewAppointmentForm(prev => ({ ...prev, type: e.target.value as AppointmentType }))}
@@ -2567,7 +2582,7 @@ const CalendarPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Data</FormLabel>
+                  <FormLabel>{t('calendar.date')}</FormLabel>
                   <FormInput
                     type="date"
                     value={newAppointmentForm.scheduled_date}
@@ -2577,7 +2592,7 @@ const CalendarPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Horário</FormLabel>
+                  <FormLabel>{t('calendar.time')}</FormLabel>
                   <FormInput
                     type="time"
                     value={newAppointmentForm.scheduled_time}
@@ -2586,11 +2601,11 @@ const CalendarPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup $fullWidth>
-                  <FormLabel>Observações (opcional)</FormLabel>
+                  <FormLabel>{t('calendar.modal.observationsOptional')}</FormLabel>
                   <FormTextarea
                     value={newAppointmentForm.notes}
                     onChange={e => setNewAppointmentForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Notas adicionais sobre a consulta..."
+                    placeholder={t('calendar.modal.notes')}
                   />
                 </FormGroup>
               </FormGrid>
@@ -2598,7 +2613,7 @@ const CalendarPage: React.FC = () => {
 
             <NewAppointmentFooter>
               <ModalButton $variant="secondary" onClick={closeNewAppointmentModal}>
-                Cancelar
+                {t('common.cancel')}
               </ModalButton>
               <ModalButton
                 $variant="primary"
@@ -2606,11 +2621,11 @@ const CalendarPage: React.FC = () => {
                 disabled={savingAppointment || !newAppointmentForm.patient_id || !newAppointmentForm.provider_id}
               >
                 {savingAppointment ? (
-                  <>Salvando...</>
+                  <>{t('common.saving')}</>
                 ) : (
                   <>
                     <Save />
-                    Agendar Consulta
+                    {t('calendar.createAppointment')}
                   </>
                 )}
               </ModalButton>
@@ -2626,7 +2641,7 @@ const CalendarPage: React.FC = () => {
             <NewAppointmentHeader>
               <h2>
                 <Lock />
-                Bloquear Data
+                {t('calendar.blockDate')}
               </h2>
               <CloseButton onClick={closeBlockModal}>
                 <X />
@@ -2637,7 +2652,7 @@ const CalendarPage: React.FC = () => {
               {blockSuccess && (
                 <SuccessMessage>
                   <CheckCircle />
-                  Bloqueio criado com sucesso!
+                  {t('calendar.blockSuccess')}
                 </SuccessMessage>
               )}
 
@@ -2650,22 +2665,22 @@ const CalendarPage: React.FC = () => {
 
               <FormGrid>
                 <FormGroup $fullWidth>
-                  <FormLabel>Médico</FormLabel>
+                  <FormLabel>{t('calendar.modal.provider')}</FormLabel>
                   <FormSelect
                     value={blockForm.provider_id}
                     onChange={e => setBlockForm(prev => ({ ...prev, provider_id: e.target.value }))}
                   >
-                    <option value="">Selecione o médico</option>
+                    <option value="">{t('calendar.selectProvider')}</option>
                     {providers.map(provider => (
                       <option key={provider.id} value={provider.id}>
-                        Dr(a). {provider.profile?.first_name} {provider.profile?.last_name} - {provider.specialty}
+                        {t('common.drPrefix')} {provider.profile?.first_name} {provider.profile?.last_name} - {t(getSpecialtyKey(provider.specialty))}
                       </option>
                     ))}
                   </FormSelect>
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Data</FormLabel>
+                  <FormLabel>{t('calendar.date')}</FormLabel>
                   <FormInput
                     type="date"
                     value={blockForm.block_date}
@@ -2675,22 +2690,22 @@ const CalendarPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <FormLabel>Período</FormLabel>
+                  <FormLabel>{t('calendar.period')}</FormLabel>
                   <FormSelect
                     value={blockForm.period}
                     onChange={e => setBlockForm(prev => ({ ...prev, period: e.target.value as any }))}
                   >
-                    <option value="full_day">Dia Inteiro</option>
-                    <option value="morning">Manhã (08:00-12:00)</option>
-                    <option value="afternoon">Tarde (12:00-18:00)</option>
-                    <option value="custom">Horário Personalizado</option>
+                    <option value="full_day">{t('calendar.fullDay')}</option>
+                    <option value="morning">{t('calendar.morning')}</option>
+                    <option value="afternoon">{t('calendar.afternoon')}</option>
+                    <option value="custom">{t('calendar.customTime')}</option>
                   </FormSelect>
                 </FormGroup>
 
                 {blockForm.period === 'custom' && (
                   <>
                     <FormGroup>
-                      <FormLabel>Início</FormLabel>
+                      <FormLabel>{t('calendar.start')}</FormLabel>
                       <FormInput
                         type="time"
                         value={blockForm.start_time}
@@ -2698,7 +2713,7 @@ const CalendarPage: React.FC = () => {
                       />
                     </FormGroup>
                     <FormGroup>
-                      <FormLabel>Fim</FormLabel>
+                      <FormLabel>{t('calendar.end')}</FormLabel>
                       <FormInput
                         type="time"
                         value={blockForm.end_time}
@@ -2709,11 +2724,11 @@ const CalendarPage: React.FC = () => {
                 )}
 
                 <FormGroup $fullWidth>
-                  <FormLabel>Motivo (opcional)</FormLabel>
+                  <FormLabel>{t('calendar.reasonOptional')}</FormLabel>
                   <FormTextarea
                     value={blockForm.reason}
                     onChange={e => setBlockForm(prev => ({ ...prev, reason: e.target.value }))}
-                    placeholder="Ex: Férias, compromisso pessoal, congresso..."
+                    placeholder={t('calendar.blockReasonPlaceholder')}
                   />
                 </FormGroup>
               </FormGrid>
@@ -2721,7 +2736,7 @@ const CalendarPage: React.FC = () => {
 
             <NewAppointmentFooter>
               <ModalButton $variant="secondary" onClick={closeBlockModal}>
-                Cancelar
+                {t('common.cancel')}
               </ModalButton>
               <ModalButton
                 $variant="danger"
@@ -2729,11 +2744,11 @@ const CalendarPage: React.FC = () => {
                 disabled={savingBlock || !blockForm.provider_id}
               >
                 {savingBlock ? (
-                  <>Salvando...</>
+                  <>{t('common.saving')}</>
                 ) : (
                   <>
                     <Lock />
-                    Bloquear
+                    {t('calendar.createBlock')}
                   </>
                 )}
               </ModalButton>

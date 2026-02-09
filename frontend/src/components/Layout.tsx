@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import styled from 'styled-components';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Calendar,
@@ -250,29 +251,30 @@ interface NavSectionConfig {
   items: NavItem[];
 }
 
-const navSections: NavSectionConfig[] = [
-  {
-    label: 'Principal',
-    items: [
-      { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-      { path: '/appointments', label: 'Consultas', icon: Calendar },
-      { path: '/documents', label: 'Documentos', icon: FileText },
-    ],
-  },
-  {
-    label: 'Minha Conta',
-    items: [
-      { path: '/profile', label: 'Meu Perfil', icon: User },
-      { path: '/settings', label: 'Configurações', icon: Settings },
-    ],
-  },
-];
-
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
+  const { t } = useTranslation();
+
+  const navSections: NavSectionConfig[] = [
+    {
+      label: t('nav.principal'),
+      items: [
+        { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+        { path: '/appointments', label: t('nav.appointments'), icon: Calendar },
+        { path: '/documents', label: t('documents.title'), icon: FileText },
+      ],
+    },
+    {
+      label: t('nav.myAccount'),
+      items: [
+        { path: '/profile', label: t('nav.myProfile'), icon: User },
+        { path: '/settings', label: t('nav.settings'), icon: Settings },
+      ],
+    },
+  ];
 
   const handleLogout = async () => {
     await signOut();
@@ -319,9 +321,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <UserSection>
           <AvatarCircle>{initials}</AvatarCircle>
           <UserName>
-            {profile ? `${profile.first_name} ${profile.last_name}` : 'Usuário'}
+            {profile ? `${profile.first_name} ${profile.last_name}` : t('common.user')}
           </UserName>
-          <LogoutButton onClick={handleLogout} title="Sair">
+          <LogoutButton onClick={handleLogout} title={t('nav.logout')}>
             <LogOut />
           </LogoutButton>
         </UserSection>

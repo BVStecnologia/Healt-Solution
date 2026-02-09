@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import {
   Stethoscope, Plus, Search, Edit2, Trash2, Check, AlertCircle,
   Calendar, Clock, X, UserCog, Phone, Mail, Activity, Users,
@@ -10,6 +11,7 @@ import { theme } from '../../styles/GlobalStyle';
 import { supabase } from '../../lib/supabaseClient';
 import { createProvider, getProfileByEmail, promoteToProvider, supabaseAdmin } from '../../lib/adminService';
 import { Profile, Provider } from '../../types/database';
+import { getSpecialtyKey } from '../../constants/treatments';
 
 // ============================================
 // TYPES
@@ -999,30 +1001,30 @@ const ConfirmBtn = styled.button<{ $danger?: boolean }>`
 // ============================================
 // CONSTANTS
 // ============================================
-const SPECIALTIES = [
-  'Clínico Geral',
-  'Cardiologista',
-  'Dermatologista',
-  'Endocrinologista',
-  'Ginecologista',
-  'Neurologista',
-  'Nutricionista',
-  'Ortopedista',
-  'Pediatra',
-  'Psicólogo',
-  'Psiquiatra',
-  'Urologista',
-  'Outro'
+const SPECIALTY_KEYS = [
+  { key: 'providers.specialty.generalPractitioner', value: 'Clínico Geral' },
+  { key: 'providers.specialty.cardiologist', value: 'Cardiologista' },
+  { key: 'providers.specialty.dermatologist', value: 'Dermatologista' },
+  { key: 'providers.specialty.endocrinologist', value: 'Endocrinologista' },
+  { key: 'providers.specialty.gynecologist', value: 'Ginecologista' },
+  { key: 'providers.specialty.neurologist', value: 'Neurologista' },
+  { key: 'providers.specialty.nutritionist', value: 'Nutricionista' },
+  { key: 'providers.specialty.orthopedist', value: 'Ortopedista' },
+  { key: 'providers.specialty.pediatrician', value: 'Pediatra' },
+  { key: 'providers.specialty.psychologist', value: 'Psicólogo' },
+  { key: 'providers.specialty.psychiatrist', value: 'Psiquiatra' },
+  { key: 'providers.specialty.urologist', value: 'Urologista' },
+  { key: 'providers.specialty.other', value: 'Outro' },
 ];
 
-const DAYS_OF_WEEK = [
-  { value: 0, label: 'Domingo' },
-  { value: 1, label: 'Segunda' },
-  { value: 2, label: 'Terça' },
-  { value: 3, label: 'Quarta' },
-  { value: 4, label: 'Quinta' },
-  { value: 5, label: 'Sexta' },
-  { value: 6, label: 'Sábado' },
+const DAY_KEYS = [
+  { value: 0, key: 'days.sunday' },
+  { value: 1, key: 'days.monday' },
+  { value: 2, key: 'days.tuesday' },
+  { value: 3, key: 'days.wednesday' },
+  { value: 4, key: 'days.thursday' },
+  { value: 5, key: 'days.friday' },
+  { value: 6, key: 'days.saturday' },
 ];
 
 const ITEMS_PER_PAGE = 8;
@@ -1031,6 +1033,7 @@ const ITEMS_PER_PAGE = 8;
 // COMPONENT
 // ============================================
 const ProvidersPage: React.FC = () => {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<ProviderWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -1049,7 +1052,7 @@ const ProvidersPage: React.FC = () => {
     is_active: true
   });
   const [schedules, setSchedules] = useState<ScheduleItem[]>(
-    DAYS_OF_WEEK.map(day => ({
+    DAY_KEYS.map(day => ({
       day_of_week: day.value,
       start_time: '08:00',
       end_time: '18:00',
@@ -1094,7 +1097,7 @@ const ProvidersPage: React.FC = () => {
         profile: profilesData?.find(p => p.id === provider.user_id) || {
           id: provider.user_id,
           email: '',
-          first_name: 'Desconhecido',
+          first_name: t('providers.unknown'),
           last_name: '',
           role: 'provider' as const,
           phone: null,
@@ -1174,7 +1177,7 @@ const ProvidersPage: React.FC = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const mergedSchedules = DAYS_OF_WEEK.map(day => {
+        const mergedSchedules = DAY_KEYS.map(day => {
           const existing = data.find(s => s.day_of_week === day.value);
           if (existing) {
             return {
@@ -1194,7 +1197,7 @@ const ProvidersPage: React.FC = () => {
         setSchedules(mergedSchedules);
       } else {
         setSchedules(
-          DAYS_OF_WEEK.map(day => ({
+          DAY_KEYS.map(day => ({
             day_of_week: day.value,
             start_time: '08:00',
             end_time: '18:00',
@@ -1245,12 +1248,12 @@ const ProvidersPage: React.FC = () => {
         if (error) throw error;
       }
 
-      setSuccess('Horários salvos com sucesso!');
+      setSuccess(t('providers.successSchedules'));
       setTimeout(() => {
         handleCloseScheduleModal();
       }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar horários');
+      setError(err.message || t('providers.errorSchedules'));
     } finally {
       setSaving(false);
     }
@@ -1258,7 +1261,7 @@ const ProvidersPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!formData.email || !formData.first_name || !formData.last_name || !formData.specialty) {
-      setError('Preencha todos os campos obrigatórios');
+      setError(t('providers.errorRequired'));
       return;
     }
 
@@ -1291,7 +1294,7 @@ const ProvidersPage: React.FC = () => {
           .eq('id', editingProvider.id);
 
         if (providerError) throw providerError;
-        setSuccess('Médico atualizado com sucesso!');
+        setSuccess(t('providers.successUpdate'));
       } else {
         const existingProfile = await getProfileByEmail(formData.email);
 
@@ -1303,7 +1306,7 @@ const ProvidersPage: React.FC = () => {
             .single();
 
           if (existingProvider) {
-            setError('Este usuário já é um médico cadastrado.');
+            setError(t('providers.errorDuplicate'));
             setSaving(false);
             return;
           }
@@ -1317,7 +1320,7 @@ const ProvidersPage: React.FC = () => {
             is_active: formData.is_active,
           });
 
-          setSuccess('Usuário promovido a médico com sucesso!');
+          setSuccess(t('providers.successPromote'));
         } else {
           const result = await createProvider({
             email: formData.email,
@@ -1332,7 +1335,7 @@ const ProvidersPage: React.FC = () => {
           });
 
           setTempPassword(result.tempPassword);
-          setSuccess(`Médico criado com sucesso!`);
+          setSuccess(t('providers.successCreate'));
           await fetchProviders();
           setSaving(false);
           return;
@@ -1345,7 +1348,7 @@ const ProvidersPage: React.FC = () => {
         handleCloseModal();
       }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar médico');
+      setError(err.message || t('providers.errorSchedules'));
     } finally {
       setSaving(false);
     }
@@ -1413,12 +1416,12 @@ const ProvidersPage: React.FC = () => {
       <PageContainer>
         <Header>
           <div>
-            <h1>Médicos</h1>
-            <p>Gerencie os médicos e profissionais de saúde</p>
+            <h1>{t('providers.title')}</h1>
+            <p>{t('providers.subtitle')}</p>
           </div>
           <AddButton onClick={() => handleOpenModal()}>
             <Plus size={18} />
-            Adicionar Médico
+            {t('providers.addTitle')}
           </AddButton>
         </Header>
 
@@ -1426,24 +1429,24 @@ const ProvidersPage: React.FC = () => {
           <StatPill>
             <Stethoscope />
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Médicos</StatLabel>
+            <StatLabel>{t('providers.title')}</StatLabel>
           </StatPill>
           <StatPill>
             <Activity />
             <StatValue>{stats.active}</StatValue>
-            <StatLabel>Ativos</StatLabel>
+            <StatLabel>{t('status.active')}</StatLabel>
           </StatPill>
           {stats.inactive > 0 && (
             <StatPill style={{ opacity: 0.5 }}>
               <Users />
               <StatValue>{stats.inactive}</StatValue>
-              <StatLabel>Inativos</StatLabel>
+              <StatLabel>{t('status.inactive')}</StatLabel>
             </StatPill>
           )}
           <StatPill>
             <Sparkles />
             <StatValue>{stats.specialties}</StatValue>
-            <StatLabel>Especialidades</StatLabel>
+            <StatLabel>{t('providers.specialty')}</StatLabel>
           </StatPill>
         </StatsRow>
 
@@ -1452,7 +1455,7 @@ const ProvidersPage: React.FC = () => {
             <Search size={18} />
             <SearchInput
               type="text"
-              placeholder="Buscar por nome, email ou especialidade..."
+              placeholder={t('providers.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -1475,18 +1478,17 @@ const ProvidersPage: React.FC = () => {
             <Stethoscope />
             {providers.length === 0 ? (
               <>
-                <h3>Cadastre os médicos da clínica</h3>
-                <p>Comece adicionando os profissionais que atendem na clínica.<br />
-                Cada médico terá acesso ao seu próprio painel com agenda e notificações.</p>
+                <h3>{t('providers.emptyTitle')}</h3>
+                <p>{t('providers.emptyDescription')}</p>
                 <EmptyStateCTA onClick={() => setShowModal(true)}>
                   <Plus size={16} />
-                  Adicionar Médico
+                  {t('providers.addTitle')}
                 </EmptyStateCTA>
               </>
             ) : (
               <>
-                <h3>Nenhum médico encontrado</h3>
-                <p>Tente ajustar os termos da busca</p>
+                <h3>{t('providers.emptySearch')}</h3>
+                <p>{t('providers.emptySearchHint')}</p>
               </>
             )}
           </EmptyState>
@@ -1500,7 +1502,7 @@ const ProvidersPage: React.FC = () => {
                   </ProviderAvatar>
 
                   <ProviderInfo>
-                    <ProviderName>Dr(a). {provider.profile.first_name} {provider.profile.last_name}</ProviderName>
+                    <ProviderName>{t('common.drPrefix')} {provider.profile.first_name} {provider.profile.last_name}</ProviderName>
                     <ProviderEmail>
                       <Mail size={12} />
                       {provider.profile.email}
@@ -1510,27 +1512,27 @@ const ProvidersPage: React.FC = () => {
                   <ProviderSpecialty>
                     <SpecialtyBadge>
                       <Stethoscope />
-                      {provider.specialty}
+                      {t(getSpecialtyKey(provider.specialty))}
                     </SpecialtyBadge>
                   </ProviderSpecialty>
 
                   <StatusBadge $active={provider.is_active}>
-                    {provider.is_active ? 'Ativo' : 'Inativo'}
+                    {provider.is_active ? t('providers.active') : t('providers.inactive')}
                   </StatusBadge>
 
                   <ProviderActions>
-                    <ActionButton $variant="info" onClick={() => handleOpenScheduleModal(provider)} title="Horários">
+                    <ActionButton $variant="info" onClick={() => handleOpenScheduleModal(provider)} title={t('providers.schedules')}>
                       <Clock size={16} />
                     </ActionButton>
-                    <ActionButton onClick={() => handleOpenModal(provider)} title="Editar">
+                    <ActionButton onClick={() => handleOpenModal(provider)} title={t('common.edit')}>
                       <Edit2 size={16} />
                     </ActionButton>
                     {provider.is_active ? (
-                      <ActionButton $variant="danger" onClick={() => handleDelete(provider)} title="Desativar">
+                      <ActionButton $variant="danger" onClick={() => handleDelete(provider)} title={t('providers.deactivate')}>
                         <Trash2 size={16} />
                       </ActionButton>
                     ) : (
-                      <ActionButton $variant="primary" onClick={() => handleReactivate(provider)} title="Reativar">
+                      <ActionButton $variant="primary" onClick={() => handleReactivate(provider)} title={t('providers.reactivate')}>
                         <RotateCcw size={16} />
                       </ActionButton>
                     )}
@@ -1577,7 +1579,7 @@ const ProvidersPage: React.FC = () => {
                 <div>
                   <h2>
                     <UserCog size={22} />
-                    {editingProvider ? 'Editar Médico' : 'Adicionar Médico'}
+                    {editingProvider ? t('providers.editTitle') : t('providers.addTitle')}
                   </h2>
                 </div>
                 <CloseButton onClick={handleCloseModal}>
@@ -1604,15 +1606,15 @@ const ProvidersPage: React.FC = () => {
                   <Alert $variant="info">
                     <AlertCircle size={18} />
                     <div>
-                      <strong>Senha temporária gerada:</strong><br />
+                      <strong>{t('providers.tempPasswordGenerated')}</strong><br />
                       <code style={{ fontSize: '16px', fontWeight: 'bold', background: 'rgba(0,0,0,0.1)', padding: '4px 8px', borderRadius: '4px' }}>{tempPassword}</code><br />
-                      <small>Anote esta senha! O médico deve alterá-la no primeiro acesso.</small>
+                      <small>{t('providers.tempPasswordNote')}</small>
                     </div>
                   </Alert>
                 )}
 
                 <FormGroup>
-                  <label>Email {!editingProvider && <span>*</span>}</label>
+                  <label>{t('providers.email')} {!editingProvider && <span>*</span>}</label>
                   <FormInput
                     type="email"
                     value={formData.email}
@@ -1621,32 +1623,32 @@ const ProvidersPage: React.FC = () => {
                     placeholder="email@exemplo.com"
                   />
                   {!editingProvider && (
-                    <small>Se o email não existir, uma nova conta será criada automaticamente.</small>
+                    <small>{t('providers.emailHint')}</small>
                   )}
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Nome <span>*</span></label>
+                  <label>{t('providers.firstName')} <span>*</span></label>
                   <FormInput
                     type="text"
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    placeholder="Nome"
+                    placeholder={t('providers.firstName')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Sobrenome <span>*</span></label>
+                  <label>{t('providers.lastName')} <span>*</span></label>
                   <FormInput
                     type="text"
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    placeholder="Sobrenome"
+                    placeholder={t('providers.lastName')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Telefone</label>
+                  <label>{t('patients.phone')}</label>
                   <FormInput
                     type="tel"
                     value={formData.phone}
@@ -1656,24 +1658,24 @@ const ProvidersPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Especialidade <span>*</span></label>
+                  <label>{t('providers.specialty')} <span>*</span></label>
                   <FormSelect
                     value={formData.specialty}
                     onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
                   >
-                    <option value="">Selecione...</option>
-                    {SPECIALTIES.map(spec => (
-                      <option key={spec} value={spec}>{spec}</option>
+                    <option value="">{t('notifications.selectLabel')}...</option>
+                    {SPECIALTY_KEYS.map(spec => (
+                      <option key={spec.value} value={spec.value}>{t(spec.key)}</option>
                     ))}
                   </FormSelect>
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Bio / Descrição</label>
+                  <label>{t('providers.bio')}</label>
                   <FormTextarea
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    placeholder="Breve descrição profissional..."
+                    placeholder={t('providers.bioPlaceholder')}
                   />
                 </FormGroup>
 
@@ -1685,18 +1687,18 @@ const ProvidersPage: React.FC = () => {
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     />
-                    <label htmlFor="is_active">Médico ativo (disponível para agendamentos)</label>
+                    <label htmlFor="is_active">{t('providers.activeCheckbox')}</label>
                   </CheckboxGroup>
                 </FormGroup>
               </ModalBody>
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={handleCloseModal}>
-                  {tempPassword ? 'Fechar' : 'Cancelar'}
+                  {tempPassword ? t('common.close') : t('common.cancel')}
                 </Button>
                 {!tempPassword && (
                   <Button $variant="primary" onClick={handleSave} disabled={saving}>
-                    {saving ? 'Salvando...' : 'Salvar'}
+                    {saving ? t('common.saving') : t('common.save')}
                   </Button>
                 )}
               </ModalFooter>
@@ -1713,24 +1715,24 @@ const ProvidersPage: React.FC = () => {
                   {confirmProvider.action === 'reactivate' ? <RotateCcw size={28} /> : <AlertTriangle size={28} />}
                 </ConfirmIconCircle>
                 <ConfirmTitle>
-                  {confirmProvider.action === 'reactivate' ? 'Reativar Médico' : 'Desativar Médico'}
+                  {confirmProvider.action === 'reactivate' ? t('providers.reactivateTitle') : t('providers.deactivateTitle')}
                 </ConfirmTitle>
                 <ConfirmText>
-                  {confirmProvider.action === 'reactivate' ? 'Deseja reativar ' : 'Tem certeza que deseja desativar '}
-                  <ConfirmDoctorName>Dr(a). {confirmProvider.provider.profile.first_name} {confirmProvider.provider.profile.last_name}</ConfirmDoctorName>?
+                  {confirmProvider.action === 'reactivate' ? t('providers.reactivateConfirm') : t('providers.deactivateConfirm')}{' '}
+                  <ConfirmDoctorName>{t('common.drPrefix')} {confirmProvider.provider.profile.first_name} {confirmProvider.provider.profile.last_name}</ConfirmDoctorName>?
                 </ConfirmText>
                 <ConfirmText style={{ fontSize: 13, opacity: 0.7 }}>
                   {confirmProvider.action === 'reactivate'
-                    ? 'O médico voltará a ficar disponível para agendamentos.'
-                    : 'O médico não ficará mais disponível para agendamentos.'}
+                    ? t('providers.reactivateDescription')
+                    : t('providers.deactivateDescription')}
                 </ConfirmText>
               </ConfirmBody>
               <ConfirmFooter>
                 <ConfirmBtn onClick={() => setConfirmProvider(null)}>
-                  Cancelar
+                  {t('common.cancel')}
                 </ConfirmBtn>
                 <ConfirmBtn $danger={confirmProvider.action === 'deactivate'} style={confirmProvider.action === 'reactivate' ? { background: `linear-gradient(135deg, ${luxuryTheme.primary}, ${luxuryTheme.primaryLight})`, color: 'white', border: 'none' } : undefined} onClick={confirmAction}>
-                  {confirmProvider.action === 'reactivate' ? 'Reativar' : 'Desativar'}
+                  {confirmProvider.action === 'reactivate' ? t('providers.reactivate') : t('providers.deactivate')}
                 </ConfirmBtn>
               </ConfirmFooter>
             </ConfirmCard>
@@ -1745,9 +1747,9 @@ const ProvidersPage: React.FC = () => {
                 <div>
                   <h2>
                     <Calendar size={22} />
-                    Horários de Trabalho
+                    {t('providers.schedules')}
                   </h2>
-                  <p>Dr(a). {selectedProviderForSchedule.profile.first_name} {selectedProviderForSchedule.profile.last_name}</p>
+                  <p>{t('common.drPrefix')} {selectedProviderForSchedule.profile.first_name} {selectedProviderForSchedule.profile.last_name}</p>
                 </div>
                 <CloseButton onClick={handleCloseScheduleModal}>
                   <X size={18} />
@@ -1770,9 +1772,9 @@ const ProvidersPage: React.FC = () => {
                 )}
 
                 <ScheduleGrid>
-                  {DAYS_OF_WEEK.map((day, index) => (
+                  {DAY_KEYS.map((day, index) => (
                     <ScheduleRow key={day.value} $active={schedules[index]?.is_active}>
-                      <span className="day-label">{day.label}</span>
+                      <span className="day-label">{t(day.key)}</span>
                       <input
                         type="time"
                         value={schedules[index]?.start_time || '08:00'}
@@ -1809,10 +1811,10 @@ const ProvidersPage: React.FC = () => {
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={handleCloseScheduleModal}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button $variant="primary" onClick={handleSaveSchedules} disabled={saving}>
-                  {saving ? 'Salvando...' : 'Salvar Horários'}
+                  {saving ? t('common.saving') : t('providers.saveSchedules')}
                 </Button>
               </ModalFooter>
             </ModalContent>

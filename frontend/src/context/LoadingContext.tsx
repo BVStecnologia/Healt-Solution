@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -23,6 +24,7 @@ interface LoadingProviderProps {
 }
 
 export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
 
@@ -30,11 +32,11 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   // Evita que múltiplas chamadas de hideLoading escondam prematuramente
   const loadingCountRef = useRef(0);
 
-  const showLoading = useCallback((message = 'Carregando...') => {
+  const showLoading = useCallback((message?: string) => {
     loadingCountRef.current += 1;
-    setLoadingMessage(message);
+    setLoadingMessage(message || t('common.loading'));
     setIsLoading(true);
-  }, []);
+  }, [t]);
 
   const hideLoading = useCallback(() => {
     loadingCountRef.current = Math.max(0, loadingCountRef.current - 1);

@@ -1,5 +1,6 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { Globe, Info } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import Layout from '../../components/Layout';
@@ -141,21 +142,22 @@ const InfoBox = styled.div`
 
 const SettingsPage: React.FC = () => {
   const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation();
 
   return (
     <Layout>
-      <PageTitle>Configurações</PageTitle>
+      <PageTitle>{t('settings.title')}</PageTitle>
 
       <Section $delay={0}>
         <SectionTitle>
           <Globe />
-          Idioma
+          {t('settings.language')}
         </SectionTitle>
         <SettingRow>
           <SettingInfo>
-            <SettingLabel>Idioma da Interface</SettingLabel>
+            <SettingLabel>{t('settings.interfaceLanguage')}</SettingLabel>
             <SettingDescription>
-              Escolha o idioma de exibição do portal
+              {t('settings.interfaceLanguageDesc')}
             </SettingDescription>
           </SettingInfo>
           <LanguageOptions>
@@ -178,12 +180,12 @@ const SettingsPage: React.FC = () => {
       <Section $delay={200}>
         <SectionTitle>
           <Info />
-          Sobre
+          {t('settings.about')}
         </SectionTitle>
         <InfoBox>
           <p><strong>Essence Medical Clinic</strong></p>
-          <p>Portal do Paciente - Gerencie suas consultas, acompanhe seu tratamento e tenha acesso a todas as informações de saúde em um único lugar.</p>
-          <p>Versão 1.0</p>
+          <p>{t('settings.aboutText')}</p>
+          <p>{t('settings.version')}</p>
         </InfoBox>
       </Section>
     </Layout>

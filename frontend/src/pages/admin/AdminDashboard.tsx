@@ -32,6 +32,8 @@ import {
   Bar,
 } from 'recharts';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -840,6 +842,7 @@ const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_
 // ============================================
 const AdminDashboard: React.FC = () => {
   const location = useLocation();
+  const { t } = useTranslation();
   const { navigateTo } = useSmartNavigation();
   const { providerId, isProvider: isProviderRole, isAdmin: isAdminRole } = useCurrentProvider();
 
@@ -1027,7 +1030,7 @@ const AdminDashboard: React.FC = () => {
         patient_id: apt.patient_id,
         patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
         patient_phone: apt.patient?.phone || null,
-        provider_name: apt.provider?.profile ? `Dr(a). ${apt.provider.profile.first_name}` : 'N/A',
+        provider_name: apt.provider?.profile ? `${t('common.drPrefix')} ${apt.provider.profile.first_name}` : 'N/A',
         scheduled_at: apt.scheduled_at,
         type: apt.type,
       }));
@@ -1070,7 +1073,7 @@ const AdminDashboard: React.FC = () => {
         id: apt.id,
         patient_id: apt.patient_id,
         patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
-        time: new Date(apt.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        time: new Date(apt.scheduled_at).toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
         type: apt.type,
         status: apt.status,
       }));
@@ -1086,7 +1089,11 @@ const AdminDashboard: React.FC = () => {
       if (isDoctorEnv && !providerId) { setWeeklyData([]); return; }
 
       const days = [];
-      const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const dayNames = [
+        t('dashboard.dayNames.sun'), t('dashboard.dayNames.mon'), t('dashboard.dayNames.tue'),
+        t('dashboard.dayNames.wed'), t('dashboard.dayNames.thu'), t('dashboard.dayNames.fri'),
+        t('dashboard.dayNames.sat'),
+      ];
 
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
@@ -1168,12 +1175,12 @@ const AdminDashboard: React.FC = () => {
           patientId: apt.patient_id,
           providerName: apt.provider_name,
           appointmentType: formatType(apt.type),
-          appointmentDate: date.toLocaleDateString('pt-BR'),
-          appointmentTime: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          appointmentDate: date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US'),
+          appointmentTime: date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
           appointmentId: apt.id,
         });
         if (!result.success) {
-          window.alert(`Consulta confirmada, mas a notificação WhatsApp falhou: ${result.error || 'Erro desconhecido'}`);
+          window.alert(`${t('dashboard.confirmWhatsappFail')} ${result.error || t('dashboard.unknownError')}`);
         }
       }
 
@@ -1189,8 +1196,8 @@ const AdminDashboard: React.FC = () => {
 
   const handleReject = async (apt: PendingAppointment) => {
     const reason = window.prompt(
-      'Motivo da rejeição:\n\n• Horário não disponível\n• Médico indisponível\n• Outro motivo',
-      'Horário não disponível'
+      t('dashboard.rejectionPrompt'),
+      t('dashboard.rejectionDefault')
     );
     if (reason === null) return; // Cancelou o prompt
 
@@ -1200,7 +1207,7 @@ const AdminDashboard: React.FC = () => {
         .from('appointments')
         .update({
           status: 'cancelled',
-          cancellation_reason: reason || 'Horário não disponível',
+          cancellation_reason: reason || t('dashboard.rejectionDefault'),
           cancelled_at: new Date().toISOString(),
         })
         .eq('id', apt.id);
@@ -1217,10 +1224,10 @@ const AdminDashboard: React.FC = () => {
           appointmentDate: '',
           appointmentTime: '',
           appointmentId: apt.id,
-          reason: reason || 'Horário não disponível',
+          reason: reason || t('dashboard.rejectionDefault'),
         });
         if (!result.success) {
-          window.alert(`Consulta rejeitada, mas a notificação WhatsApp falhou: ${result.error || 'Erro desconhecido'}`);
+          window.alert(`${t('dashboard.rejectWhatsappFail')} ${result.error || t('dashboard.unknownError')}`);
         }
       }
 
@@ -1235,7 +1242,7 @@ const AdminDashboard: React.FC = () => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', {
+    return date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
       day: '2-digit',
       month: '2-digit',
       hour: '2-digit',
@@ -1243,15 +1250,17 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  const formatType = (type: string) => getTreatmentLabel(type);
+  const formatType = (type: string) => getTreatmentLabel(type, i18n.language as 'pt' | 'en');
 
   const formatStatus = (status: string) => {
     const statuses: Record<string, string> = {
-      pending: 'Pendente',
-      confirmed: 'Confirmado',
-      in_progress: 'Em andamento',
-      completed: 'Concluído',
-      cancelled: 'Cancelado',
+      pending: t('status.pending'),
+      confirmed: t('status.confirmedMasc'),
+      checked_in: t('status.checkedIn'),
+      in_progress: t('status.inProgress'),
+      completed: t('status.completedMasc'),
+      cancelled: t('status.cancelledMasc'),
+      no_show: t('status.noShow'),
     };
     return statuses[status] || status;
   };
@@ -1280,7 +1289,7 @@ const AdminDashboard: React.FC = () => {
       return (
         <CustomTooltip>
           <div className="label">{label}</div>
-          <div className="value">{payload[0].value} consultas</div>
+          <div className="value">{payload[0].value}</div>
         </CustomTooltip>
       );
     }
@@ -1291,8 +1300,8 @@ const AdminDashboard: React.FC = () => {
     <AdminLayout>
       <PageWrapper>
         <Header>
-          <h1>{isProvider ? 'Meu Painel' : 'Dashboard'}</h1>
-          <p>{isProvider ? 'Visão geral das suas consultas' : 'Visão geral do sistema da clínica'}</p>
+          <h1>{isProvider ? t('dashboard.myPanel') : t('dashboard.title')}</h1>
+          <p>{isProvider ? t('dashboard.subtitleProvider') : t('dashboard.subtitle')}</p>
         </Header>
 
         {isAdmin && (
@@ -1306,11 +1315,11 @@ const AdminDashboard: React.FC = () => {
           <StatCard $delay={0} $accentColor={luxuryColors.primary}>
             <StatCardContent>
               <StatInfo>
-                <StatLabel>{isProvider ? 'Meus Pacientes' : 'Pacientes'}</StatLabel>
+                <StatLabel>{isProvider ? t('dashboard.myPatients') : t('dashboard.patients')}</StatLabel>
                 <StatValue>{stats.totalPatients}</StatValue>
                 <StatTrend $positive>
                   <TrendingUp />
-                  <span>{isProvider ? 'Atendidos' : 'Ativos'}</span>
+                  <span>{isProvider ? t('dashboard.trendAttended') : t('dashboard.trendActive')}</span>
                 </StatTrend>
               </StatInfo>
               <StatIcon $color={luxuryColors.primary}>
@@ -1322,11 +1331,11 @@ const AdminDashboard: React.FC = () => {
           <StatCard $delay={100} $accentColor={luxuryColors.primaryLight}>
             <StatCardContent>
               <StatInfo>
-                <StatLabel>{isProvider ? 'Total Consultas' : 'Médicos'}</StatLabel>
+                <StatLabel>{isProvider ? t('dashboard.totalAppointments') : t('dashboard.providers')}</StatLabel>
                 <StatValue>{stats.totalProviders}</StatValue>
                 <StatTrend $positive>
                   <Activity />
-                  <span>{isProvider ? 'Realizadas' : 'Disponíveis'}</span>
+                  <span>{isProvider ? t('dashboard.trendCompleted') : t('dashboard.trendAvailable')}</span>
                 </StatTrend>
               </StatInfo>
               <StatIcon $color={luxuryColors.primaryLight}>
@@ -1338,11 +1347,11 @@ const AdminDashboard: React.FC = () => {
           <StatCard $delay={200} $accentColor={luxuryColors.warning}>
             <StatCardContent>
               <StatInfo>
-                <StatLabel>Pendentes</StatLabel>
+                <StatLabel>{t('dashboard.pendingCount')}</StatLabel>
                 <StatValue>{stats.pendingAppointments}</StatValue>
                 <StatTrend>
                   <Clock />
-                  <span>Aguardando</span>
+                  <span>{t('dashboard.trendPending')}</span>
                 </StatTrend>
               </StatInfo>
               <StatIcon $color={luxuryColors.warning}>
@@ -1354,11 +1363,11 @@ const AdminDashboard: React.FC = () => {
           <StatCard $delay={300} $accentColor={luxuryColors.gold}>
             <StatCardContent>
               <StatInfo>
-                <StatLabel>Hoje</StatLabel>
+                <StatLabel>{t('dashboard.todayCount')}</StatLabel>
                 <StatValue>{stats.todayAppointments}</StatValue>
                 <StatTrend $positive>
                   <Sparkles />
-                  <span>Agendadas</span>
+                  <span>{t('dashboard.trendScheduled')}</span>
                 </StatTrend>
               </StatInfo>
               <StatIcon $color={luxuryColors.gold}>
@@ -1374,7 +1383,7 @@ const AdminDashboard: React.FC = () => {
             <ChartHeader>
               <ChartTitle>
                 <BarChart3 />
-                Consultas - Últimos 7 dias
+                {t('dashboard.chartWeekly')}
               </ChartTitle>
             </ChartHeader>
             <ResponsiveContainer width="100%" height={200}>
@@ -1413,7 +1422,7 @@ const AdminDashboard: React.FC = () => {
             <ChartHeader>
               <ChartTitle>
                 <PieChart />
-                Tipos de Consulta
+                {t('dashboard.chartTypes')}
               </ChartTitle>
             </ChartHeader>
             {typeDistribution.length > 0 ? (
@@ -1448,7 +1457,7 @@ const AdminDashboard: React.FC = () => {
             ) : (
               <EmptyState>
                 <PieChart />
-                <p>Sem dados de consultas</p>
+                <p>{t('dashboard.chartNoData')}</p>
               </EmptyState>
             )}
           </ChartCard>
@@ -1460,10 +1469,10 @@ const AdminDashboard: React.FC = () => {
             <CardHeader>
               <SectionTitle>
                 <Clock />
-                Consultas Pendentes
+                {t('dashboard.pendingAppointments')}
               </SectionTitle>
               {pendingAppointments.length > 0 && (
-                <CardBadge>{pendingAppointments.length} nova{pendingAppointments.length > 1 ? 's' : ''}</CardBadge>
+                <CardBadge>{pendingAppointments.length}</CardBadge>
               )}
             </CardHeader>
 
@@ -1487,7 +1496,7 @@ const AdminDashboard: React.FC = () => {
                       <ActionButton
                         $variant="approve"
                         onClick={(e) => { e.stopPropagation(); handleApprove(apt); }}
-                        title="Aprovar"
+                        title={t('dashboard.approve')}
                         disabled={processingId === apt.id}
                       >
                         {processingId === apt.id ? <Loader2 className="spin" /> : <CheckCircle />}
@@ -1495,7 +1504,7 @@ const AdminDashboard: React.FC = () => {
                       <ActionButton
                         $variant="reject"
                         onClick={(e) => { e.stopPropagation(); handleReject(apt); }}
-                        title="Rejeitar"
+                        title={t('dashboard.reject')}
                         disabled={processingId === apt.id}
                       >
                         <XCircle />
@@ -1507,7 +1516,7 @@ const AdminDashboard: React.FC = () => {
             ) : (
               <EmptyState>
                 <CheckCircle />
-                <p>Nenhuma consulta pendente<br />Todas as solicitações foram processadas</p>
+                <p>{t('dashboard.noPending')}<br />{t('dashboard.allProcessed')}</p>
               </EmptyState>
             )}
           </Card>
@@ -1516,7 +1525,7 @@ const AdminDashboard: React.FC = () => {
             <CardHeader>
               <SectionTitle>
                 <CalendarCheck />
-                Agenda de Hoje
+                {t('dashboard.todaySchedule')}
               </SectionTitle>
               {todayAppointments.length > 0 && (
                 <CardBadge>{todayAppointments.length}</CardBadge>
@@ -1541,7 +1550,7 @@ const AdminDashboard: React.FC = () => {
             ) : (
               <EmptyState>
                 <Calendar />
-                <p>Nenhuma consulta hoje</p>
+                <p>{t('dashboard.noToday')}</p>
               </EmptyState>
             )}
           </Card>
@@ -1558,7 +1567,7 @@ const AdminDashboard: React.FC = () => {
               </SectionTitle>
               <WhatsAppStatus $connected={whatsappConnected}>
                 <div className="dot" />
-                <span>{whatsappConnected ? 'Conectado' : 'Desconectado'}</span>
+                <span>{whatsappConnected ? t('status.connected') : t('status.disconnected')}</span>
               </WhatsAppStatus>
             </CardHeader>
 
@@ -1569,19 +1578,19 @@ const AdminDashboard: React.FC = () => {
                     <Phone />
                   </div>
                   <div className="info">
-                    <div className="label">Número conectado</div>
-                    <div className="number">{whatsappPhone ? formatPhone(whatsappPhone) : 'Carregando...'}</div>
+                    <div className="label">{t('dashboard.whatsappPhone')}</div>
+                    <div className="number">{whatsappPhone ? formatPhone(whatsappPhone) : t('common.loading')}</div>
                   </div>
                 </PhoneDisplay>
                 <QuickActionButton onClick={() => window.location.href = '/admin/whatsapp'}>
                   <MessageCircle />
-                  Gerenciar
+                  {t('dashboard.whatsappManage')}
                 </QuickActionButton>
               </div>
             ) : (
               <EmptyState style={{ padding: '20px' }}>
                 <MessageCircle />
-                <p>Configure uma instância em <strong>Configurações → WhatsApp</strong></p>
+                <p>{t('dashboard.whatsappSetup')}</p>
               </EmptyState>
             )}
           </WhatsAppCard>

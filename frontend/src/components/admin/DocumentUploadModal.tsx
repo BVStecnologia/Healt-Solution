@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { Upload, X, FileUp, CheckCircle } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { DocumentType } from '../../types/documents';
@@ -302,19 +303,20 @@ const SuccessMessage = styled.div`
   }
 `;
 
-const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
-  { value: 'lab_result', label: 'Resultado de Exame' },
-  { value: 'prescription', label: 'Receita/Prescrição' },
-  { value: 'treatment_plan', label: 'Plano de Tratamento' },
-  { value: 'consent_form', label: 'Termo de Consentimento' },
-  { value: 'intake_form', label: 'Formulário Inicial' },
-  { value: 'invoice', label: 'Nota Fiscal' },
-  { value: 'other', label: 'Outro' },
+const DOC_TYPE_KEYS: { value: DocumentType; key: string }[] = [
+  { value: 'lab_result', key: 'documents.type.labResult' },
+  { value: 'prescription', key: 'documents.type.prescription' },
+  { value: 'treatment_plan', key: 'documents.type.treatmentPlan' },
+  { value: 'consent_form', key: 'documents.type.consentForm' },
+  { value: 'intake_form', key: 'documents.type.intakeForm' },
+  { value: 'invoice', key: 'documents.type.invoice' },
+  { value: 'other', key: 'documents.type.other' },
 ];
 
 const ACCEPTED_TYPES = '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx';
 
 const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ onClose, onUpload }) => {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [type, setType] = useState<DocumentType>('lab_result');
@@ -361,7 +363,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ onClose, onUp
         <ModalHeader>
           <ModalTitle>
             <Upload />
-            Enviar Documento
+            {t('documents.upload.title')}
           </ModalTitle>
           <CloseButton onClick={onClose}>
             <X />
@@ -372,12 +374,12 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ onClose, onUp
           {success && (
             <SuccessMessage>
               <CheckCircle />
-              Documento enviado com sucesso!
+              {t('documents.upload.success')}
             </SuccessMessage>
           )}
 
           <FormGroup>
-            <FormLabel>Arquivo</FormLabel>
+            <FormLabel>{t('documents.upload.file')}</FormLabel>
             <HiddenInput
               ref={fileInputRef}
               type="file"
@@ -401,49 +403,49 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ onClose, onUp
                 <p>{file.name}</p>
               ) : (
                 <>
-                  <p>Clique ou arraste um arquivo aqui</p>
-                  <small>PDF, imagens, Word, Excel</small>
+                  <p>{t('documents.upload.dropzone')}</p>
+                  <small>{t('documents.upload.dropzoneHint')}</small>
                 </>
               )}
             </DropZone>
           </FormGroup>
 
           <FormGroup>
-            <FormLabel>Titulo</FormLabel>
+            <FormLabel>{t('documents.upload.titleField')}</FormLabel>
             <FormInput
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Ex: Exame de sangue - Fevereiro 2026"
+              placeholder={t('documents.upload.titlePlaceholder')}
             />
           </FormGroup>
 
           <FormGroup>
-            <FormLabel>Tipo de Documento</FormLabel>
+            <FormLabel>{t('documents.upload.typeField')}</FormLabel>
             <FormSelect
               value={type}
               onChange={e => setType(e.target.value as DocumentType)}
             >
-              {DOCUMENT_TYPES.map(dt => (
-                <option key={dt.value} value={dt.value}>{dt.label}</option>
+              {DOC_TYPE_KEYS.map(dt => (
+                <option key={dt.value} value={dt.value}>{t(dt.key)}</option>
               ))}
             </FormSelect>
           </FormGroup>
 
           <FormGroup>
-            <FormLabel>Categoria (opcional)</FormLabel>
+            <FormLabel>{t('documents.upload.categoryField')}</FormLabel>
             <FormInput
               type="text"
               value={category}
               onChange={e => setCategory(e.target.value)}
-              placeholder="Ex: Hormonal, Estética, Geral..."
+              placeholder={t('documents.upload.categoryPlaceholder')}
             />
           </FormGroup>
         </ModalBody>
 
         <ModalFooter>
           <ModalButton $variant="secondary" onClick={onClose}>
-            Cancelar
+            {t('common.cancel')}
           </ModalButton>
           <ModalButton
             $variant="primary"
@@ -451,11 +453,11 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ onClose, onUp
             disabled={!canSubmit}
           >
             {uploading ? (
-              <>Enviando...</>
+              <>{t('documents.upload.sending')}</>
             ) : (
               <>
                 <Upload />
-                Enviar
+                {t('documents.upload.send')}
               </>
             )}
           </ModalButton>

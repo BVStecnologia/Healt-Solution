@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Calendar,
@@ -367,26 +368,7 @@ const LogoutButton = styled.button`
 // ============================================
 type Environment = 'admin' | 'doctor' | 'patient';
 
-const environments: { key: Environment; label: string; icon: React.FC<any>; path: string; bgColor: string }[] = [
-  { key: 'admin', label: 'Administrador', icon: Shield, path: '/admin', bgColor: 'rgba(146, 86, 62, 0.45)' },
-  { key: 'doctor', label: 'Médico', icon: Stethoscope, path: '/doctor', bgColor: 'rgba(180, 143, 122, 0.45)' },
-  { key: 'patient', label: 'Paciente', icon: User, path: '/?as=patient', bgColor: 'rgba(140, 139, 139, 0.35)' },
-];
-
-const allNavItems = [
-  { subpath: '', label: 'Dashboard', icon: LayoutDashboard, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
-  { subpath: '/calendar', label: 'Calendário', icon: Calendar, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
-  { subpath: '/appointments', label: 'Consultas', icon: Stethoscope, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
-  { subpath: '/my-schedule', label: 'Minha Agenda', icon: Clock, section: 'principal', envs: ['doctor'] as Environment[] },
-  { subpath: '/my-schedule', label: 'Agenda Médicos', icon: Clock, section: 'gestao', envs: ['admin'] as Environment[] },
-  { subpath: '/patients', label: 'Pacientes', icon: Users, section: 'gestao', envs: ['admin'] as Environment[] },
-  { subpath: '/providers', label: 'Médicos', icon: UserCog, section: 'gestao', envs: ['admin'] as Environment[] },
-  { subpath: '/admins', label: 'Admins', icon: Shield, section: 'gestao', envs: ['admin'] as Environment[] },
-  { subpath: '/notifications', label: 'Notificacoes', icon: Bell, section: 'config', envs: ['admin'] as Environment[] },
-  { subpath: '/notifications', label: 'Meus Lembretes', icon: Bell, section: 'config', envs: ['doctor'] as Environment[] },
-  { subpath: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
-  { subpath: '/failed-messages', label: 'Msgs Falhas', icon: AlertTriangle, section: 'config', envs: ['admin'] as Environment[] },
-];
+// environments and allNavItems moved inside component to access t()
 
 // ============================================
 // COMPONENT
@@ -400,12 +382,33 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
-  // Theme toggle desabilitado - usando apenas tema claro da marca
+  const { t } = useTranslation();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = profile?.role === 'admin';
   const isProvider = profile?.role === 'provider';
+
+  const environments: { key: Environment; label: string; icon: React.FC<any>; path: string; bgColor: string }[] = [
+    { key: 'admin', label: t('role.admin'), icon: Shield, path: '/admin', bgColor: 'rgba(146, 86, 62, 0.45)' },
+    { key: 'doctor', label: t('role.doctor'), icon: Stethoscope, path: '/doctor', bgColor: 'rgba(180, 143, 122, 0.45)' },
+    { key: 'patient', label: t('role.patient'), icon: User, path: '/?as=patient', bgColor: 'rgba(140, 139, 139, 0.35)' },
+  ];
+
+  const allNavItems = [
+    { subpath: '', label: t('nav.dashboard'), icon: LayoutDashboard, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
+    { subpath: '/calendar', label: t('nav.calendar'), icon: Calendar, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
+    { subpath: '/appointments', label: t('nav.appointments'), icon: Stethoscope, section: 'principal', envs: ['admin', 'doctor'] as Environment[] },
+    { subpath: '/my-schedule', label: t('nav.mySchedule'), icon: Clock, section: 'principal', envs: ['doctor'] as Environment[] },
+    { subpath: '/my-schedule', label: t('nav.providerSchedules'), icon: Clock, section: 'gestao', envs: ['admin'] as Environment[] },
+    { subpath: '/patients', label: t('nav.patients'), icon: Users, section: 'gestao', envs: ['admin'] as Environment[] },
+    { subpath: '/providers', label: t('nav.providers'), icon: UserCog, section: 'gestao', envs: ['admin'] as Environment[] },
+    { subpath: '/admins', label: t('nav.admins'), icon: Shield, section: 'gestao', envs: ['admin'] as Environment[] },
+    { subpath: '/notifications', label: t('nav.notifications'), icon: Bell, section: 'config', envs: ['admin'] as Environment[] },
+    { subpath: '/notifications', label: t('nav.myReminders'), icon: Bell, section: 'config', envs: ['doctor'] as Environment[] },
+    { subpath: '/whatsapp', label: t('nav.whatsapp'), icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
+    { subpath: '/failed-messages', label: t('nav.failedMessages'), icon: AlertTriangle, section: 'config', envs: ['admin'] as Environment[] },
+  ];
 
   // Detectar ambiente atual pela URL
   const currentEnv: Environment = location.pathname.startsWith('/doctor')
@@ -454,9 +457,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
 
   // Seções visíveis
   const allSections = [
-    { key: 'principal', title: 'Principal' },
-    { key: 'gestao', title: 'Gestão' },
-    { key: 'config', title: 'Configurações' },
+    { key: 'principal', title: t('nav.principal') },
+    { key: 'gestao', title: t('nav.management') },
+    { key: 'config', title: t('nav.config') },
   ];
   const sections = allSections.filter(section =>
     navItems.some(item => item.section === section.key)
@@ -467,11 +470,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
 
   const displayName = profile
     ? (currentEnv === 'doctor' || isProvider)
-      ? `Dr(a). ${profile.first_name}`
+      ? `${t('common.drPrefix')} ${profile.first_name}`
       : `${profile.first_name} ${profile.last_name}`
     : 'Admin';
 
-  const badgeLabel = currentEnv === 'doctor' ? 'Médico' : isProvider ? 'Médico' : 'Admin';
+  const badgeLabel = currentEnv === 'doctor' ? t('role.doctor') : isProvider ? t('role.doctor') : t('role.adminShort');
 
   return (
     <Sidebar $open={open}>
@@ -549,7 +552,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
           )}
         </Avatar>
         <UserName>{displayName}</UserName>
-        <LogoutButton onClick={handleLogout} title="Sair">
+        <LogoutButton onClick={handleLogout} title={t('nav.logout')}>
           <LogOut />
         </LogoutButton>
       </UserSection>

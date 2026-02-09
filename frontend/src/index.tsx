@@ -7,6 +7,7 @@ import { LoadingProvider } from './context/LoadingContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { GlobalStyle } from './styles/GlobalStyle';
+import './i18n';
 import './index.css';
 
 const root = ReactDOM.createRoot(

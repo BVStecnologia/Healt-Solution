@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -12,12 +13,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRole,
 }) => {
+  const { t } = useTranslation();
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   // Mostrar loading enquanto verifica autenticação
   if (loading) {
-    return <LoadingSpinner fullScreen message="Verificando autenticação..." />;
+    return <LoadingSpinner fullScreen message={t('common.verifyingAuth')} />;
   }
 
   // Redirecionar para login se não autenticado

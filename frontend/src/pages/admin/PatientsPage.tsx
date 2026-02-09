@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled, { keyframes, css } from 'styled-components';
 import { useSearchParams } from 'react-router-dom';
 import { useSmartNavigation } from '../../hooks/useSmartNavigation';
@@ -827,6 +828,7 @@ const ITEMS_PER_PAGE = 8;
 // COMPONENT
 // ============================================
 const PatientsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { navigateTo } = useSmartNavigation();
   const [patients, setPatients] = useState<Profile[]>([]);
@@ -945,7 +947,7 @@ const PatientsPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!formData.first_name || !formData.last_name) {
-      setError('Preencha todos os campos obrigatórios');
+      setError(t('patients.errorRequired'));
       return;
     }
 
@@ -967,23 +969,23 @@ const PatientsPage: React.FC = () => {
           .eq('id', editingPatient.id);
 
         if (error) throw error;
-        setSuccess('Paciente atualizado com sucesso!');
+        setSuccess(t('patients.successUpdate'));
       } else {
         // Validações para novo paciente
         if (!formData.email) {
-          setError('Email é obrigatório');
+          setError(t('patients.errorEmail'));
           setSaving(false);
           return;
         }
 
         if (!formData.password || formData.password.length < 6) {
-          setError('Senha é obrigatória (mínimo 6 caracteres)');
+          setError(t('patients.errorPassword'));
           setSaving(false);
           return;
         }
 
         if (!formData.preferred_language) {
-          setError('Idioma preferido é obrigatório');
+          setError(t('patients.errorLanguage'));
           setSaving(false);
           return;
         }
@@ -996,7 +998,7 @@ const PatientsPage: React.FC = () => {
           .single();
 
         if (existingUser) {
-          setError('Este email já está cadastrado.');
+          setError(t('patients.errorDuplicateEmail'));
           setSaving(false);
           return;
         }
@@ -1050,12 +1052,12 @@ const PatientsPage: React.FC = () => {
 
           if (profileError) {
             console.error('Erro ao criar perfil:', profileError);
-            setError('Usuário criado, mas erro ao criar perfil. Contate o suporte.');
+            setError(t('patients.errorProfileCreate'));
             setSaving(false);
             return;
           }
 
-          setSuccess('Paciente cadastrado com sucesso! Um email de confirmação foi enviado.');
+          setSuccess(t('patients.successCreate'));
         } else {
           // Restaurar sessão do admin se não criou usuário
           if (adminSession) {
@@ -1069,7 +1071,7 @@ const PatientsPage: React.FC = () => {
         handleCloseModal();
       }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar paciente');
+      setError(err.message || t('patients.errorSavePatient'));
     } finally {
       setSaving(false);
     }
@@ -1129,12 +1131,12 @@ const PatientsPage: React.FC = () => {
       <PageContainer>
         <Header>
           <div>
-            <h1>Pacientes</h1>
-            <p>Gerencie os pacientes cadastrados na clínica</p>
+            <h1>{t('patients.title')}</h1>
+            <p>{t('patients.subtitle')}</p>
           </div>
           <NewPatientButton onClick={() => handleOpenModal()}>
             <UserPlus size={18} />
-            Novo Paciente
+            {t('patients.newTitle')}
           </NewPatientButton>
         </Header>
 
@@ -1142,23 +1144,23 @@ const PatientsPage: React.FC = () => {
           <StatPill>
             <Users />
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Pacientes</StatLabel>
+            <StatLabel>{t('patients.title')}</StatLabel>
           </StatPill>
           <StatPill>
             <UserPlus />
             <StatValue>{stats.new}</StatValue>
-            <StatLabel>Novos</StatLabel>
+            <StatLabel>{t('patientType.new')}</StatLabel>
           </StatPill>
           <StatPill>
             <Activity />
             <StatValue>{stats.wellness}</StatValue>
-            <StatLabel>Bem-estar</StatLabel>
+            <StatLabel>{t('patientType.wellness')}</StatLabel>
           </StatPill>
           {stats.vip > 0 && (
             <StatPill>
               <Crown />
               <StatValue>{stats.vip}</StatValue>
-              <StatLabel>VIP</StatLabel>
+              <StatLabel>{t('patientType.vip')}</StatLabel>
             </StatPill>
           )}
         </StatsRow>
@@ -1168,7 +1170,7 @@ const PatientsPage: React.FC = () => {
             <Search size={18} />
             <SearchInput
               type="text"
-              placeholder="Buscar por nome ou email..."
+              placeholder={t('patients.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -1180,8 +1182,8 @@ const PatientsPage: React.FC = () => {
               type="button"
             >
               {typeFilter === 'all'
-                ? 'Todos os tipos'
-                : PATIENT_TYPE_OPTIONS.find(t => t.value === typeFilter)?.label || typeFilter
+                ? t('patientType.allTypes')
+                : PATIENT_TYPE_OPTIONS.find(opt => opt.value === typeFilter)?.label || typeFilter
               }
               <ChevronDown size={16} />
             </DropdownTrigger>
@@ -1190,7 +1192,7 @@ const PatientsPage: React.FC = () => {
                 $selected={typeFilter === 'all'}
                 onClick={() => { setTypeFilter('all'); setDropdownOpen(false); }}
               >
-                Todos os tipos
+                {t('patientType.allTypes')}
               </DropdownOption>
               {PATIENT_TYPE_OPTIONS.map(type => (
                 <DropdownOption
@@ -1221,18 +1223,18 @@ const PatientsPage: React.FC = () => {
             <Users />
             {patients.length === 0 ? (
               <>
-                <h3>Nenhum paciente cadastrado</h3>
-                <p>Pacientes aparecem aqui após se registrarem pelo portal ou serem cadastrados manualmente.<br />
+                <h3>{t('appointments.emptyDefault')}</h3>
+                <p>{t('patients.emptyRegistered')}<br />
                 Você pode criar o primeiro paciente agora.</p>
                 <EmptyStateCTA onClick={() => setShowModal(true)}>
                   <UserPlus size={16} />
-                  Cadastrar Paciente
+                  {t('patients.newTitle')}
                 </EmptyStateCTA>
               </>
             ) : (
               <>
-                <h3>Nenhum paciente encontrado</h3>
-                <p>Tente ajustar os filtros de busca</p>
+                <h3>{t('appointments.emptyDefault')}</h3>
+                <p>{t('common.tryAdjustFilters')}</p>
               </>
             )}
           </EmptyState>
@@ -1315,7 +1317,7 @@ const PatientsPage: React.FC = () => {
               <ModalHeader>
                 <h2>
                   <Users size={22} />
-                  {editingPatient ? 'Editar Paciente' : 'Novo Paciente'}
+                  {editingPatient ? t('patients.editTitle') : t('patients.newTitle')}
                 </h2>
                 <CloseButton onClick={handleCloseModal}>
                   <X size={18} />
@@ -1338,7 +1340,7 @@ const PatientsPage: React.FC = () => {
                 )}
 
                 <FormGroup>
-                  <label>Email {!editingPatient && <span>*</span>}</label>
+                  <label>{t('patients.email')} {!editingPatient && <span>*</span>}</label>
                   <FormInput
                     type="email"
                     value={formData.email}
@@ -1350,38 +1352,38 @@ const PatientsPage: React.FC = () => {
 
                 {!editingPatient && (
                   <FormGroup>
-                    <label>Senha <span>*</span></label>
+                    <label>{t('patients.password')} <span>*</span></label>
                     <FormInput
                       type="password"
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder={t('patients.passwordHint')}
                     />
                   </FormGroup>
                 )}
 
                 <FormGroup>
-                  <label>Nome <span>*</span></label>
+                  <label>{t('patients.firstName')} <span>*</span></label>
                   <FormInput
                     type="text"
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    placeholder="Nome"
+                    placeholder={t('patients.firstName')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Sobrenome <span>*</span></label>
+                  <label>{t('patients.lastName')} <span>*</span></label>
                   <FormInput
                     type="text"
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    placeholder="Sobrenome"
+                    placeholder={t('patients.lastName')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Telefone</label>
+                  <label>{t('patients.phone')}</label>
                   <FormInput
                     type="tel"
                     value={formData.phone}
@@ -1391,7 +1393,7 @@ const PatientsPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Tipo de Paciente</label>
+                  <label>{t('patients.patientType')}</label>
                   <FormSelect
                     value={formData.patient_type}
                     onChange={(e) => setFormData({ ...formData, patient_type: e.target.value as PatientType })}
@@ -1403,20 +1405,20 @@ const PatientsPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Idioma Preferido <span>*</span></label>
+                  <label>{t('language.preference')} <span>*</span></label>
                   <FormSelect
                     value={formData.preferred_language}
                     onChange={(e) => setFormData({ ...formData, preferred_language: e.target.value as PreferredLanguage })}
                   >
-                    <option value="pt">Português</option>
-                    <option value="en">English</option>
+                    <option value="pt">{t('language.pt')}</option>
+                    <option value="en">{t('language.en')}</option>
                   </FormSelect>
                 </FormGroup>
               </ModalBody>
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={handleCloseModal}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   $variant="primary"
@@ -1429,7 +1431,7 @@ const PatientsPage: React.FC = () => {
                     (!editingPatient && (!formData.email.trim() || formData.password.length < 6))
                   }
                 >
-                  {saving ? 'Salvando...' : 'Salvar'}
+                  {saving ? t('common.saving') : t('common.save')}
                 </Button>
               </ModalFooter>
             </ModalContent>

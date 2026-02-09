@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { HelpCircle, X, Lightbulb } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../styles/GlobalStyle';
 
 const fadeIn = keyframes`
@@ -74,6 +75,7 @@ interface HelpTipProps {
 }
 
 const HelpTip: React.FC<HelpTipProps> = ({ id, children, icon = 'lightbulb' }) => {
+  const { t } = useTranslation();
   const storageKey = `essence_help_${id}`;
   const [dismissed, setDismissed] = useState(true);
 
@@ -95,7 +97,7 @@ const HelpTip: React.FC<HelpTipProps> = ({ id, children, icon = 'lightbulb' }) =
     <Container>
       <IconWrapper><Icon /></IconWrapper>
       <Content>{children}</Content>
-      <DismissBtn onClick={handleDismiss} title="Fechar dica">
+      <DismissBtn onClick={handleDismiss} title={t('helpTip.dismiss')}>
         <X />
       </DismissBtn>
     </Container>

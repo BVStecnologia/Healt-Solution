@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import {
   Clock,
   Save,
@@ -21,6 +22,7 @@ import HelpTip from '../../components/ui/HelpTip';
 import { theme } from '../../styles/GlobalStyle';
 import { supabase, callRPC } from '../../lib/supabaseClient';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
+import { getSpecialtyKey } from '../../constants/treatments';
 
 // ============================================
 // TYPES
@@ -58,14 +60,14 @@ type BlockPeriod = 'full_day' | 'morning' | 'afternoon' | 'custom';
 // ============================================
 // CONSTANTS
 // ============================================
-const DAYS_OF_WEEK = [
-  { value: 0, label: 'Domingo', short: 'Dom' },
-  { value: 1, label: 'Segunda', short: 'Seg' },
-  { value: 2, label: 'Terça', short: 'Ter' },
-  { value: 3, label: 'Quarta', short: 'Qua' },
-  { value: 4, label: 'Quinta', short: 'Qui' },
-  { value: 5, label: 'Sexta', short: 'Sex' },
-  { value: 6, label: 'Sábado', short: 'Sáb' },
+const DAY_KEYS = [
+  { value: 0, labelKey: 'days.sunday', shortKey: 'days.sunShort' },
+  { value: 1, labelKey: 'days.monday', shortKey: 'days.monShort' },
+  { value: 2, labelKey: 'days.tuesday', shortKey: 'days.tueShort' },
+  { value: 3, labelKey: 'days.wednesday', shortKey: 'days.wedShort' },
+  { value: 4, labelKey: 'days.thursday', shortKey: 'days.thuShort' },
+  { value: 5, labelKey: 'days.friday', shortKey: 'days.friShort' },
+  { value: 6, labelKey: 'days.saturday', shortKey: 'days.satShort' },
 ];
 
 const DEFAULT_SEGMENTS: ScheduleSegment[] = [
@@ -73,7 +75,7 @@ const DEFAULT_SEGMENTS: ScheduleSegment[] = [
   { start_time: '13:00', end_time: '17:00' },
 ];
 
-const DEFAULT_SCHEDULES: DaySchedule[] = DAYS_OF_WEEK.map(day => ({
+const DEFAULT_SCHEDULES: DaySchedule[] = DAY_KEYS.map(day => ({
   day_of_week: day.value,
   is_active: day.value >= 1 && day.value <= 5,
   segments: [...DEFAULT_SEGMENTS.map(s => ({ ...s }))],
@@ -764,6 +766,7 @@ const ConflictAlert = styled.div`
 // COMPONENT
 // ============================================
 const MySchedulePage: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const { providerId, loading: providerLoading, isAdmin: isAdminRole } = useCurrentProvider();
   const isDoctorEnv = location.pathname.startsWith('/doctor');
@@ -820,8 +823,8 @@ const MySchedulePage: React.FC = () => {
       if (data && data.length > 0) {
         const options = data.map((p: any) => ({
           id: p.id,
-          name: p.profiles ? `Dr(a). ${p.profiles.first_name} ${p.profiles.last_name}` : 'Sem nome',
-          specialty: p.specialty || '',
+          name: p.profiles ? `${t('common.drPrefix')} ${p.profiles.first_name} ${p.profiles.last_name}` : t('schedule.noName'),
+          specialty: p.specialty ? t(getSpecialtyKey(p.specialty)) : '',
         }));
         setProviders(options);
         setSelectedProviderId(options[0].id);
@@ -852,7 +855,7 @@ const MySchedulePage: React.FC = () => {
 
       if (data && data.length > 0) {
         // Agrupar por dia da semana (múltiplos segmentos por dia)
-        const grouped = DAYS_OF_WEEK.map(day => {
+        const grouped = DAY_KEYS.map(day => {
           const dayRows = data.filter(s => s.day_of_week === day.value && s.is_active);
           if (dayRows.length > 0) {
             return {
@@ -879,7 +882,7 @@ const MySchedulePage: React.FC = () => {
       }
     } catch (err) {
       console.error('Erro ao carregar horários:', err);
-      setError('Erro ao carregar horários');
+      setError(t('schedule.errorLoad'));
     } finally {
       setLoading(false);
     }
@@ -917,11 +920,11 @@ const MySchedulePage: React.FC = () => {
         p_schedules: rows,
       });
 
-      setSuccess('Horários salvos com sucesso!');
+      setSuccess(t('schedule.successSave'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       console.error('Erro ao salvar:', err);
-      setError(err.message || 'Erro ao salvar horários');
+      setError(err.message || t('schedule.errorSave'));
     } finally {
       setSaving(false);
     }
@@ -1056,12 +1059,12 @@ const MySchedulePage: React.FC = () => {
       setBlockStartTime('08:00');
       setBlockEndTime('12:00');
       setBlockReason('');
-      setSuccess('Bloqueio adicionado com sucesso!');
+      setSuccess(t('schedule.successBlock'));
       setTimeout(() => setSuccess(''), 3000);
       loadBlocks();
     } catch (err: any) {
       console.error('Erro ao criar bloqueio:', err);
-      setError(err.message || 'Erro ao criar bloqueio');
+      setError(err.message || t('schedule.errorCreateBlock'));
     } finally {
       setBlockSaving(false);
     }
@@ -1074,23 +1077,24 @@ const MySchedulePage: React.FC = () => {
       });
 
       setBlocks(prev => prev.filter(b => b.id !== blockId));
-      setSuccess('Bloqueio removido!');
+      setSuccess(t('schedule.successDeleteBlock'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       console.error('Erro ao remover bloqueio:', err);
-      setError(err.message || 'Erro ao remover bloqueio');
+      setError(err.message || t('schedule.errorDeleteBlock'));
     }
   };
 
   const formatBlockDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-');
     const date = new Date(Number(year), Number(month) - 1, Number(day));
-    const weekday = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][date.getDay()];
+    const shortKeys = ['days.sunShort', 'days.monShort', 'days.tueShort', 'days.wedShort', 'days.thuShort', 'days.friShort', 'days.satShort'];
+    const weekday = t(shortKeys[date.getDay()]);
     return `${weekday}, ${day}/${month}/${year}`;
   };
 
   const formatBlockPeriod = (block: ProviderBlock) => {
-    if (!block.start_time && !block.end_time) return 'Dia inteiro';
+    if (!block.start_time && !block.end_time) return t('schedule.fullDay');
     const start = block.start_time?.slice(0, 5) || '';
     const end = block.end_time?.slice(0, 5) || '';
     return `${start} — ${end}`;
@@ -1138,7 +1142,7 @@ const MySchedulePage: React.FC = () => {
       <AdminLayout>
         <LoadingContainer>
           <Loader2 size={32} />
-          Carregando...
+          {t('common.loading')}
         </LoadingContainer>
       </AdminLayout>
     );
@@ -1151,20 +1155,18 @@ const MySchedulePage: React.FC = () => {
           <div>
             <h1>
               <Clock size={28} />
-              {isAdmin ? (isDoctorEnv ? 'Minha Agenda' : 'Agenda do Médico') : 'Minha Agenda'}
+              {isAdmin ? (isDoctorEnv ? t('schedule.title') : t('schedule.titleAdmin')) : t('schedule.title')}
             </h1>
             <p>
               {isAdmin
-                ? 'Gerencie os dias e horários de atendimento dos médicos'
-                : 'Gerencie seus dias e horários de atendimento'}
+                ? t('schedule.subtitleAdmin')
+                : t('schedule.subtitle')}
             </p>
           </div>
         </Header>
 
         <HelpTip id="my-schedule">
-          <strong>Como funciona:</strong> Ative os dias da semana e defina os turnos de atendimento.
-          Voce pode ter multiplos turnos por dia (ex: manha e tarde). Pacientes so conseguirao
-          agendar dentro desses horarios.
+          <span dangerouslySetInnerHTML={{ __html: t('schedule.helpTip') }} />
         </HelpTip>
 
         {isAdmin && providers.length > 0 && (
@@ -1176,7 +1178,7 @@ const MySchedulePage: React.FC = () => {
             >
               {providers.find(p => p.id === selectedProviderId)
                 ? `${providers.find(p => p.id === selectedProviderId)!.name} — ${providers.find(p => p.id === selectedProviderId)!.specialty}`
-                : 'Selecionar médico'
+                : t('schedule.selectProvider')
               }
               <ChevronDown size={16} />
             </ProviderDropdownTrigger>
@@ -1198,8 +1200,8 @@ const MySchedulePage: React.FC = () => {
           <Card>
             <div style={{ textAlign: 'center', padding: '40px 20px', color: luxuryTheme.textSecondary }}>
               <Stethoscope size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
-              <h3 style={{ margin: '0 0 8px', color: luxuryTheme.text }}>Perfil de médico não encontrado</h3>
-              <p style={{ margin: 0 }}>Sua conta não está vinculada a um registro de médico.</p>
+              <h3 style={{ margin: '0 0 8px', color: luxuryTheme.text }}>{t('schedule.noProviderTitle')}</h3>
+              <p style={{ margin: 0 }}>{t('schedule.noProviderDesc')}</p>
             </div>
           </Card>
         )}
@@ -1210,15 +1212,15 @@ const MySchedulePage: React.FC = () => {
               <SummaryGrid>
                 <SummaryCard>
                   <div className="value">{activeDays}</div>
-                  <div className="label">Dias ativos</div>
+                  <div className="label">{t('schedule.activeDays')}</div>
                 </SummaryCard>
                 <SummaryCard>
                   <div className="value">{totalHours.toFixed(0)}h</div>
-                  <div className="label">Horas semanais</div>
+                  <div className="label">{t('schedule.weeklyHours')}</div>
                 </SummaryCard>
                 <SummaryCard>
                   <div className="value">{firstTime}</div>
-                  <div className="label">Primeiro horário</div>
+                  <div className="label">{t('schedule.firstTime')}</div>
                 </SummaryCard>
               </SummaryGrid>
             )}
@@ -1226,10 +1228,10 @@ const MySchedulePage: React.FC = () => {
             <Card>
               <SectionTitle>
                 <Calendar size={20} />
-                Horários de Trabalho{selectedProviderName ? ` — ${selectedProviderName}` : ''}
+                {t('schedule.workingHours')}{selectedProviderName ? ` — ${selectedProviderName}` : ''}
               </SectionTitle>
               <p style={{ fontSize: 13, color: luxuryTheme.textSecondary, margin: '-16px 0 20px', opacity: 0.7 }}>
-                Clique em um dia para editar os turnos
+                {t('schedule.clickDayHint')}
               </p>
 
               {error && (
@@ -1249,12 +1251,12 @@ const MySchedulePage: React.FC = () => {
               {loading ? (
                 <LoadingContainer>
                   <Loader2 size={28} />
-                  Carregando horários...
+                  {t('schedule.loadingSchedules')}
                 </LoadingContainer>
               ) : (
                 <>
                   <WeekGrid>
-                    {DAYS_OF_WEEK.map((day, dayIndex) => {
+                    {DAY_KEYS.map((day, dayIndex) => {
                       const daySchedule = schedules[dayIndex];
                       return (
                         <DayTile
@@ -1263,7 +1265,7 @@ const MySchedulePage: React.FC = () => {
                           $selected={expandedDay === dayIndex}
                           onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
                         >
-                          <DayName $active={daySchedule?.is_active}>{day.short}</DayName>
+                          <DayName $active={daySchedule?.is_active}>{t(day.shortKey)}</DayName>
                           <DayToggle onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
@@ -1274,7 +1276,7 @@ const MySchedulePage: React.FC = () => {
                           {daySchedule?.is_active ? (
                             <DaySummaryText>{formatDayTileSummary(daySchedule)}</DaySummaryText>
                           ) : (
-                            <DayOffLabel>Folga</DayOffLabel>
+                            <DayOffLabel>{t('schedule.dayOff')}</DayOffLabel>
                           )}
                         </DayTile>
                       );
@@ -1285,18 +1287,18 @@ const MySchedulePage: React.FC = () => {
                     <ExpandedPanel>
                       <ExpandedHeader>
                         <span className="day-title">
-                          {DAYS_OF_WEEK[expandedDay].label} — Turnos
+                          {t(DAY_KEYS[expandedDay].labelKey)} — {t('schedule.shifts')}
                         </span>
                         <AddSegmentBtn onClick={() => addSegment(expandedDay)}>
                           <Plus size={14} />
-                          Adicionar turno
+                          {t('schedule.addShift')}
                         </AddSegmentBtn>
                       </ExpandedHeader>
                       <SegmentsContainer>
                         {schedules[expandedDay].segments.map((seg, segIndex) => (
                           <SegmentRow key={segIndex}>
                             <span className="segment-label">
-                              Turno {segIndex + 1}
+                              {t('schedule.shift')} {segIndex + 1}
                             </span>
                             <input
                               type="time"
@@ -1312,7 +1314,7 @@ const MySchedulePage: React.FC = () => {
                             {schedules[expandedDay].segments.length > 1 && (
                               <RemoveSegmentBtn
                                 onClick={() => removeSegment(expandedDay, segIndex)}
-                                title="Remover turno"
+                                title={t('schedule.removeShift')}
                               >
                                 <X size={14} />
                               </RemoveSegmentBtn>
@@ -1327,12 +1329,12 @@ const MySchedulePage: React.FC = () => {
                     {saving ? (
                       <>
                         <Loader2 size={18} />
-                        Salvando...
+                        {t('common.saving')}
                       </>
                     ) : (
                       <>
                         <Save size={18} />
-                        Salvar Horários
+                        {t('schedule.saveSchedules')}
                       </>
                     )}
                   </SaveButton>
@@ -1344,14 +1346,14 @@ const MySchedulePage: React.FC = () => {
             <BlocksCard>
               <SectionTitle>
                 <Ban size={20} />
-                Bloqueios de Agenda{selectedProviderName ? ` — ${selectedProviderName}` : ''}
+                {t('schedule.scheduleBlocks')}{selectedProviderName ? ` — ${selectedProviderName}` : ''}
               </SectionTitle>
 
               {blockConflicts.length > 0 && (
                 <ConflictAlert>
                   <AlertTriangle size={18} />
                   <div>
-                    <strong>Atenção:</strong> Existem consultas agendadas neste período:
+                    <strong>{t('schedule.conflictWarning')}</strong> {t('schedule.conflictMessage')}
                     <ul>
                       {blockConflicts.map((c: any, i: number) => (
                         <li key={i}>
@@ -1365,7 +1367,7 @@ const MySchedulePage: React.FC = () => {
 
               <BlockForm>
                 <FormGroup>
-                  <label>Data do bloqueio</label>
+                  <label>{t('schedule.blockDate')}</label>
                   <input
                     type="date"
                     value={blockDate}
@@ -1375,45 +1377,45 @@ const MySchedulePage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Período</label>
+                  <label>{t('schedule.period')}</label>
                   <PeriodOptions>
                     <PeriodButton
                       $active={blockPeriod === 'full_day'}
                       onClick={() => setBlockPeriod('full_day')}
                     >
-                      Dia inteiro
+                      {t('schedule.fullDay')}
                     </PeriodButton>
                     <PeriodButton
                       $active={blockPeriod === 'morning'}
                       onClick={() => setBlockPeriod('morning')}
                     >
-                      Manhã
+                      {t('schedule.morning')}
                     </PeriodButton>
                     <PeriodButton
                       $active={blockPeriod === 'afternoon'}
                       onClick={() => setBlockPeriod('afternoon')}
                     >
-                      Tarde
+                      {t('schedule.afternoon')}
                     </PeriodButton>
                     <PeriodButton
                       $active={blockPeriod === 'custom'}
                       onClick={() => setBlockPeriod('custom')}
                     >
-                      Personalizado
+                      {t('schedule.custom')}
                     </PeriodButton>
                   </PeriodOptions>
                 </FormGroup>
 
                 {blockPeriod === 'custom' && (
                   <FormGroup $fullWidth>
-                    <label>Horário</label>
+                    <label>{t('schedule.time')}</label>
                     <BlockTimeRow>
                       <input
                         type="time"
                         value={blockStartTime}
                         onChange={(e) => setBlockStartTime(e.target.value)}
                       />
-                      <span>até</span>
+                      <span>{t('schedule.until')}</span>
                       <input
                         type="time"
                         value={blockEndTime}
@@ -1424,12 +1426,12 @@ const MySchedulePage: React.FC = () => {
                 )}
 
                 <FormGroup $fullWidth>
-                  <label>Motivo (opcional)</label>
+                  <label>{t('schedule.reasonOptional')}</label>
                   <input
                     type="text"
                     value={blockReason}
                     onChange={(e) => setBlockReason(e.target.value)}
-                    placeholder="Ex: Almoço, Reunião, Férias..."
+                    placeholder={t('schedule.blockPlaceholder')}
                   />
                 </FormGroup>
 
@@ -1440,12 +1442,12 @@ const MySchedulePage: React.FC = () => {
                   {blockSaving ? (
                     <>
                       <Loader2 size={16} />
-                      Adicionando...
+                      {t('schedule.adding')}
                     </>
                   ) : (
                     <>
                       <Plus size={16} />
-                      Adicionar Bloqueio
+                      {t('schedule.addBlock')}
                     </>
                   )}
                 </AddBlockButton>
@@ -1454,12 +1456,12 @@ const MySchedulePage: React.FC = () => {
               {blocksLoading ? (
                 <LoadingContainer>
                   <Loader2 size={24} />
-                  Carregando bloqueios...
+                  {t('schedule.loadingBlocks')}
                 </LoadingContainer>
               ) : blocks.length === 0 ? (
                 <EmptyBlocks>
                   <Ban size={32} />
-                  <p>Nenhum bloqueio nos próximos 60 dias</p>
+                  <p>{t('schedule.noBlocks')}</p>
                 </EmptyBlocks>
               ) : (
                 <BlockList>
@@ -1470,7 +1472,7 @@ const MySchedulePage: React.FC = () => {
                         <div className="block-period">{formatBlockPeriod(block)}</div>
                         {block.reason && <div className="block-reason">{block.reason}</div>}
                       </div>
-                      <DeleteButton onClick={() => handleDeleteBlock(block.id)} title="Remover bloqueio">
+                      <DeleteButton onClick={() => handleDeleteBlock(block.id)} title={t('schedule.removeBlock')}>
                         <Trash2 size={16} />
                       </DeleteButton>
                     </BlockItem>

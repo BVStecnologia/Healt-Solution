@@ -11,6 +11,8 @@ import {
   XCircle,
   Send,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabase } from '../../lib/supabaseClient';
@@ -387,6 +389,7 @@ interface FailedMessage {
 // COMPONENT
 // ============================================
 const FailedMessagesPage: React.FC = () => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<FailedMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [retryingId, setRetryingId] = useState<string | null>(null);
@@ -429,7 +432,7 @@ const FailedMessagesPage: React.FC = () => {
     try {
       const instance = await whatsappService.getConnectedInstance();
       if (!instance) {
-        window.alert('Nenhuma instancia WhatsApp conectada.');
+        window.alert(t('failedMessages.noWhatsapp'));
         return;
       }
 
@@ -470,12 +473,12 @@ const FailedMessagesPage: React.FC = () => {
           })
           .eq('id', msg.id);
 
-        window.alert(`Falha ao reenviar: ${result.error || 'Erro desconhecido'}`);
+        window.alert(`${t('failedMessages.retryFail')}: ${result.error || t('dashboard.unknownError')}`);
         loadMessages();
       }
     } catch (err) {
       console.error('Error retrying message:', err);
-      window.alert('Erro ao tentar reenviar mensagem.');
+      window.alert(t('failedMessages.retryError'));
     } finally {
       setRetryingId(null);
     }
@@ -483,7 +486,7 @@ const FailedMessagesPage: React.FC = () => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleString('pt-BR', {
+    return date.toLocaleString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
       day: '2-digit',
       month: '2-digit',
       hour: '2-digit',
@@ -493,22 +496,22 @@ const FailedMessagesPage: React.FC = () => {
 
   const formatTemplate = (name: string | null) => {
     if (!name) return '-';
-    const labels: Record<string, string> = {
-      appointment_confirmed: 'Confirmacao',
-      appointment_rejected: 'Rejeicao',
-      appointment_cancelled: 'Cancelamento',
-      appointment_cancelled_by_provider: 'Cancel. medico',
-      appointment_auto_confirmed: 'Auto-confirmacao',
-      reminder_24h: 'Lembrete 24h',
-      reminder_1h: 'Lembrete 1h',
-      no_show_patient: 'No-show (pac)',
-      no_show_provider: 'No-show (med)',
-      new_appointment_provider: 'Nova consulta (med)',
-      new_appointment_clinic: 'Nova consulta (clin)',
-      provider_reminder_2h: 'Lembrete 2h (med)',
-      provider_reminder_15min: 'Lembrete 15min (med)',
+    const labelKeys: Record<string, string> = {
+      appointment_confirmed: 'failedMessages.template.confirmed',
+      appointment_rejected: 'failedMessages.template.rejected',
+      appointment_cancelled: 'failedMessages.template.cancelled',
+      appointment_cancelled_by_provider: 'failedMessages.template.cancelledByProvider',
+      appointment_auto_confirmed: 'failedMessages.template.autoConfirmed',
+      reminder_24h: 'failedMessages.template.reminder24h',
+      reminder_1h: 'failedMessages.template.reminder1h',
+      no_show_patient: 'failedMessages.template.noShowPatient',
+      no_show_provider: 'failedMessages.template.noShowProvider',
+      new_appointment_provider: 'failedMessages.template.newAppointmentProvider',
+      new_appointment_clinic: 'failedMessages.template.newAppointmentClinic',
+      provider_reminder_2h: 'failedMessages.template.providerReminder2h',
+      provider_reminder_15min: 'failedMessages.template.providerReminder15min',
     };
-    return labels[name] || name;
+    return labelKeys[name] ? t(labelKeys[name]) : name;
   };
 
   return (
@@ -516,12 +519,12 @@ const FailedMessagesPage: React.FC = () => {
       <PageContainer>
         <Header>
           <div>
-            <h1>Mensagens Falhas</h1>
-            <p>Mensagens WhatsApp que nao foram entregues</p>
+            <h1>{t('failedMessages.title')}</h1>
+            <p>{t('failedMessages.subtitle')}</p>
           </div>
           <RefreshButton onClick={loadMessages} $loading={loading}>
             <RefreshCw size={16} />
-            Atualizar
+            {t('failedMessages.refresh')}
           </RefreshButton>
         </Header>
 
@@ -529,17 +532,17 @@ const FailedMessagesPage: React.FC = () => {
           <StatPill>
             <XCircle style={{ color: luxuryTheme.error }} />
             <StatValue>{stats.failed}</StatValue>
-            <StatLabel>Falhas</StatLabel>
+            <StatLabel>{t('failedMessages.statFailed')}</StatLabel>
           </StatPill>
           <StatPill>
             <Send style={{ color: luxuryTheme.warning }} />
             <StatValue>{stats.retriable}</StatValue>
-            <StatLabel>Reenvio possivel</StatLabel>
+            <StatLabel>{t('failedMessages.statRetriable')}</StatLabel>
           </StatPill>
           <StatPill>
             <AlertTriangle style={{ color: luxuryTheme.textSecondary }} />
             <StatValue>{stats.exhausted}</StatValue>
-            <StatLabel>Esgotadas</StatLabel>
+            <StatLabel>{t('failedMessages.statExhausted')}</StatLabel>
           </StatPill>
         </StatsRow>
 
@@ -547,23 +550,23 @@ const FailedMessagesPage: React.FC = () => {
           {messages.length === 0 && !loading ? (
             <EmptyState>
               <CheckCircle />
-              <h3>Nenhuma mensagem falha</h3>
-              <p>Todas as mensagens WhatsApp foram entregues com sucesso.</p>
+              <h3>{t('failedMessages.emptyTitle')}</h3>
+              <p>{t('failedMessages.emptyDescription')}</p>
             </EmptyState>
           ) : (
             <>
               <TableHeader>
-                <span>Mensagem</span>
-                <span>Telefone</span>
-                <span>Erro</span>
-                <span>Template</span>
-                <span>Tentativas</span>
-                <span>Acao</span>
+                <span>{t('failedMessages.headerMessage')}</span>
+                <span>{t('failedMessages.headerPhone')}</span>
+                <span>{t('failedMessages.headerError')}</span>
+                <span>{t('failedMessages.headerTemplate')}</span>
+                <span>{t('failedMessages.headerAttempts')}</span>
+                <span>{t('failedMessages.headerAction')}</span>
               </TableHeader>
               {messages.map(msg => (
                 <TableRow key={msg.id} $retrying={retryingId === msg.id}>
                   <div>
-                    <CellLabel>Mensagem:</CellLabel>
+                    <CellLabel>{t('failedMessages.cellMessage')}</CellLabel>
                     <MessagePreview title={msg.message}>
                       {msg.message.substring(0, 80)}...
                     </MessagePreview>
@@ -574,25 +577,25 @@ const FailedMessagesPage: React.FC = () => {
                   </div>
 
                   <PhoneCell>
-                    <CellLabel>Tel:</CellLabel>
+                    <CellLabel>{t('failedMessages.cellPhone')}</CellLabel>
                     <Phone size={14} />
                     {msg.phone_number}
                   </PhoneCell>
 
                   <div>
-                    <CellLabel>Erro:</CellLabel>
-                    <ErrorCell title={msg.error || 'Sem detalhes'}>
-                      {msg.error || 'Sem detalhes'}
+                    <CellLabel>{t('failedMessages.cellError')}</CellLabel>
+                    <ErrorCell title={msg.error || t('failedMessages.noDetails')}>
+                      {msg.error || t('failedMessages.noDetails')}
                     </ErrorCell>
                   </div>
 
                   <div>
-                    <CellLabel>Template:</CellLabel>
+                    <CellLabel>{t('failedMessages.cellTemplate')}</CellLabel>
                     <TemplateCell>{formatTemplate(msg.template_name)}</TemplateCell>
                   </div>
 
                   <div>
-                    <CellLabel>Tentativas:</CellLabel>
+                    <CellLabel>{t('failedMessages.cellAttempts')}</CellLabel>
                     <RetryBadge $count={msg.retry_count}>
                       <RotateCcw size={11} />
                       {msg.retry_count}/3
@@ -603,10 +606,10 @@ const FailedMessagesPage: React.FC = () => {
                     {retrySuccess.has(msg.id) ? (
                       <SuccessBadge>
                         <CheckCircle size={12} />
-                        Enviado!
+                        {t('failedMessages.sent')}
                       </SuccessBadge>
                     ) : msg.retry_count >= 3 ? (
-                      <ExhaustedLabel>Esgotado</ExhaustedLabel>
+                      <ExhaustedLabel>{t('failedMessages.exhausted')}</ExhaustedLabel>
                     ) : (
                       <RetryButton
                         onClick={() => handleRetry(msg)}
@@ -617,7 +620,7 @@ const FailedMessagesPage: React.FC = () => {
                         ) : (
                           <RotateCcw size={12} />
                         )}
-                        Reenviar
+                        {t('failedMessages.resend')}
                       </RetryButton>
                     )}
                   </div>

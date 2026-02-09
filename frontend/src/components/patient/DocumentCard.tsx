@@ -1,10 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { FileText, FileSpreadsheet, FileCheck, FileOutput, FileSearch, Download, Trash2, Eye } from 'lucide-react';
 import { PatientDocument, DocumentType } from '../../types/documents';
 import { theme } from '../../styles/GlobalStyle';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 
 interface DocumentCardProps {
   document: PatientDocument;
@@ -131,19 +132,20 @@ const getIcon = (type: DocumentType) => {
   }
 };
 
-const getTypeLabel = (type: DocumentType) => {
-  switch (type) {
-    case 'lab_result': return 'Resultado de Exame';
-    case 'prescription': return 'Receita/Prescrição';
-    case 'invoice': return 'Nota Fiscal';
-    case 'treatment_plan': return 'Plano de Tratamento';
-    case 'consent_form': return 'Consentimento';
-    case 'intake_form': return 'Formulário Inicial';
-    default: return 'Geral';
-  }
+const DOC_TYPE_KEY_MAP: Record<string, string> = {
+  lab_result: 'documents.type.labResult',
+  prescription: 'documents.type.prescription',
+  invoice: 'documents.type.invoice',
+  treatment_plan: 'documents.type.treatmentPlan',
+  consent_form: 'documents.type.consentForm',
+  intake_form: 'documents.type.intakeForm',
 };
 
 export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete, onDownload, onView }) => {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === 'pt' ? ptBR : enUS;
+  const getTypeLabel = (type: DocumentType) => t(DOC_TYPE_KEY_MAP[type] || 'documents.type.other');
+
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDownload) {
@@ -165,21 +167,21 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete, 
       <Content>
         <Title>{document.title}</Title>
         <Meta>
-          <span>{format(new Date(document.created_at), "d 'de' MMMM, yyyy", { locale: ptBR })}</span>
+          <span>{format(new Date(document.created_at), 'd MMMM, yyyy', { locale: dateLocale })}</span>
           <Badge>{getTypeLabel(document.type)}</Badge>
         </Meta>
       </Content>
       <Actions>
         {onView && (
-          <ActionBtn onClick={(e) => { e.stopPropagation(); onView(); }} title="Visualizar documento">
+          <ActionBtn onClick={(e) => { e.stopPropagation(); onView(); }} title={t('documents.action.view')}>
             <Eye size={20} />
           </ActionBtn>
         )}
-        <ActionBtn onClick={handleDownload} title="Baixar documento">
+        <ActionBtn onClick={handleDownload} title={t('documents.action.download')}>
           <Download size={20} />
         </ActionBtn>
         {onDelete && (
-          <DeleteBtn onClick={(e) => { e.stopPropagation(); onDelete(document.id); }} title="Excluir documento">
+          <DeleteBtn onClick={(e) => { e.stopPropagation(); onDelete(document.id); }} title={t('documents.action.delete')}>
             <Trash2 size={18} />
           </DeleteBtn>
         )}

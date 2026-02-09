@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import styled from 'styled-components';
+import i18n from 'i18next';
 import { theme } from '../../styles/GlobalStyle';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info';
@@ -45,14 +46,15 @@ export default Badge;
 
 // Helper para status de appointment
 export const getAppointmentStatusBadge = (status: string): { variant: BadgeVariant; label: string } => {
+  const translate = (i18n as any).t.bind(i18n) as (key: string) => string; // eslint-disable-line
   const statusMap: Record<string, { variant: BadgeVariant; label: string }> = {
-    pending: { variant: 'warning', label: 'Pendente' },
-    confirmed: { variant: 'info', label: 'Confirmado' },
-    checked_in: { variant: 'info', label: 'Check-in' },
-    in_progress: { variant: 'info', label: 'Em andamento' },
-    completed: { variant: 'success', label: 'Concluído' },
-    cancelled: { variant: 'error', label: 'Cancelado' },
-    no_show: { variant: 'error', label: 'Faltou' },
+    pending: { variant: 'warning', label: translate('badge.pending') },
+    confirmed: { variant: 'info', label: translate('badge.confirmed') },
+    checked_in: { variant: 'info', label: translate('badge.checkedIn') },
+    in_progress: { variant: 'info', label: translate('badge.inProgress') },
+    completed: { variant: 'success', label: translate('badge.completed') },
+    cancelled: { variant: 'error', label: translate('badge.cancelled') },
+    no_show: { variant: 'error', label: translate('badge.noShow') },
   };
 
   return statusMap[status] || { variant: 'default', label: status };

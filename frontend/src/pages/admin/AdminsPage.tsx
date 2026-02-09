@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled, { keyframes, css } from 'styled-components';
 import {
   Shield, Plus, Search, Edit2, Trash2, X, Check, AlertCircle,
@@ -808,6 +809,7 @@ const ITEMS_PER_PAGE = 8;
 // COMPONENT
 // ============================================
 const AdminsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [admins, setAdmins] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -875,7 +877,7 @@ const AdminsPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!formData.email || !formData.first_name || !formData.last_name) {
-      setError('Preencha todos os campos obrigatórios');
+      setError(t('admins.errorRequired'));
       return;
     }
 
@@ -895,7 +897,7 @@ const AdminsPage: React.FC = () => {
           .eq('id', editingAdmin.id);
 
         if (error) throw error;
-        setSuccess('Administrador atualizado com sucesso!');
+        setSuccess(t('admins.successUpdate'));
       } else {
         const { data: existingUser } = await supabase
           .from('profiles')
@@ -916,9 +918,9 @@ const AdminsPage: React.FC = () => {
             .eq('id', existingUser.id);
 
           if (error) throw error;
-          setSuccess('Usuário promovido a administrador!');
+          setSuccess(t('admins.successPromote'));
         } else {
-          setError('Email não encontrado. O usuário precisa se registrar primeiro.');
+          setError(t('admins.errorNotFound'));
           setSaving(false);
           return;
         }
@@ -929,7 +931,7 @@ const AdminsPage: React.FC = () => {
         handleCloseModal();
       }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar administrador');
+      setError(err.message || t('admins.errorSave'));
     } finally {
       setSaving(false);
     }
@@ -989,12 +991,12 @@ const AdminsPage: React.FC = () => {
       <PageContainer>
         <Header>
           <div>
-            <h1>Administradores</h1>
-            <p>Gerencie os administradores do sistema</p>
+            <h1>{t('admins.title')}</h1>
+            <p>{t('admins.description')}</p>
           </div>
           <AddButton onClick={() => handleOpenModal()}>
             <Plus size={18} />
-            Adicionar Admin
+            {t('admins.addButton')}
           </AddButton>
         </Header>
 
@@ -1002,12 +1004,12 @@ const AdminsPage: React.FC = () => {
           <StatPill>
             <Shield />
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Administradores</StatLabel>
+            <StatLabel>{t('admins.title')}</StatLabel>
           </StatPill>
           <StatPill>
             <Phone />
             <StatValue>{stats.withPhone}</StatValue>
-            <StatLabel>Com Telefone</StatLabel>
+            <StatLabel>{t('patients.phone')}</StatLabel>
           </StatPill>
         </StatsRow>
 
@@ -1016,7 +1018,7 @@ const AdminsPage: React.FC = () => {
             <Search size={18} />
             <SearchInput
               type="text"
-              placeholder="Buscar por nome ou email..."
+              placeholder={t('patients.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -1039,18 +1041,17 @@ const AdminsPage: React.FC = () => {
             <Shield />
             {admins.length === 0 ? (
               <>
-                <h3>Nenhum administrador cadastrado</h3>
-                <p>Administradores podem gerenciar consultas, pacientes e configuracoes da clinica.<br />
-                Adicione outros membros da equipe para ajudar na gestao.</p>
+                <h3>{t('appointments.emptyDefault')}</h3>
+                <p>{t('admins.description')}</p>
                 <EmptyStateCTA onClick={() => setShowModal(true)}>
                   <UserPlus size={16} />
-                  Adicionar Admin
+                  {t('admins.addButton')}
                 </EmptyStateCTA>
               </>
             ) : (
               <>
-                <h3>Nenhum administrador encontrado</h3>
-                <p>Tente ajustar os termos da busca</p>
+                <h3>{t('appointments.emptyDefault')}</h3>
+                <p>{t('common.tryAdjustSearch')}</p>
               </>
             )}
           </EmptyState>
@@ -1073,15 +1074,15 @@ const AdminsPage: React.FC = () => {
 
                   <AdminBadge>
                     <Crown size={11} />
-                    Administrador
+                    {t('admins.role')}
                   </AdminBadge>
 
                   <AdminActions>
-                    <ActionButton onClick={() => handleOpenModal(admin)} title="Editar">
+                    <ActionButton onClick={() => handleOpenModal(admin)} title={t('common.edit')}>
                       <Edit2 size={16} />
                     </ActionButton>
                     {admin.id !== user?.id && (
-                      <ActionButton $variant="danger" onClick={() => handleDelete(admin)} title="Remover">
+                      <ActionButton $variant="danger" onClick={() => handleDelete(admin)} title={t('common.remove')}>
                         <Trash2 size={16} />
                       </ActionButton>
                     )}
@@ -1128,7 +1129,7 @@ const AdminsPage: React.FC = () => {
                 <ConfirmIconCircle>
                   <AlertTriangle size={28} />
                 </ConfirmIconCircle>
-                <ConfirmTitle>Remover Administrador</ConfirmTitle>
+                <ConfirmTitle>{t('admins.removeTitle')}</ConfirmTitle>
                 <ConfirmText>
                   Tem certeza que deseja remover <ConfirmName>{confirmRemoveAdmin.first_name} {confirmRemoveAdmin.last_name}</ConfirmName> como administrador?
                 </ConfirmText>
@@ -1138,10 +1139,10 @@ const AdminsPage: React.FC = () => {
               </ConfirmBody>
               <ConfirmFooter>
                 <ConfirmBtn onClick={() => setConfirmRemoveAdmin(null)}>
-                  Cancelar
+                  {t('common.cancel')}
                 </ConfirmBtn>
                 <ConfirmBtn $danger onClick={confirmRemove}>
-                  Remover
+                  {t('common.remove')}
                 </ConfirmBtn>
               </ConfirmFooter>
             </ConfirmCard>
@@ -1154,7 +1155,7 @@ const AdminsPage: React.FC = () => {
               <ModalHeader>
                 <h2>
                   <Shield size={22} />
-                  {editingAdmin ? 'Editar Administrador' : 'Adicionar Administrador'}
+                  {editingAdmin ? t('admins.editTitle') : t('admins.addTitle')}
                 </h2>
                 <CloseButton onClick={handleCloseModal}>
                   <X size={18} />
@@ -1177,7 +1178,7 @@ const AdminsPage: React.FC = () => {
                 )}
 
                 <FormGroup>
-                  <label>Email {!editingAdmin && <span>*</span>}</label>
+                  <label>{t('patients.email')} {!editingAdmin && <span>*</span>}</label>
                   <FormInput
                     type="email"
                     value={formData.email}
@@ -1188,27 +1189,27 @@ const AdminsPage: React.FC = () => {
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Nome <span>*</span></label>
+                  <label>{t('patients.firstName')} <span>*</span></label>
                   <FormInput
                     type="text"
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    placeholder="Nome"
+                    placeholder={t('patients.firstName')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Sobrenome <span>*</span></label>
+                  <label>{t('patients.lastName')} <span>*</span></label>
                   <FormInput
                     type="text"
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    placeholder="Sobrenome"
+                    placeholder={t('patients.lastName')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Telefone</label>
+                  <label>{t('patients.phone')}</label>
                   <FormInput
                     type="tel"
                     value={formData.phone}
@@ -1220,10 +1221,10 @@ const AdminsPage: React.FC = () => {
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={handleCloseModal}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button $variant="primary" onClick={handleSave} disabled={saving}>
-                  {saving ? 'Salvando...' : 'Salvar'}
+                  {saving ? t('common.saving') : t('common.save')}
                 </Button>
               </ModalFooter>
             </ModalContent>

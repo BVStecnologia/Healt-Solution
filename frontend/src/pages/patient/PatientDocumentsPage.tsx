@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../styles/GlobalStyle';
 import { usePatientDocuments } from '../../hooks/usePatientDocuments';
 import { DocumentCard } from '../../components/patient/DocumentCard';
@@ -90,18 +91,19 @@ const EmptyState = styled.div`
 
 type TabType = 'all' | 'clinical' | 'administrative' | 'plans';
 
-const TABS: { key: TabType; label: string }[] = [
-  { key: 'all', label: 'Todos' },
-  { key: 'plans', label: 'Planos de Tratamento' },
-  { key: 'clinical', label: 'Exames & Clínico' },
-  { key: 'administrative', label: 'Administrativo' },
-];
-
 const CLINICAL_TYPES = ['lab_result', 'prescription', 'other'];
 const ADMIN_TYPES = ['invoice', 'consent_form', 'intake_form'];
 
 const PatientDocumentsPage: React.FC = () => {
   const { documents, loading, getSignedUrl } = usePatientDocuments();
+  const { t } = useTranslation();
+
+  const TABS: { key: TabType; label: string }[] = [
+    { key: 'all', label: t('documents.tabAll') },
+    { key: 'plans', label: t('documents.tabPlans') },
+    { key: 'clinical', label: t('documents.tabClinical') },
+    { key: 'administrative', label: t('documents.tabAdministrative') },
+  ];
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [viewingDoc, setViewingDoc] = useState<PatientDocument | null>(null);
   const [viewerUrl, setViewerUrl] = useState<string>('');
@@ -111,7 +113,7 @@ const PatientDocumentsPage: React.FC = () => {
     if (url) {
       window.open(url, '_blank');
     } else {
-      alert('Erro ao gerar link de download.');
+      alert(t('documents.downloadError'));
     }
   };
 
@@ -121,7 +123,7 @@ const PatientDocumentsPage: React.FC = () => {
       setViewerUrl(url);
       setViewingDoc(doc);
     } else {
-      alert('Erro ao gerar link de visualizacao.');
+      alert(t('documents.viewError'));
     }
   };
 
@@ -136,7 +138,7 @@ const PatientDocumentsPage: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <LoadingSpinner message="Carregando documentos..." />
+        <LoadingSpinner message={t('documents.loading')} />
       </Layout>
     );
   }
@@ -144,8 +146,8 @@ const PatientDocumentsPage: React.FC = () => {
   return (
     <Layout>
       <Header>
-        <Title>Documentos</Title>
-        <Subtitle>Acesse seus resultados de exames, planos e prescrições.</Subtitle>
+        <Title>{t('documents.title')}</Title>
+        <Subtitle>{t('documents.subtitle')}</Subtitle>
       </Header>
 
       <TabsContainer>
@@ -174,11 +176,11 @@ const PatientDocumentsPage: React.FC = () => {
       ) : (
         <EmptyState>
           <FileText size={48} />
-          <p>Nenhum documento encontrado.</p>
+          <p>{t('documents.emptyTitle')}</p>
           {activeTab !== 'all' ? (
-            <small>Tente selecionar outra categoria ou verifique se há novos arquivos.</small>
+            <small>{t('documents.emptyFilterHint')}</small>
           ) : (
-            <small>Documentos enviados pela clínica aparecerão aqui.</small>
+            <small>{t('documents.emptyHint')}</small>
           )}
         </EmptyState>
       )}

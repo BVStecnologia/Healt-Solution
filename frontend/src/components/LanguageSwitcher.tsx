@@ -149,7 +149,7 @@ const LanguageSwitcher: React.FC = () => {
       <MainButton
         onClick={() => setOpen(!open)}
         data-open={open}
-        aria-label="Selecionar idioma"
+        aria-label={language === 'pt' ? 'Selecionar idioma' : 'Select language'}
       >
         <FlagIcon>
           <CurrentFlag />

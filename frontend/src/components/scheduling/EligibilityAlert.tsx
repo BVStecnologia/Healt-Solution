@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import type { EligibilityResult } from '../../types/database';
@@ -100,6 +101,8 @@ const EligibilityAlert: React.FC<EligibilityAlertProps> = ({
   eligibility,
   loading = false,
 }) => {
+  const { t, i18n } = useTranslation();
+
   if (loading) {
     return (
       <Container $type="info">
@@ -107,8 +110,8 @@ const EligibilityAlert: React.FC<EligibilityAlertProps> = ({
           <Info />
         </IconWrapper>
         <Content>
-          <Title>Verificando elegibilidade...</Title>
-          <Message>Aguarde enquanto verificamos seus requisitos.</Message>
+          <Title>{t('booking.eligibilityChecking')}</Title>
+          <Message>{t('booking.eligibilityCheckingDesc')}</Message>
         </Content>
       </Container>
     );
@@ -129,13 +132,13 @@ const EligibilityAlert: React.FC<EligibilityAlertProps> = ({
       <Content>
         <Title>
           {eligibility.eligible
-            ? 'Você está elegível para este tipo de consulta'
-            : 'Você não está elegível para este tipo de consulta'}
+            ? t('booking.eligibilityEligible')
+            : t('booking.eligibilityIneligible')}
         </Title>
 
         {!eligibility.eligible && eligibility.reasons.length > 0 && (
           <>
-            <Message>Motivos:</Message>
+            <Message>{t('booking.eligibilityReasons')}</Message>
             <ReasonsList>
               {eligibility.reasons.map((reason, index) => (
                 <li key={index}>{reason}</li>
@@ -148,14 +151,16 @@ const EligibilityAlert: React.FC<EligibilityAlertProps> = ({
           <RequirementsList>
             <Requirement $met={eligibility.requirements.labs_completed}>
               {eligibility.requirements.labs_completed ? <CheckCircle /> : <XCircle />}
-              Exames laboratoriais {eligibility.requirements.labs_completed ? 'em dia' : 'pendentes'}
+              {eligibility.requirements.labs_completed
+                ? t('booking.eligibilityLabsCurrent')
+                : t('booking.eligibilityLabsPending')}
             </Requirement>
             {eligibility.requirements.visit_required && (
               <Requirement $met={!!eligibility.requirements.last_visit_date}>
                 {eligibility.requirements.last_visit_date ? <CheckCircle /> : <XCircle />}
-                Visita médica {eligibility.requirements.last_visit_date
-                  ? `realizada`
-                  : 'necessária'}
+                {eligibility.requirements.last_visit_date
+                  ? t('booking.eligibilityVisitDone')
+                  : t('booking.eligibilityVisitNeeded')}
               </Requirement>
             )}
           </RequirementsList>
@@ -163,7 +168,11 @@ const EligibilityAlert: React.FC<EligibilityAlertProps> = ({
 
         {eligibility.next_eligible_date && (
           <Message style={{ marginTop: theme.spacing.sm }}>
-            Próxima data elegível: {new Date(eligibility.next_eligible_date).toLocaleDateString('pt-BR')}
+            {t('booking.eligibilityNextDate', {
+              date: new Date(eligibility.next_eligible_date).toLocaleDateString(
+                i18n.language === 'pt' ? 'pt-BR' : 'en-US'
+              )
+            })}
           </Message>
         )}
       </Content>

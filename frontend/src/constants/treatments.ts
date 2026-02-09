@@ -318,6 +318,38 @@ export function getTreatmentCategory(treatmentKey: string): CategoryInfo | undef
 }
 
 // =============================================
+// SPECIALTY TRANSLATION
+// =============================================
+
+// Maps Portuguese DB values to i18n keys
+const SPECIALTY_MAP: Record<string, string> = {
+  'Clínico Geral': 'providers.specialty.generalPractitioner',
+  'Clinica Geral': 'providers.specialty.generalPractitioner',
+  'Clínica Geral': 'providers.specialty.generalPractitioner',
+  'Cardiologista': 'providers.specialty.cardiologist',
+  'Dermatologista': 'providers.specialty.dermatologist',
+  'Endocrinologista': 'providers.specialty.endocrinologist',
+  'Ginecologista': 'providers.specialty.gynecologist',
+  'Neurologista': 'providers.specialty.neurologist',
+  'Nutricionista': 'providers.specialty.nutritionist',
+  'Ortopedista': 'providers.specialty.orthopedist',
+  'Pediatra': 'providers.specialty.pediatrician',
+  'Psicólogo': 'providers.specialty.psychologist',
+  'Psiquiatra': 'providers.specialty.psychiatrist',
+  'Urologista': 'providers.specialty.urologist',
+  'Outro': 'providers.specialty.other',
+};
+
+/**
+ * Returns the i18n key for a specialty stored in PT in the DB.
+ * Use with t(): t(getSpecialtyKey(specialty))
+ * Falls back to raw value if no mapping found.
+ */
+export function getSpecialtyKey(specialty: string): string {
+  return SPECIALTY_MAP[specialty] || specialty;
+}
+
+// =============================================
 // PATIENT TYPES
 // =============================================
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, Shield, Stethoscope, ArrowRight } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
@@ -617,6 +618,7 @@ const AdminLoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const { t } = useTranslation();
   const { user, profile, signIn, signInWithGoogle } = useAuth();
   const { syncFromDatabase: syncLanguageFromDatabase } = useLanguage();
   const navigate = useNavigate();
@@ -650,7 +652,7 @@ const AdminLoginPage: React.FC = () => {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setError('Erro ao verificar usuário');
+        setError(t('adminLogin.errorVerifyUser'));
         setLoading(false);
         return;
       }
@@ -674,7 +676,7 @@ const AdminLoginPage: React.FC = () => {
       // Smart redirect: provider → /doctor, admin → /admin
       navigate(profile.role === 'provider' ? '/doctor' : '/admin');
     } catch (err) {
-      setError('Erro ao fazer login');
+      setError(t('adminLogin.errorLogin'));
     } finally {
       setLoading(false);
     }
@@ -687,12 +689,12 @@ const AdminLoginPage: React.FC = () => {
     try {
       const { error: signInError } = await signInWithGoogle();
       if (signInError) {
-        setError('Erro ao fazer login com Google');
+        setError(t('adminLogin.errorGoogleLogin'));
         setGoogleLoading(false);
         return;
       }
     } catch (err) {
-      setError('Erro ao fazer login com Google');
+      setError(t('adminLogin.errorGoogleLogin'));
       setGoogleLoading(false);
     }
   };
@@ -763,7 +765,7 @@ const AdminLoginPage: React.FC = () => {
               <InputGroup $index={1}>
                 <Input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Senha"
+                  placeholder={t('adminLogin.passwordPlaceholder')}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
@@ -825,7 +827,7 @@ const AdminLoginPage: React.FC = () => {
             </GoogleButton>
 
             <BackLink>
-              <a href="/login">Voltar para o Portal do Paciente</a>
+              <a href="/login">{t('adminLogin.backToPatientPortal')}</a>
             </BackLink>
           </Card>
         </ContentWrapper>

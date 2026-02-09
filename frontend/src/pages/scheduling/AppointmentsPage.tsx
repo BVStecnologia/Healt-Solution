@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import { Plus, Filter } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAppointments } from '../../hooks/useAppointments';
@@ -112,16 +113,17 @@ const ModalActions = styled.div`
 
 type FilterType = 'all' | 'upcoming' | 'completed' | 'cancelled';
 
-const filterOptions: { value: FilterType; label: string }[] = [
-  { value: 'all', label: 'Todas' },
-  { value: 'upcoming', label: 'Próximas' },
-  { value: 'completed', label: 'Realizadas' },
-  { value: 'cancelled', label: 'Canceladas' },
-];
-
 const AppointmentsPage: React.FC = () => {
   const navigate = useNavigate();
   const { appointments, loading, cancelAppointment } = useAppointments();
+  const { t } = useTranslation();
+
+  const filterOptions: { value: FilterType; label: string }[] = [
+    { value: 'all', label: t('appointments.patientFilterAll') },
+    { value: 'upcoming', label: t('appointments.patientFilterUpcoming') },
+    { value: 'completed', label: t('appointments.patientFilterCompleted') },
+    { value: 'cancelled', label: t('appointments.patientFilterCancelled') },
+  ];
   const [filter, setFilter] = useState<FilterType>('all');
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -170,10 +172,10 @@ const AppointmentsPage: React.FC = () => {
   return (
     <Layout>
       <PageHeader>
-        <Title>Minhas Consultas</Title>
+        <Title>{t('appointments.patientTitle')}</Title>
         <Button onClick={() => navigate('/appointments/new')}>
           <Plus size={18} />
-          Nova Consulta
+          {t('dashboard.newAppointment')}
         </Button>
       </PageHeader>
 
@@ -194,8 +196,12 @@ const AppointmentsPage: React.FC = () => {
         loading={loading}
         emptyMessage={
           filter === 'all'
-            ? 'Você ainda não tem consultas'
-            : `Nenhuma consulta ${filter === 'upcoming' ? 'agendada' : filter === 'completed' ? 'realizada' : 'cancelada'}`
+            ? t('appointments.patientEmptyAll')
+            : filter === 'upcoming'
+              ? t('appointments.patientEmptyUpcoming')
+              : filter === 'completed'
+                ? t('appointments.patientEmptyCompleted')
+                : t('appointments.patientEmptyCancelled')
         }
         onAppointmentClick={appointment => navigate(`/appointments/${appointment.id}`)}
         onCancelClick={handleCancelClick}
@@ -205,12 +211,12 @@ const AppointmentsPage: React.FC = () => {
       {cancelModalOpen && (
         <CancelModal onClick={() => setCancelModalOpen(false)}>
           <ModalContent onClick={e => e.stopPropagation()}>
-            <ModalTitle>Cancelar Consulta</ModalTitle>
+            <ModalTitle>{t('appointments.cancelTitle')}</ModalTitle>
             <ModalText>
-              Tem certeza que deseja cancelar esta consulta? Por favor, informe o motivo:
+              {t('appointments.cancelConfirmText')}
             </ModalText>
             <TextArea
-              placeholder="Motivo do cancelamento..."
+              placeholder={t('appointments.cancelReasonPlaceholder')}
               value={cancelReason}
               onChange={e => setCancelReason(e.target.value)}
             />
@@ -220,7 +226,7 @@ const AppointmentsPage: React.FC = () => {
                 onClick={() => setCancelModalOpen(false)}
                 disabled={cancelling}
               >
-                Voltar
+                {t('common.back')}
               </Button>
               <Button
                 variant="danger"
@@ -228,7 +234,7 @@ const AppointmentsPage: React.FC = () => {
                 disabled={!cancelReason.trim() || cancelling}
                 isLoading={cancelling}
               >
-                Confirmar Cancelamento
+                {t('appointments.cancelConfirmButton')}
               </Button>
             </ModalActions>
           </ModalContent>

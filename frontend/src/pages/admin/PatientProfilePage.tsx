@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled, { keyframes, css } from 'styled-components';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSmartNavigation } from '../../hooks/useSmartNavigation';
@@ -46,6 +47,7 @@ import {
   getPatientTypeIcon,
   ACTIVE_PATIENT_TYPES,
 } from '../../constants/treatments';
+import i18n from 'i18next';
 import { useAdminDocuments } from '../../hooks/admin/useAdminDocuments';
 import { DocumentCard } from '../../components/patient/DocumentCard';
 import DocumentUploadModal from '../../components/admin/DocumentUploadModal';
@@ -833,24 +835,21 @@ const statusColors: Record<string, { dot: string; bg: string; text: string }> = 
 
 const getStatusColors = (status: string) => statusColors[status] || statusColors.pending;
 
-const getStatusLabel = (status: AppointmentStatus): string => {
-  const labels: Record<string, string> = {
-    completed: 'Concluída', confirmed: 'Confirmada', pending: 'Pendente',
-    cancelled: 'Cancelada', no_show: 'Não Compareceu', checked_in: 'Check-in',
-    in_progress: 'Em Andamento',
-  };
-  return labels[status] || status;
+const statusKeyMap: Record<string, string> = {
+  completed: 'status.completed', confirmed: 'status.confirmed', pending: 'status.pending',
+  cancelled: 'status.cancelled', no_show: 'status.noShow', checked_in: 'status.checkedIn',
+  in_progress: 'status.inProgress',
 };
 
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
+  return new Date(dateStr).toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   });
 };
 
 const formatDateTime = (dateStr: string): string => {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
+  return new Date(dateStr).toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -874,9 +873,14 @@ const PATIENT_TYPE_OPTIONS: { value: PatientType; label: string }[] = ACTIVE_PAT
 // COMPONENT
 // ============================================
 const PatientProfilePage: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { goBack } = useSmartNavigation();
+
+  const getStatusLabel = (status: AppointmentStatus): string => {
+    return statusKeyMap[status] ? t(statusKeyMap[status]) : status;
+  };
 
   const handleBack = () => goBack('/admin/patients');
 
@@ -963,7 +967,7 @@ const PatientProfilePage: React.FC = () => {
       <AdminLayout>
         <LoadingState>
           <Activity />
-          <span>Carregando ficha do paciente...</span>
+          <span>{t('patient.loading')}</span>
         </LoadingState>
       </AdminLayout>
     );
@@ -974,7 +978,7 @@ const PatientProfilePage: React.FC = () => {
       <AdminLayout>
         <EmptyState>
           <User />
-          <p>Paciente não encontrado</p>
+          <p>{t('patient.notFound')}</p>
         </EmptyState>
       </AdminLayout>
     );
@@ -986,7 +990,7 @@ const PatientProfilePage: React.FC = () => {
 
   // Handlers
   const handleDeleteDocument = async (docId: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este documento?')) return;
+    if (!window.confirm(t('patient.deleteDocumentConfirm'))) return;
     await removeDoc(docId);
   };
 
@@ -995,7 +999,7 @@ const PatientProfilePage: React.FC = () => {
     if (url) {
       window.open(url, '_blank');
     } else {
-      alert('Erro ao gerar link de download.');
+      alert(t('patient.downloadError'));
     }
   };
 
@@ -1005,7 +1009,7 @@ const PatientProfilePage: React.FC = () => {
       setViewerUrl(url);
       setViewingDoc(doc);
     } else {
-      alert('Erro ao gerar link de visualizacao.');
+      alert(t('patient.viewError'));
     }
   };
 
@@ -1070,7 +1074,7 @@ const PatientProfilePage: React.FC = () => {
       <PageContainer>
         <BackButton onClick={handleBack}>
           <ArrowLeft />
-          Voltar
+          {t('common.back')}
         </BackButton>
 
         {/* ===== HEADER ===== */}
@@ -1089,11 +1093,11 @@ const PatientProfilePage: React.FC = () => {
               <MetaRow>
                 <TypeBadge $bg={typeBgColor} $color={typeColor}>
                   {renderTypeIcon(patient.patient_type)}
-                  {getPatientTypeLabel(patient.patient_type || 'general')}
+                  {t('patientType.' + (patient.patient_type === 'iv_therapy' ? 'ivTherapy' : (patient.patient_type || 'general')))}
                 </TypeBadge>
                 <MetaChip>
                   <Clock />
-                  Desde {formatDate(patient.created_at)}
+                  {t('profile.since', { date: formatDate(patient.created_at) })}
                 </MetaChip>
                 {(patient.no_show_count || 0) > 0 && (
                   <MetaChip style={{ color: '#C4836A' }}>
@@ -1119,11 +1123,11 @@ const PatientProfilePage: React.FC = () => {
             <HeaderActions>
               <ActionBtn onClick={openEditModal}>
                 <Edit3 />
-                Editar
+                {t('common.edit')}
               </ActionBtn>
               <ActionBtn $primary onClick={() => navigate(`/admin/calendar?newAppointment=true&patientId=${patient.id}`)}>
                 <Calendar />
-                Agendar
+                {t('calendar.newAppointment')}
               </ActionBtn>
             </HeaderActions>
           </HeaderContent>
@@ -1137,7 +1141,7 @@ const PatientProfilePage: React.FC = () => {
             </StatIcon>
             <StatContent>
               <StatValue>{stats.total}</StatValue>
-              <StatLabel>Total de Consultas</StatLabel>
+              <StatLabel>{t('dashboard.totalAppointments')}</StatLabel>
             </StatContent>
           </StatCard>
           <StatCard $delay={160}>
@@ -1146,7 +1150,7 @@ const PatientProfilePage: React.FC = () => {
             </StatIcon>
             <StatContent>
               <StatValue>{stats.completed}</StatValue>
-              <StatLabel>Realizadas</StatLabel>
+              <StatLabel>{t('dashboard.trendCompleted')}</StatLabel>
             </StatContent>
           </StatCard>
           <StatCard $delay={240}>
@@ -1155,7 +1159,7 @@ const PatientProfilePage: React.FC = () => {
             </StatIcon>
             <StatContent>
               <StatValue>{stats.upcoming}</StatValue>
-              <StatLabel>Agendadas</StatLabel>
+              <StatLabel>{t('dashboard.trendScheduled')}</StatLabel>
             </StatContent>
           </StatCard>
         </StatsRow>
@@ -1164,29 +1168,29 @@ const PatientProfilePage: React.FC = () => {
         <SectionGrid>
           <Card $delay={300}>
             <CardHeader>
-              <CardTitle><User /> Dados Pessoais</CardTitle>
+              <CardTitle><User /> {t('patient.personalData')}</CardTitle>
             </CardHeader>
             <CardBody>
               <InfoGrid>
                 <InfoItem>
-                  <InfoLabel>Nome Completo</InfoLabel>
+                  <InfoLabel>{t('patient.fullName')}</InfoLabel>
                   <InfoValue>{patient.first_name} {patient.last_name}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>Email</InfoLabel>
+                  <InfoLabel>{t('patient.email')}</InfoLabel>
                   <InfoValue>{patient.email}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>Telefone</InfoLabel>
+                  <InfoLabel>{t('patient.phone')}</InfoLabel>
                   <InfoValue>{patient.phone || '-'}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>Tipo de Paciente</InfoLabel>
-                  <InfoValue>{getPatientTypeLabel(patient.patient_type || 'general')}</InfoValue>
+                  <InfoLabel>{t('patient.patientType')}</InfoLabel>
+                  <InfoValue>{t('patientType.' + (patient.patient_type === 'iv_therapy' ? 'ivTherapy' : (patient.patient_type || 'general')))}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>Idioma Preferido</InfoLabel>
-                  <InfoValue>{patient.preferred_language === 'en' ? 'English' : 'Português'}</InfoValue>
+                  <InfoLabel>{t('patient.preferredLanguage')}</InfoLabel>
+                  <InfoValue>{patient.preferred_language === 'en' ? t('patient.languageEn') : t('patient.languagePt')}</InfoValue>
                 </InfoItem>
               </InfoGrid>
             </CardBody>
@@ -1194,26 +1198,26 @@ const PatientProfilePage: React.FC = () => {
 
           <Card $delay={380}>
             <CardHeader>
-              <CardTitle><Activity /> Informações Médicas</CardTitle>
+              <CardTitle><Activity /> {t('patient.medicalInfo')}</CardTitle>
             </CardHeader>
             <CardBody>
               <InfoGrid>
                 <InfoItem>
-                  <InfoLabel>Última Visita</InfoLabel>
+                  <InfoLabel>{t('patient.lastVisit')}</InfoLabel>
                   <InfoValue>{formatDate(patient.last_visit_at)}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>Exames Realizados</InfoLabel>
+                  <InfoLabel>{t('patient.labsCompleted')}</InfoLabel>
                   <InfoValue>{formatDate(patient.labs_completed_at)}</InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>Faltas (No-Show)</InfoLabel>
+                  <InfoLabel>{t('status.noShow')}</InfoLabel>
                   <InfoValue style={(patient.no_show_count || 0) > 0 ? { color: '#C4836A', fontWeight: 600 } : undefined}>
                     {patient.no_show_count || 0}
                   </InfoValue>
                 </InfoItem>
                 <InfoItem>
-                  <InfoLabel>Cadastrado em</InfoLabel>
+                  <InfoLabel>{t('patient.registeredAt')}</InfoLabel>
                   <InfoValue>{formatDate(patient.created_at)}</InfoValue>
                 </InfoItem>
               </InfoGrid>
@@ -1225,7 +1229,7 @@ const PatientProfilePage: React.FC = () => {
         {upcomingAppointments.length > 0 && (
           <Card $delay={460} style={{ marginBottom: theme.spacing.lg }}>
             <CardHeader>
-              <CardTitle><Calendar /> Próximas Consultas</CardTitle>
+              <CardTitle><Calendar /> {t('patient.upcomingAppointments')}</CardTitle>
               <CardLink onClick={() => navigate(`/admin/calendar?patientId=${patient.id}`)}>
                 Ver todas <ChevronRight />
               </CardLink>
@@ -1238,13 +1242,13 @@ const PatientProfilePage: React.FC = () => {
                     <AppointmentItem key={apt.id}>
                       <StatusDot $color={sc.dot} />
                       <AppointmentInfo>
-                        <AppointmentTitle>{getTreatmentLabel(apt.type)}</AppointmentTitle>
+                        <AppointmentTitle>{getTreatmentLabel(apt.type, i18n.language as 'pt' | 'en')}</AppointmentTitle>
                         <AppointmentMeta>
                           <span>{formatDateTime(apt.scheduled_at)}</span>
                           <span>·</span>
                           <span>
                             {apt.provider?.profile
-                              ? `Dr(a). ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
+                              ? `${t('common.drPrefix')} ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
                               : 'N/A'}
                           </span>
                         </AppointmentMeta>
@@ -1263,7 +1267,7 @@ const PatientProfilePage: React.FC = () => {
         {/* ===== HISTORY ===== */}
         <Card $delay={540} style={{ marginBottom: theme.spacing.lg }}>
           <CardHeader>
-            <CardTitle><FileText /> Histórico de Consultas</CardTitle>
+            <CardTitle><FileText /> {t('patient.appointmentHistory')}</CardTitle>
             <CardLink onClick={() => navigate(`/admin/appointments?patientId=${patient.id}`)}>
               Ver todas <ChevronRight />
             </CardLink>
@@ -1277,13 +1281,13 @@ const PatientProfilePage: React.FC = () => {
                     <AppointmentItem key={apt.id}>
                       <StatusDot $color={sc.dot} />
                       <AppointmentInfo>
-                        <AppointmentTitle>{getTreatmentLabel(apt.type)}</AppointmentTitle>
+                        <AppointmentTitle>{getTreatmentLabel(apt.type, i18n.language as 'pt' | 'en')}</AppointmentTitle>
                         <AppointmentMeta>
                           <span>{formatDateTime(apt.scheduled_at)}</span>
                           <span>·</span>
                           <span>
                             {apt.provider?.profile
-                              ? `Dr(a). ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
+                              ? `${t('common.drPrefix')} ${apt.provider.profile.first_name} ${apt.provider.profile.last_name}`
                               : 'N/A'}
                           </span>
                         </AppointmentMeta>
@@ -1298,7 +1302,7 @@ const PatientProfilePage: React.FC = () => {
             ) : (
               <EmptyState>
                 <FileText />
-                <p>Nenhuma consulta no histórico</p>
+                <p>{t('patient.noHistory')}</p>
               </EmptyState>
             )}
           </CardBody>
@@ -1310,14 +1314,14 @@ const PatientProfilePage: React.FC = () => {
             <CardTitle><Upload /> Documentos</CardTitle>
             <UploadBtn onClick={() => setIsUploadModalOpen(true)}>
               <Upload />
-              Enviar Documento
+              {t('documents.title')}
             </UploadBtn>
           </CardHeader>
           <CardBody>
             {docsLoading ? (
               <EmptyState>
                 <Activity />
-                <p>Carregando documentos...</p>
+                <p>{t('patient.loadingDocuments')}</p>
               </EmptyState>
             ) : documents.length > 0 ? (
               <DocumentGrid>
@@ -1334,7 +1338,7 @@ const PatientProfilePage: React.FC = () => {
             ) : (
               <EmptyState>
                 <FileText />
-                <p>Nenhum documento enviado</p>
+                <p>{t('documents.emptyHint')}</p>
               </EmptyState>
             )}
           </CardBody>
@@ -1363,7 +1367,7 @@ const PatientProfilePage: React.FC = () => {
         <ModalOverlay onClick={closeEditModal}>
           <ModalContainer onClick={e => e.stopPropagation()}>
             <ModalHeader>
-              <ModalTitle><Edit3 /> Editar Paciente</ModalTitle>
+              <ModalTitle><Edit3 /> {t('patients.editTitle')}</ModalTitle>
               <CloseBtn onClick={closeEditModal}><X /></CloseBtn>
             </ModalHeader>
 
@@ -1371,35 +1375,35 @@ const PatientProfilePage: React.FC = () => {
               {saveSuccess && (
                 <SuccessMsg>
                   <CheckCircle />
-                  Dados salvos com sucesso!
+                  {t('patient.dataSaved')}
                 </SuccessMsg>
               )}
 
               <FormGrid>
                 <FormGroup>
-                  <FormLabel>Nome</FormLabel>
+                  <FormLabel>{t('patients.firstName')}</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.first_name}
                     onChange={e => setEditForm(prev => ({ ...prev, first_name: e.target.value }))}
-                    placeholder="Nome"
+                    placeholder={t('patients.firstName')}
                   />
                 </FormGroup>
                 <FormGroup>
-                  <FormLabel>Sobrenome</FormLabel>
+                  <FormLabel>{t('patients.lastName')}</FormLabel>
                   <FormInput
                     type="text"
                     value={editForm.last_name}
                     onChange={e => setEditForm(prev => ({ ...prev, last_name: e.target.value }))}
-                    placeholder="Sobrenome"
+                    placeholder={t('patients.lastName')}
                   />
                 </FormGroup>
                 <FormGroup $full>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t('patients.email')}</FormLabel>
                   <FormInput type="email" value={patient?.email || ''} disabled />
                 </FormGroup>
                 <FormGroup>
-                  <FormLabel>Telefone</FormLabel>
+                  <FormLabel>{t('patients.phone')}</FormLabel>
                   <FormInput
                     type="tel"
                     value={editForm.phone}
@@ -1408,7 +1412,7 @@ const PatientProfilePage: React.FC = () => {
                   />
                 </FormGroup>
                 <FormGroup>
-                  <FormLabel>Tipo de Paciente</FormLabel>
+                  <FormLabel>{t('patient.patientType')}</FormLabel>
                   <FormSelect
                     value={editForm.patient_type}
                     onChange={e => setEditForm(prev => ({ ...prev, patient_type: e.target.value as PatientType }))}
@@ -1419,26 +1423,26 @@ const PatientProfilePage: React.FC = () => {
                   </FormSelect>
                 </FormGroup>
                 <FormGroup>
-                  <FormLabel>Idioma Preferido</FormLabel>
+                  <FormLabel>{t('patient.preferredLanguage')}</FormLabel>
                   <FormSelect
                     value={editForm.preferred_language}
                     onChange={e => setEditForm(prev => ({ ...prev, preferred_language: e.target.value as 'pt' | 'en' }))}
                   >
-                    <option value="pt">Português</option>
-                    <option value="en">English</option>
+                    <option value="pt">{t('patient.languagePt')}</option>
+                    <option value="en">{t('patient.languageEn')}</option>
                   </FormSelect>
                 </FormGroup>
               </FormGrid>
             </ModalBody>
 
             <ModalFooter>
-              <ModalBtn onClick={closeEditModal}>Cancelar</ModalBtn>
+              <ModalBtn onClick={closeEditModal}>{t('common.cancel')}</ModalBtn>
               <ModalBtn
                 $primary
                 onClick={handleSavePatient}
                 disabled={saving || !editForm.first_name || !editForm.last_name}
               >
-                {saving ? 'Salvando...' : <><Save /> Salvar</>}
+                {saving ? t('common.saving') : <><Save /> {t('common.save')}</>}
               </ModalBtn>
             </ModalFooter>
           </ModalContainer>

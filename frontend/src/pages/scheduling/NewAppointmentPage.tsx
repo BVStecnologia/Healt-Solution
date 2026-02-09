@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { ArrowLeft, ArrowRight, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Dna, Clock, ChevronLeft } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { theme } from '../../styles/GlobalStyle';
@@ -342,6 +344,7 @@ const DurationBadge = styled.span`
 
 const NewAppointmentPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { createAppointment } = useAppointments();
   const { providers, loading: providersLoading } = useProviders();
   const { slots, loading: slotsLoading, fetchSlots, clearSlots } = useAvailability();
@@ -408,13 +411,13 @@ const NewAppointmentPage: React.FC = () => {
       console.error('Error creating appointment:', error);
       const msg = error?.message || error?.details || '';
       if (msg.includes('24')) {
-        setSubmitError('Agendamentos devem ser feitos com pelo menos 24 horas de antecedência.');
+        setSubmitError(t('booking.error24h'));
       } else if (msg.includes('conflict') || msg.includes('já existe') || msg.includes('already')) {
-        setSubmitError('Já existe uma consulta agendada neste horário.');
+        setSubmitError(t('booking.errorConflict'));
       } else if (msg.includes('slot') || msg.includes('disponível') || msg.includes('available')) {
-        setSubmitError('Este horário não está mais disponível. Selecione outro.');
+        setSubmitError(t('booking.errorUnavailable'));
       } else {
-        setSubmitError('Não foi possível agendar a consulta. Tente novamente.');
+        setSubmitError(t('booking.errorGeneric'));
       }
     } finally {
       setSubmitting(false);
@@ -427,11 +430,11 @@ const NewAppointmentPage: React.FC = () => {
 
   const getProviderName = () => {
     if (!selectedProvider?.profile) return '';
-    return `Dr(a). ${selectedProvider.profile.first_name} ${selectedProvider.profile.last_name}`;
+    return `${t('common.drPrefix')} ${selectedProvider.profile.first_name} ${selectedProvider.profile.last_name}`;
   };
 
   const getTypeName = () => {
-    return selectedType ? getTreatmentLabel(selectedType) : '';
+    return selectedType ? getTreatmentLabel(selectedType, i18n.language as 'pt' | 'en') : '';
   };
 
   return (
@@ -440,15 +443,15 @@ const NewAppointmentPage: React.FC = () => {
         <BackButton onClick={() => navigate(-1)}>
           <ArrowLeft size={20} />
         </BackButton>
-        <Title>Nova Consulta</Title>
+        <Title>{t('booking.title')}</Title>
       </PageHeader>
 
       <Steps>
         {[
-          { num: 1, label: 'Tipo' },
-          { num: 2, label: 'Médico' },
-          { num: 3, label: 'Horário' },
-          { num: 4, label: 'Confirmar' },
+          { num: 1, label: t('booking.stepType') },
+          { num: 2, label: t('booking.stepProvider') },
+          { num: 3, label: t('booking.stepTime') },
+          { num: 4, label: t('booking.stepConfirm') },
         ].map((s, i) => (
           <React.Fragment key={s.num}>
             <StepItem $active={step === s.num} $completed={step > s.num}>
@@ -469,7 +472,7 @@ const NewAppointmentPage: React.FC = () => {
         <StepContent>
           <Card padding="large">
             <h3 style={{ margin: `0 0 ${theme.spacing.lg}` }}>
-              Qual tipo de cuidado você procura?
+              {t('booking.categoryPrompt')}
             </h3>
 
             <CategoryGrid>
@@ -483,9 +486,9 @@ const NewAppointmentPage: React.FC = () => {
                     {CATEGORY_ICONS_LARGE[category.key]?.(24)}
                   </CategoryIconWrap>
                   <CategoryCardInfo>
-                    <CategoryCardName>{category.label}</CategoryCardName>
+                    <CategoryCardName>{i18n.language === 'en' ? category.labelEn : category.label}</CategoryCardName>
                     <CategoryCardCount>
-                      {treatments.length} {treatments.length === 1 ? 'tratamento' : 'tratamentos'}
+                      {treatments.length} {treatments.length === 1 ? t('booking.treatmentSingular') : t('booking.treatmentPlural')}
                     </CategoryCardCount>
                   </CategoryCardInfo>
                   <CategoryCardArrow>
@@ -512,23 +515,23 @@ const NewAppointmentPage: React.FC = () => {
                     </SubStepBack>
                     <SubStepTitle $color={group.category.color}>
                       {CATEGORY_ICONS_LARGE[group.category.key]?.(20)}
-                      {group.category.label}
+                      {i18n.language === 'en' ? group.category.labelEn : group.category.label}
                     </SubStepTitle>
                   </SubStepHeader>
 
                   <TypeGrid>
-                    {group.treatments.map(t => (
+                    {group.treatments.map(tr => (
                       <TypeCard
-                        key={t.key}
-                        $selected={selectedType === t.key}
+                        key={tr.key}
+                        $selected={selectedType === tr.key}
                         $disabled={false}
-                        onClick={() => handleTypeSelect(t.key as AppointmentType)}
+                        onClick={() => handleTypeSelect(tr.key as AppointmentType)}
                       >
-                        <TypeName $selected={selectedType === t.key}>{t.label}</TypeName>
-                        <TypeDescription>{t.description}</TypeDescription>
+                        <TypeName $selected={selectedType === tr.key}>{i18n.language === 'en' ? tr.labelEn : tr.label}</TypeName>
+                        <TypeDescription>{i18n.language === 'en' ? tr.descriptionEn : tr.description}</TypeDescription>
                         <DurationBadge>
                           <Clock size={10} />
-                          {t.duration} min
+                          {tr.duration} min
                         </DurationBadge>
                       </TypeCard>
                     ))}
@@ -548,7 +551,7 @@ const NewAppointmentPage: React.FC = () => {
                       onClick={() => setStep(2)}
                       disabled={!canProceedStep1}
                     >
-                      Continuar
+                      {t('common.continue')}
                     </Button>
                   </Actions>
                 </>
@@ -571,7 +574,7 @@ const NewAppointmentPage: React.FC = () => {
 
             <Actions style={{ marginTop: theme.spacing.xl }}>
               <Button variant="ghost" onClick={() => setStep(1)}>
-                Voltar
+                {t('common.back')}
               </Button>
               <Button
                 onClick={() => setStep(3)}
@@ -598,7 +601,7 @@ const NewAppointmentPage: React.FC = () => {
 
             <Actions style={{ marginTop: theme.spacing.xl }}>
               <Button variant="ghost" onClick={() => setStep(2)}>
-                Voltar
+                {t('common.back')}
               </Button>
               <Button
                 onClick={() => setStep(4)}
@@ -616,20 +619,20 @@ const NewAppointmentPage: React.FC = () => {
         <StepContent>
           <Card padding="large">
             <h3 style={{ margin: `0 0 ${theme.spacing.lg}` }}>
-              Confirme os dados da consulta
+              {t('booking.confirmPrompt')}
             </h3>
 
             <Summary>
               <SummaryRow>
-                <SummaryLabel>Tipo de consulta</SummaryLabel>
+                <SummaryLabel>{t('booking.summaryType')}</SummaryLabel>
                 <SummaryValue>{getTypeName()}</SummaryValue>
               </SummaryRow>
               <SummaryRow>
-                <SummaryLabel>Médico</SummaryLabel>
+                <SummaryLabel>{t('booking.summaryProvider')}</SummaryLabel>
                 <SummaryValue>{getProviderName()}</SummaryValue>
               </SummaryRow>
               <SummaryRow>
-                <SummaryLabel>Data</SummaryLabel>
+                <SummaryLabel>{t('booking.summaryDate')}</SummaryLabel>
                 <SummaryValue>
                   {selectedSlot && (() => {
                     const d = new Date(selectedSlot.start);
@@ -638,7 +641,7 @@ const NewAppointmentPage: React.FC = () => {
                 </SummaryValue>
               </SummaryRow>
               <SummaryRow>
-                <SummaryLabel>Horário</SummaryLabel>
+                <SummaryLabel>{t('booking.summaryTime')}</SummaryLabel>
                 <SummaryValue>
                   {selectedSlot && (() => {
                     const d = new Date(selectedSlot.start);
@@ -657,13 +660,13 @@ const NewAppointmentPage: React.FC = () => {
 
             <Actions>
               <Button variant="ghost" onClick={() => { setSubmitError(null); setStep(3); }}>
-                Voltar
+                {t('common.back')}
               </Button>
               <Button
                 onClick={handleSubmit}
                 isLoading={submitting}
               >
-                Confirmar Agendamento
+                {t('booking.confirmButton')}
               </Button>
             </Actions>
           </Card>
