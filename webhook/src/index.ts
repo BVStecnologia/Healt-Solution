@@ -20,7 +20,7 @@ import {
 } from './whatsappResponder';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
 // Log incoming webhook events
 app.use((req, _res, next) => {
@@ -54,7 +54,9 @@ async function getShortLink(email: string, redirectPath: string): Promise<string
 }
 
 // Webhook endpoint for Evolution API
-app.post(config.webhookPath, async (req, res) => {
+// Evolution API v2.3+ appends event name to URL when WEBHOOK_BY_EVENTS=true
+// e.g. /webhook/messages/messages-upsert, /webhook/messages/chats-update
+app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
   try {
     const payload = req.body as EvolutionWebhookPayload;
 
