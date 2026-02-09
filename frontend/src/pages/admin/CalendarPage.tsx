@@ -206,8 +206,7 @@ const CalendarWrapper = styled.div`
   border-radius: ${theme.borderRadius.xl};
   padding: ${theme.spacing.xl};
   box-shadow: ${theme.shadows.card};
-  height: calc(100vh - 180px);
-  min-height: 600px;
+  min-height: 680px;
   animation: ${slideIn} 0.5s ease-out;
 
   .rbc-calendar {
@@ -240,7 +239,7 @@ const CalendarWrapper = styled.div`
 
   .rbc-month-row {
     border-bottom: 1px solid ${theme.colors.borderLight};
-    min-height: 110px;
+    min-height: 130px;
 
     &:last-child {
       border-bottom: none;
@@ -320,8 +319,8 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-event {
-    border-radius: 6px;
-    padding: 3px 8px;
+    border-radius: 5px;
+    padding: 2px 6px;
     font-size: 11px;
     font-weight: 600;
     font-family: ${theme.typography.fontFamily};
@@ -330,7 +329,7 @@ const CalendarWrapper = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
     border: none !important;
-    margin: 1px 4px;
+    margin: 1px 3px;
     text-align: center;
     letter-spacing: 0.1px;
 
@@ -354,7 +353,7 @@ const CalendarWrapper = styled.div`
   }
 
   .rbc-row-segment {
-    padding: 1px 4px 2px;
+    padding: 0 3px 1px;
   }
 
   .rbc-event-label {
@@ -486,10 +485,43 @@ const CalendarWrapper = styled.div`
 
   .rbc-time-content {
     border-top: none;
+    overflow-y: auto;
+  }
+
+  /* Week/Day view events - Google Calendar style */
+  .rbc-time-view .rbc-event {
+    border-radius: 6px !important;
+    margin: 1px 2px !important;
+    min-height: 28px !important;
+    overflow: hidden;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+    &:hover {
+      box-shadow: 0 3px 8px rgba(0,0,0,0.18) !important;
+      transform: translateY(-1px);
+      z-index: 10;
+      overflow: visible;
+    }
+
+    .rbc-event-label {
+      display: none;
+    }
+
+    .rbc-event-content {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.3;
+      overflow: hidden;
+    }
+  }
+
+  /* Alternating hour backgrounds for better scannability */
+  .rbc-time-content > .rbc-time-gutter .rbc-timeslot-group:nth-child(even) {
+    background: rgba(0,0,0,0.015);
   }
 
   .rbc-timeslot-group {
-    min-height: 60px;
+    min-height: 100px;
     border-bottom: 1px solid ${theme.colors.borderLight};
   }
 
@@ -634,18 +666,21 @@ const CalendarWrapper = styled.div`
   .rbc-show-more {
     color: ${theme.colors.primary};
     font-weight: 700;
-    font-size: 11px;
-    background: ${theme.colors.primaryA10} !important;
-    padding: 2px 8px;
-    border-radius: ${theme.borderRadius.sm};
+    font-size: 10px;
+    background: linear-gradient(135deg, rgba(146, 86, 62, 0.08) 0%, rgba(146, 86, 62, 0.14) 100%) !important;
+    padding: 3px 10px;
+    border-radius: ${theme.borderRadius.full};
     transition: all 0.2s ease;
     display: inline-block;
     margin: 2px 4px;
+    letter-spacing: 0.3px;
+    border: 1px solid rgba(146, 86, 62, 0.15);
 
     &:hover {
-      background: ${theme.colors.primaryA20} !important;
+      background: linear-gradient(135deg, rgba(146, 86, 62, 0.14) 0%, rgba(146, 86, 62, 0.22) 100%) !important;
       text-decoration: none;
       transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(146, 86, 62, 0.12);
     }
   }
 
@@ -1451,6 +1486,53 @@ const formatStatusShort = (status: string): string => {
   return statuses[status] || status;
 };
 
+// Tooltip com informações completas do evento
+const getEventTooltip = (event: CalendarEvent): string => {
+  if (event.isBlock) return event.blockReason || 'Horário bloqueado';
+  const time = `${format(event.start, 'HH:mm')} — ${format(event.end, 'HH:mm')}`;
+  const duration = Math.round((event.end.getTime() - event.start.getTime()) / 60000);
+  return [
+    `${event.patientName}`,
+    `${formatTypeShort(event.type)} · ${duration}min`,
+    time,
+    `${event.providerName}`,
+    `Status: ${formatStatusShort(event.status)}`,
+  ].join('\n');
+};
+
+// Componente custom para eventos na week/day view
+const CustomTimeEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
+  if (event.isBlock) {
+    return <span>{event.title}</span>;
+  }
+  const duration = Math.round((event.end.getTime() - event.start.getTime()) / 60000);
+  const isShort = duration <= 30;
+  const timeStr = `${format(event.start, 'HH:mm')} — ${format(event.end, 'HH:mm')}`;
+
+  if (isShort) {
+    // Evento curto: tudo em uma linha compacta
+    return (
+      <div style={{ lineHeight: 1.2, overflow: 'hidden' }}>
+        <span style={{ fontSize: '11px', fontWeight: 700 }}>
+          {event.patientName.split(' ')[0]}
+        </span>
+        <span style={{ fontSize: '10px', opacity: 0.7, marginLeft: 4 }}>
+          {formatTypeShort(event.type)}
+        </span>
+      </div>
+    );
+  }
+
+  // Evento normal: horário + nome + tipo
+  return (
+    <div style={{ lineHeight: 1.3, overflow: 'hidden' }}>
+      <div style={{ fontSize: '10px', opacity: 0.75, fontWeight: 500 }}>{timeStr}</div>
+      <div style={{ fontSize: '12px', fontWeight: 700 }}>{event.patientName}</div>
+      <div style={{ fontSize: '10px', opacity: 0.7 }}>{formatTypeShort(event.type)}</div>
+    </div>
+  );
+};
+
 // Componente customizado para renderizar evento na Agenda - Versão Limpa
 const CustomAgendaEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
   return (
@@ -1559,6 +1641,25 @@ const CalendarPage: React.FC = () => {
 
   const [view, setView] = useState<View>(initialView);
   const [date, setDate] = useState(initialDate);
+
+  // Limites de horário para week/day views (6h-20h) e auto-scroll para 7h
+  const calendarMin = useMemo(() => { const d = new Date(); d.setHours(6, 0, 0, 0); return d; }, []);
+  const calendarMax = useMemo(() => { const d = new Date(); d.setHours(20, 0, 0, 0); return d; }, []);
+  const scrollToTime = useMemo(() => { const d = new Date(); d.setHours(7, 0, 0, 0); return d; }, []);
+
+  // Auto-scroll para 07:00 quando view muda para week/day
+  useEffect(() => {
+    if (view === 'week' || view === 'day') {
+      const timer = setTimeout(() => {
+        const el = document.querySelector('.rbc-time-content');
+        if (el) {
+          // 1 hora = min-height do timeslot (72px). 07:00 é 1h após min (06:00)
+          el.scrollTop = 100;
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [view, date]);
 
   // Atualizar URL quando view ou date mudar
   const updateUrl = useCallback((newView: View, newDate: Date) => {
@@ -1847,48 +1948,60 @@ const CalendarPage: React.FC = () => {
       };
     }
 
-    // Paleta brand-aligned para calendar cards (mês, semana, dia)
-    const statusStyles: Record<string, { bg: string; text: string }> = {
-      pending: {
-        bg: 'rgba(212, 165, 116, 0.18)',
-        text: '#A67B5B',
-      },
-      confirmed: {
-        bg: 'rgba(146, 86, 62, 0.12)',
-        text: '#92563E',
-      },
-      checked_in: {
-        bg: 'rgba(180, 143, 122, 0.15)',
-        text: '#7A6355',
-      },
-      in_progress: {
-        bg: 'rgba(146, 86, 62, 0.18)',
-        text: '#7A4532',
-      },
-      completed: {
-        bg: 'rgba(140, 139, 139, 0.10)',
-        text: '#8C8B8B',
-      },
-      cancelled: {
-        bg: 'rgba(196, 131, 106, 0.10)',
-        text: '#B49585',
-      },
-      no_show: {
-        bg: 'rgba(196, 131, 106, 0.12)',
-        text: '#B49585',
-      },
+    const isTimeView = view === 'week' || view === 'day';
+
+    // Paleta para month view — suave, compacta
+    const monthStyles: Record<string, { bg: string; text: string }> = {
+      pending: { bg: 'rgba(212, 165, 116, 0.18)', text: '#A67B5B' },
+      confirmed: { bg: 'rgba(146, 86, 62, 0.12)', text: '#92563E' },
+      checked_in: { bg: 'rgba(180, 143, 122, 0.15)', text: '#7A6355' },
+      in_progress: { bg: 'rgba(146, 86, 62, 0.18)', text: '#7A4532' },
+      completed: { bg: 'rgba(140, 139, 139, 0.10)', text: '#8C8B8B' },
+      cancelled: { bg: 'rgba(196, 131, 106, 0.10)', text: '#B49585' },
+      no_show: { bg: 'rgba(196, 131, 106, 0.12)', text: '#B49585' },
     };
 
-    const style = statusStyles[event.status] || statusStyles.pending;
+    // Paleta para week/day view — Google Calendar style: fundo sólido, borda forte, texto escuro
+    const timeStyles: Record<string, { bg: string; border: string; text: string }> = {
+      pending: { bg: '#F5E6D3', border: '#D4A574', text: '#6B4D35' },
+      confirmed: { bg: '#E8D5C4', border: '#92563E', text: '#5C3626' },
+      checked_in: { bg: '#DDD0C6', border: '#7A6355', text: '#4A3B30' },
+      in_progress: { bg: '#E0C4B4', border: '#7A4532', text: '#4A2A1D' },
+      completed: { bg: '#E8E8E8', border: '#999', text: '#666' },
+      cancelled: { bg: '#F0E8E4', border: '#C4A090', text: '#998880' },
+      no_show: { bg: '#F0E8E4', border: '#C4A090', text: '#998880' },
+    };
 
+    if (isTimeView) {
+      const ts = timeStyles[event.status] || timeStyles.pending;
+      return {
+        style: {
+          backgroundColor: ts.bg,
+          borderRadius: '6px',
+          borderLeft: `4px solid ${ts.border}`,
+          color: ts.text,
+          fontWeight: 600,
+          fontSize: '12px',
+          padding: '4px 8px 4px 6px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)',
+          opacity: event.status === 'cancelled' || event.status === 'no_show' ? 0.6 : 1,
+          display: 'block',
+          textDecoration: event.status === 'cancelled' ? 'line-through' : 'none',
+          textAlign: 'left' as const,
+        },
+      };
+    }
+
+    // Month view
+    const ms = monthStyles[event.status] || monthStyles.pending;
     return {
       style: {
-        backgroundColor: style.bg,
-        borderRadius: '6px',
-        color: style.text,
+        backgroundColor: ms.bg,
+        borderRadius: '5px',
+        color: ms.text,
         fontWeight: 600,
         fontSize: '11px',
-        padding: '3px 8px',
+        padding: '2px 6px',
         boxShadow: 'none',
         opacity: event.status === 'cancelled' || event.status === 'no_show' ? 0.7 : 1,
         display: 'block',
@@ -2190,6 +2303,7 @@ const CalendarPage: React.FC = () => {
       <HelpTip id="calendar">
         <strong>Dica:</strong> Clique em uma consulta para ver detalhes e alterar o status.
         Use os botoes acima para alternar entre visao de mes, semana ou dia.
+        Na visao semanal/diaria, a altura de cada card representa a duracao real da consulta.
         {isAdmin && ' Filtre por medico para ver a agenda individual.'}
       </HelpTip>
 
@@ -2205,8 +2319,12 @@ const CalendarPage: React.FC = () => {
           onNavigate={handleNavigate}
           eventPropGetter={eventStyleGetter}
           onSelectEvent={handleSelectEvent}
+          tooltipAccessor={(event: CalendarEvent) => getEventTooltip(event)}
           messages={messages}
           culture="pt-BR"
+          dayLayoutAlgorithm="no-overlap"
+          {...{ min: calendarMin, max: calendarMax, scrollToTime } as any}
+          style={{ height: view === 'month' ? 720 : view === 'agenda' ? 600 : 800 }}
           formats={{
             monthHeaderFormat: (date: Date) => format(date, 'MMMM yyyy', { locale: ptBR }),
             weekdayFormat: (date: Date) => format(date, 'EEE', { locale: ptBR }),
@@ -2222,8 +2340,14 @@ const CalendarPage: React.FC = () => {
           components={{
             agenda: {
               event: CustomAgendaEvent,
-            } as any,
-          }}
+            },
+            week: {
+              event: CustomTimeEvent,
+            },
+            day: {
+              event: CustomTimeEvent,
+            },
+          } as any}
           popup
           selectable
         />

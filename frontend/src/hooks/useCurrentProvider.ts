@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,15 +21,18 @@ interface UseCurrentProviderReturn {
 /**
  * Hook que retorna o provider record do usuário logado.
  * Se role=provider, busca na tabela providers pelo user_id.
- * Se role=admin, retorna null (admin não é provider).
+ * Se role=admin na rota /doctor, também busca (admin que é médico).
+ * Se role=admin em outras rotas, retorna null.
  */
 export function useCurrentProvider(): UseCurrentProviderReturn {
   const { user, profile } = useAuth();
+  const location = useLocation();
   const [provider, setProvider] = useState<ProviderRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isProvider = profile?.role === 'provider';
   const isAdmin = profile?.role === 'admin';
+  const isDoctorRoute = location.pathname.startsWith('/doctor');
 
   useEffect(() => {
     if (!user || !profile) {
@@ -37,7 +41,8 @@ export function useCurrentProvider(): UseCurrentProviderReturn {
       return;
     }
 
-    if (profile.role !== 'provider') {
+    // Buscar provider se: é provider OU é admin na visão médico
+    if (profile.role !== 'provider' && !isDoctorRoute) {
       setProvider(null);
       setLoading(false);
       return;
@@ -67,13 +72,13 @@ export function useCurrentProvider(): UseCurrentProviderReturn {
     };
 
     fetchProvider();
-  }, [user, profile]);
+  }, [user, profile, isDoctorRoute]);
 
   return {
     provider,
     providerId: provider?.id || null,
     loading,
-    isProvider,
+    isProvider: isProvider || (isAdmin && isDoctorRoute && !!provider),
     isAdmin,
   };
 }
