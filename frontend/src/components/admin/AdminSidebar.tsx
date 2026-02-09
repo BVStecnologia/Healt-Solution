@@ -370,7 +370,7 @@ type Environment = 'admin' | 'doctor' | 'patient';
 const environments: { key: Environment; label: string; icon: React.FC<any>; path: string; bgColor: string }[] = [
   { key: 'admin', label: 'Administrador', icon: Shield, path: '/admin', bgColor: 'rgba(146, 86, 62, 0.45)' },
   { key: 'doctor', label: 'Médico', icon: Stethoscope, path: '/doctor', bgColor: 'rgba(180, 143, 122, 0.45)' },
-  { key: 'patient', label: 'Paciente', icon: User, path: '/', bgColor: 'rgba(140, 139, 139, 0.35)' },
+  { key: 'patient', label: 'Paciente', icon: User, path: '/?as=patient', bgColor: 'rgba(140, 139, 139, 0.35)' },
 ];
 
 const allNavItems = [

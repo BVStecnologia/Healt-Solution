@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
@@ -33,11 +33,16 @@ const NotificationRulesPage = lazy(() => import('./pages/admin/NotificationRules
 const FailedMessagesPage = lazy(() => import('./pages/admin/FailedMessagesPage'));
 
 // Smart redirect: admins/providers vão para sua área, pacientes ficam no dashboard
+// ?as=patient permite admin/provider visualizar o portal do paciente
 const HomeDashboard: React.FC = () => {
   const { profile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const viewAsPatient = searchParams.get('as') === 'patient';
 
-  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
-  if (profile?.role === 'provider') return <Navigate to="/doctor" replace />;
+  if (!viewAsPatient) {
+    if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
+    if (profile?.role === 'provider') return <Navigate to="/doctor" replace />;
+  }
 
   return <Dashboard />;
 };
