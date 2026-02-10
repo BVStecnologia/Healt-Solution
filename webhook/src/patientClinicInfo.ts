@@ -82,6 +82,13 @@ export async function handleClinicInfoInput(
   }
 
   const phone = extractPhoneFromJid(remoteJid);
+
+  // Handle "0" = back to main menu
+  if (input === '0') {
+    clearMenuState(remoteJid);
+    return { handled: false };
+  }
+
   const idx = parseInt(input, 10);
   if (isNaN(idx) || idx < 1) return { handled: false };
 

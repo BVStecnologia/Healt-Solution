@@ -193,6 +193,23 @@ export async function handleServicesInput(
     return { handled: false };
   }
 
+  // Handle "0" = go back one level
+  if (input === '0') {
+    if (handler === 'services_category') {
+      // Back to categories
+      await showServicesMenu(instance, remoteJid, lang, userId);
+      return { handled: true };
+    }
+    if (handler === 'service_detail' && menuState.context?.category) {
+      // Back to category treatments
+      await showCategoryTreatments(instance, remoteJid, menuState.context.category, lang, 1, userId);
+      return { handled: true };
+    }
+    // services (top level) → go to main menu
+    clearMenuState(remoteJid);
+    return { handled: false, action: 'main_menu' };
+  }
+
   const idx = parseInt(input, 10);
   if (isNaN(idx) || idx < 1) {
     return { handled: false };

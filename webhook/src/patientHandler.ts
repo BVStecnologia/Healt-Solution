@@ -56,7 +56,7 @@ import {
 } from './patientResponder';
 import { getTypeLabel, formatDateShort } from './whatsappResponder';
 
-const EXIT_WORDS = ['0', 'sair', 'exit', 'voltar', 'back', 'menu'];
+const EXIT_WORDS = ['sair', 'exit', 'voltar', 'back', 'menu'];
 const CONFIRMATION_WORDS = ['ok', 'sim', 'yes', 'confirmo', 'confirmed', 'confirmar'];
 
 /**
@@ -133,6 +133,13 @@ export async function handlePatientMessage(
         return;
       }
     }
+  }
+
+  // "0" without active sub-menu = show main menu
+  if (input === '0') {
+    clearAllState(remoteJid);
+    await showMainMenu(instance, remoteJid, patient);
+    return;
   }
 
   // Quick presence confirmation (OK, sim, yes, confirmo)
