@@ -178,14 +178,16 @@
 
 ## Gap Analysis: Portal Essence vs OptiMantra
 
+> Ultima atualizacao: 10/02/2026
+
 ### JA TEMOS (funcional)
 
 | Funcionalidade | Portal Essence | Status |
 |----------------|---------------|--------|
 | Calendario (Day/Week/Month) | CalendarPage | OK |
 | Lista de pacientes com busca | PatientsPage | OK |
-| Perfil basico do paciente | PatientProfilePage | Parcial |
-| Tipos de consulta (18 ativos) | treatments.ts + treatment_types | OK |
+| Perfil completo do paciente (23 campos) | PatientProfilePage | OK (migration 021+022) |
+| Tipos de consulta (29 ativos) | treatments.ts + treatment_types | OK (migrations 015-018) |
 | Criacao de agendamento | NewAppointmentPage | OK |
 | Fluxo de status (pending->completed) | AdminDashboard + AdminAppointmentsPage | OK |
 | Blocos de agenda | CalendarPage + provider_blocks | OK |
@@ -199,46 +201,65 @@
 | Elegibilidade | check_patient_eligibility | OK |
 | Patient Portal (basico) | Login, Dashboard, Appointments | OK |
 | i18n (PT/EN/ES) | react-i18next | OK |
+| Upload de documentos | PatientDocumentsPage + Storage | OK (migration 020) |
 
 ### GAPS - Prioridade ALTA (essencial para a clinica operar)
 
-| # | Funcionalidade | Impacto | Complexidade |
-|---|---------------|---------|-------------|
-| 1 | **Precos nos servicos** | A clinica precisa saber quanto cobrar. Nosso treatment_types nao tem preco | Media |
-| 2 | **Pagamento com cartao (POS)** | Processam ~$1,800/dia por cartao. Stripe seria o mais simples | Alta |
-| 3 | **Perfil completo do paciente** | Faltam: endereco completo, emergency contact, preferred name, sex at birth, race, ethnicity, marital status, occupation, referred by, patient notes | Media |
-| 4 | **Insurance (seguro saude)** | Muitos pacientes tem seguro (ex: OSCAR). Precisamos armazenar plano, ID, copay | Media |
-| 5 | **Superbill / Faturamento** | Geram superbills para cada consulta com servicos, precos, codigos CPT | Alta |
-| 6 | **Telehealth** | Marcam consultas In-Office e Telehealth. Precisamos de flag + link video | Media |
+| # | Funcionalidade | Status | Complexidade | Estimativa |
+|---|---------------|--------|-------------|------------|
+| 1 | **Precos nos servicos** | PENDENTE | Baixa | 1-2 dias |
+| 2 | **Pagamento com cartao** | PENDENTE | Alta | 1-2 semanas |
+| 3 | ~~Perfil completo do paciente~~ | FEITO (10/02) | - | - |
+| 4 | **Insurance (seguro saude)** | PENDENTE | Media | 3-4 dias |
+| 5 | **Superbill / Faturamento** | PENDENTE | Alta | 1 semana |
+| 6 | **Telehealth flag** | PENDENTE | Baixa | 1 dia |
+
+**Detalhes dos gaps ALTA pendentes:**
+- **#1 Precos**: Adicionar `price` e `cost` na tabela `treatment_types` + UI admin para gerenciar. Dados ja disponiveis na tabela de servicos do OptiMantra (65 servicos com precos)
+- **#2 Pagamento**: Integracao com gateway (Stripe recomendado). Clinica processa ~$1,800/dia. Precisa confirmar qual processador querem usar
+- **#4 Insurance**: Tabela com plano, ID, copay, grupo, payer. Ex: paciente tem OSCAR SILVER SIMPLE. So armazenar (nao processar claims)
+- **#5 Superbill**: Gerar PDF/recibo por consulta com servicos, precos, codigos CPT. Essencial para faturamento
+- **#6 Telehealth**: Flag `modality` (in_office/telehealth) nos appointments + campo link_video. Simples
 
 ### GAPS - Prioridade MEDIA (importante para crescimento)
 
-| # | Funcionalidade | Impacto | Complexidade |
-|---|---------------|---------|-------------|
-| 7 | **Servicos que faltam no nosso sistema** | Weight Loss Injection, Male/Female Pellet, Testosterone/Nandrolone Injection, Tirzepatide, Inbody, Calorimetry, Nutritionist Consult, etc. | Baixa |
-| 8 | **Inventario/Estoque** | 73 produtos (suplementos, meds), controle de quantidade, custos, validade | Alta |
-| 9 | **Labs/Exames** | 30+ exames Labcorp com precos. Precisamos de modulo de exames | Alta |
-| 10 | **SMS/Text 2-Way** | 99+ SMS. WhatsApp cobre parte, mas SMS e padrao nos EUA | Media |
-| 11 | **Email (reminder + templates)** | Reminder por email alem do WhatsApp | Media |
-| 12 | **Documentos do paciente** | Upload/download de docs, exames, consent forms | Media |
-| 13 | **Intake/Consent forms** | Formularios digitais pre-consulta | Media |
-| 14 | **Waitlist** | Fila de espera por dia | Baixa |
-| 15 | **Analytics/Reports** | Relatorios financeiros, de pacientes, tendencias | Alta |
+| # | Funcionalidade | Status | Complexidade | Estimativa |
+|---|---------------|--------|-------------|------------|
+| 7 | **Servicos faltantes do OptiMantra** | PARCIAL | Baixa | 1-2 dias |
+| 8 | **Inventario/Estoque** | PENDENTE | Alta | 1-2 semanas |
+| 9 | **Labs/Exames** | PENDENTE | Alta | 1 semana |
+| 10 | **SMS/Text 2-Way** | PENDENTE | Media | 3-4 dias |
+| 11 | **Email (reminder + templates)** | PENDENTE | Media | 3-4 dias |
+| 12 | ~~Documentos do paciente~~ | FEITO | - | - |
+| 13 | **Intake/Consent forms** | PENDENTE | Media | 1 semana |
+| 14 | **Waitlist** | PENDENTE | Baixa | 2 dias |
+| 15 | **Analytics/Reports** | PENDENTE | Alta | 1-2 semanas |
 
-### GAPS - Prioridade BAIXA (nice-to-have)
+**Detalhes:**
+- **#7 Servicos**: Ja adicionamos 11 (migration 018: peptideos, iron, chelation, cortisol). Faltam ~8 do OptiMantra: Weight Loss Injection, Male/Female Pellet, Testosterone/Nandrolone Injection, Tirzepatide, Inbody, Calorimetry, Nutritionist Consult, Mid-Level Consultation
+- **#8 Inventario**: Modulo novo (73 itens no OptiMantra). Tabela produtos + controle estoque + alertas
+- **#9 Labs**: 30+ exames Labcorp. Modulo para registrar pedidos/resultados (sem integracao direta)
+- **#10 SMS**: Twilio ja previsto no stack. WhatsApp cobre a maioria, SMS para quem nao tem WhatsApp
+- **#11 Email**: Resend ja previsto. Templates de reminder + confirmacao
+- **#12 Documentos**: FEITO (migration 020, PatientDocumentsPage, Supabase Storage)
+- **#13 Intake**: Formularios pre-consulta (questionarios de saude, consent). Builder de formularios
+- **#14 Waitlist**: Lista de espera por dia/provider. Simples
+- **#15 Analytics**: Dashboard financeiro, relatorios de pacientes, tendencias. Depende de #1 e #2
 
-| # | Funcionalidade | Impacto | Complexidade |
-|---|---------------|---------|-------------|
-| 16 | Charting/EMR (SOAP notes) | Prontuario eletronico completo | Muito Alta |
-| 17 | eRx (e-prescriptions) | Prescricao eletronica (precisa DEA) | Muito Alta |
-| 18 | Gift Cards / Coupons | Descontos e gift cards | Media |
-| 19 | Marketing (newsletters, birthday) | CRM marketing | Media |
-| 20 | Fax | E-faxing | Alta |
-| 21 | Office Chat | Chat interno equipe | Media |
-| 22 | Claims / Form1500 / Insurance Billing | Faturamento de seguros | Muito Alta |
-| 23 | Custom Formulations | Farmacia de manipulacao | Alta |
-| 24 | Patient Tags | Categorizacao livre (temos patient_type) | Baixa |
-| 25 | Rooms management | Salas da clinica | Baixa |
+### GAPS - Prioridade BAIXA (nice-to-have / futuro)
+
+| # | Funcionalidade | Status | Complexidade | Notas |
+|---|---------------|--------|-------------|-------|
+| 16 | Charting/EMR (SOAP notes) | PENDENTE | Muito Alta | Prontuario eletronico — projeto grande |
+| 17 | eRx (e-prescriptions) | PENDENTE | Muito Alta | Precisa DEA, integracao Surescripts |
+| 18 | Gift Cards / Coupons | PENDENTE | Media | Depende de #2 (pagamento) |
+| 19 | Marketing (newsletters, birthday) | PENDENTE | Media | CRM basico |
+| 20 | Fax | PENDENTE | Alta | E-faxing (pouco usado) |
+| 21 | Office Chat | PENDENTE | Media | Chat interno equipe |
+| 22 | Claims / Insurance Billing | PENDENTE | Muito Alta | Form1500, clearinghouse |
+| 23 | Custom Formulations | PENDENTE | Alta | Farmacia de manipulacao |
+| 24 | Patient Tags | PENDENTE | Baixa | Ja temos patient_type |
+| 25 | Rooms management | PENDENTE | Baixa | Salas da clinica |
 
 ---
 
@@ -285,35 +306,53 @@ Comparando os 65 servicos do OptiMantra com nossos 18 tipos ativos:
 ## Recomendacao de Proximos Passos
 
 ### Fase 1 - Essencial (proximo sprint)
-1. **Expandir perfil do paciente** - Adicionar campos: endereco, emergency contact, sex at birth, etc.
-2. **Adicionar precos nos servicos** - Campo `price` e `cost` na tabela `treatment_types`
-3. **Novos tipos de servico** - Adicionar os 19 que faltam
-4. **Flag Telehealth** - Diferenciar In-Office vs Telehealth nos appointments
+1. ~~Expandir perfil do paciente~~ — **FEITO** (migrations 021+022, 10/02/2026)
+2. **Adicionar precos nos servicos** — Campo `price` e `cost` na tabela `treatment_types`
+3. **Servicos faltantes** — Adicionar os ~8 que faltam do OptiMantra (parcial: 11 ja adicionados em 018)
+4. **Flag Telehealth** — Diferenciar In-Office vs Telehealth nos appointments
 
 ### Fase 2 - Financeiro (essencial para operar)
-5. **Stripe integration** - Pagamento com cartao
-6. **Superbill basico** - Gerar recibo/fatura por consulta
-7. **Modulo de seguro** - Tabela de insurance no perfil do paciente
+5. **Gateway de pagamento** — Stripe ou outro (confirmar com cliente)
+6. **Superbill basico** — Gerar recibo/fatura por consulta
+7. **Modulo de seguro** — Tabela de insurance no perfil do paciente
 
 ### Fase 3 - Clinico
-8. **Modulo de exames** - Acompanhar resultados de lab
-9. **Documentos** - Upload de docs, consent forms
-10. **Intake forms** - Formularios digitais pre-consulta
+8. **Modulo de exames** — Acompanhar resultados de lab
+9. ~~Documentos~~ — **FEITO** (migration 020, PatientDocumentsPage)
+10. **Intake forms** — Formularios digitais pre-consulta
 
 ### Fase 4 - Avancado
-11. **Inventario** - Controle de estoque de suplementos/meds
-12. **Analytics** - Dashboard financeiro e relatorioss
-13. **Email notifications** - Alem do WhatsApp
+11. **Inventario** — Controle de estoque de suplementos/meds
+12. **Analytics** — Dashboard financeiro e relatorios
+13. **Email + SMS notifications** — Alem do WhatsApp
 
 ---
 
+## Resumo de Cobertura (10/02/2026)
+
+| Area | Cobertura | Notas |
+|------|-----------|-------|
+| Calendario/Agendamento | **95%** | Falta: Telehealth flag, Waitlist |
+| Ficha do paciente | **85%** | Falta: Insurance. Demografico completo (21+022) |
+| Notificacoes | **100%** | WhatsApp > SMS/Email. Melhor que OptiMantra |
+| No-show + Confirmacao | **100%** | Automatico (OptiMantra e manual) |
+| Gestao providers/admins | **100%** | CRUD completo |
+| Portal do paciente | **80%** | Falta: Intake forms |
+| Documentos | **70%** | Upload basico OK. Falta: consent forms, intake |
+| Financeiro | **0%** | Gap principal: precos, pagamento, superbill |
+| Inventario | **0%** | Modulo novo necessario |
+| Labs/Exames | **0%** | Modulo novo necessario |
+| **TOTAL (uso real)** | **~75%** | Core OK. Falta parte financeira |
+
 ## Observacoes Importantes
 
-1. **A clinica processa ~$1,800/dia em cartao** - gateway de pagamento e CRITICO
-2. **Stripe Express nao esta configurado no OptiMantra** - estao usando outro processador (provavelmente Fiserv)
-3. **1.138 pacientes reais** - migrar dados seria um projeto grande
-4. **2 practitioners**: Dra. Rosane (MD) + Registered Nurse - nosso sistema ja suporta
-5. **Labs sao via Labcorp** - integracao direta pode nao ser necessaria inicialmente (podem continuar usando Labcorp separado)
-6. **Muitos IVs especificos** (Inflammation, Metabolic, Homocysteine, Insulin Resistance) - nosso `iv_protocols` e generico demais
-7. **Weight Loss (Tirzepatide/Ozempic)** - servico em alta demanda, precisa estar no sistema
-8. **Telehealth** e usado ativamente - precisamos suportar
+1. **A clinica processa ~$1,800/dia em cartao** — gateway de pagamento e CRITICO
+2. **Stripe Express nao esta configurado no OptiMantra** — estao usando outro processador (provavelmente Fiserv). Precisa confirmar com o cliente
+3. **1.138 pacientes reais** — migrar dados seria um projeto grande
+4. **2 practitioners**: Dra. Rosane (MD) + Registered Nurse — nosso sistema ja suporta
+5. **Labs sao via Labcorp** — integracao direta pode nao ser necessaria inicialmente (podem continuar usando Labcorp separado)
+6. **Muitos IVs especificos** (Inflammation, Metabolic, Homocysteine, Insulin Resistance) — nosso `iv_protocols` e generico demais
+7. **Weight Loss (Tirzepatide/Ozempic)** — servico em alta demanda, precisa estar no sistema
+8. **Telehealth** e usado ativamente — precisamos suportar
+9. **Charting/EMR e eRx** — muito complexos, provavelmente continuarao usando outro sistema para isso
+10. **Core do sistema esta pronto** — para substituir o OptiMantra falta essencialmente a parte financeira (~2-3 semanas)
