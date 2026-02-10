@@ -2,6 +2,34 @@
 
 Este arquivo documenta toda a arquitetura, funcionalidades e padrões do sistema de gestão da clínica médica.
 
+---
+
+## REGRAS DE SEGURANÇA (OBRIGATÓRIO — LER PRIMEIRO)
+
+### Dados de Teste / Demo
+- **NUNCA** usar telefones reais em dados de teste/demo. Sempre usar padrão fake: `+15550000001`, `+15550000002`, etc.
+- **NUNCA** usar emails reais de pessoas/clínica em dados de teste. Usar `@example.com` ou `@test.com`.
+- **NUNCA** inserir dados de teste no banco de produção (VPS) sem ANTES parar o webhook: `docker stop webhook-server`
+- O cron do webhook roda a cada 5 minutos e ENVIA mensagens WhatsApp reais. Qualquer dado com telefone real no DB será alvo de lembretes, no-show, confirmações.
+
+### Antes de Inserir Dados de Teste no DB de Produção
+1. **Verificar TODOS os telefones** — nenhum número real permitido, APENAS padrão fake
+2. **Verificar TODOS os emails** — nenhum email real permitido, APENAS @example.com ou @test.com
+3. O webhook PODE ficar ligado — o problema é ter dados reais no DB, não o webhook rodar
+4. Na dúvida, parar o webhook primeiro (`docker stop webhook-server`), inserir dados, verificar, e religar
+
+### Ações que Podem Comprometer o Usuário
+- Enviar mensagem WhatsApp para qualquer número que não seja explicitamente um número de teste autorizado pelo usuário
+- Criar usuários no auth.users com emails reais que podem receber notificações
+- Modificar dados de pacientes/médicos reais sem confirmação do usuário
+- Qualquer ação que dispare comunicação externa (WhatsApp, SMS, email) sem aprovação explícita
+
+### Números de Teste Autorizados
+- Apenas os 2 números que o usuário conectou na Evolution API (perguntar antes de usar)
+- Para dados demo, SEMPRE usar: `+1555000XXXX` (padrão US fake) ou `+5500000000XX` (padrão BR fake)
+
+---
+
 ## Visão Geral do Projeto
 
 **Essence Medical Clinic** - Sistema completo de gestão de clínica médica com:

@@ -1073,7 +1073,7 @@ const AdminDashboard: React.FC = () => {
         id: apt.id,
         patient_id: apt.patient_id,
         patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
-        time: new Date(apt.scheduled_at).toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
+        time: new Date(apt.scheduled_at).toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
         type: apt.type,
         status: apt.status,
       }));
@@ -1175,8 +1175,8 @@ const AdminDashboard: React.FC = () => {
           patientId: apt.patient_id,
           providerName: apt.provider_name,
           appointmentType: formatType(apt.type),
-          appointmentDate: date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US'),
-          appointmentTime: date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
+          appointmentDate: date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { timeZone: 'UTC' }),
+          appointmentTime: date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
           appointmentId: apt.id,
         });
         if (!result.success) {
@@ -1247,6 +1247,7 @@ const AdminDashboard: React.FC = () => {
       month: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'UTC',
     });
   };
 

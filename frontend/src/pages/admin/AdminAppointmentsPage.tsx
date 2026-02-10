@@ -1663,8 +1663,8 @@ const AdminAppointmentsPage: React.FC = () => {
           patientId: apt.patient_id,
           providerName: apt.provider?.profile ? `${t('common.drPrefix')} ${apt.provider.profile.first_name}` : 'N/A',
           appointmentType: formatType(apt.type),
-          appointmentDate: date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US'),
-          appointmentTime: date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
+          appointmentDate: date.toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { timeZone: 'UTC' }),
+          appointmentTime: date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
           appointmentId: apt.id,
         });
         if (!result.success) {
@@ -1769,6 +1769,7 @@ const AdminAppointmentsPage: React.FC = () => {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+      timeZone: 'UTC',
     });
   };
 
@@ -1777,6 +1778,7 @@ const AdminAppointmentsPage: React.FC = () => {
     return date.toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'UTC',
     });
   };
 

@@ -902,14 +902,14 @@ const statusKeyMap: Record<string, string> = {
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
+    day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC',
   });
 };
 
 const formatDateTime = (dateStr: string): string => {
   return new Date(dateStr).toLocaleDateString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', {
     day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
   });
 };
 

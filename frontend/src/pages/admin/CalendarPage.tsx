@@ -1767,8 +1767,11 @@ const CalendarPage: React.FC = () => {
 
       if (error) throw error;
 
+      // Convert UTC-stored time to "fake local" Date so react-big-calendar positions correctly
+      const toFakeLocal = (d: Date) => new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes());
+
       const calendarEvents: CalendarEvent[] = (data || []).map((apt: any) => {
-        const startDate = new Date(apt.scheduled_at);
+        const startDate = toFakeLocal(new Date(apt.scheduled_at));
         const endDate = new Date(startDate.getTime() + (apt.duration || 30) * 60000);
         const patientName = apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A';
         const providerName = apt.provider?.profile ? `${t('common.drPrefix')} ${apt.provider.profile.first_name}` : 'N/A';
