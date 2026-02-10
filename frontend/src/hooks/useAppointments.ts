@@ -89,6 +89,8 @@ export const useAppointments = (): UseAppointmentsReturn => {
         p_type: data.type,
         p_scheduled_at: data.scheduled_at,
         p_notes: data.notes || null,
+        p_modality: data.modality || 'in_office',
+        p_video_link: data.video_link || null,
       });
 
       // Atualizar lista local

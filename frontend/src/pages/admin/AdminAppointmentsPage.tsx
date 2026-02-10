@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Video,
 } from 'lucide-react';
 import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import {
@@ -1098,6 +1099,8 @@ interface Appointment {
   type: string;
   status: string;
   notes: string | null;
+  modality?: string;
+  video_link?: string | null;
   patient: {
     id: string;
     first_name: string;
@@ -1190,7 +1193,10 @@ const SortableCard: React.FC<SortableCardProps> = ({
           <div className="name">
             {appointment.patient?.first_name} {appointment.patient?.last_name}
           </div>
-          <div className="type">{formatType(appointment.type)}</div>
+          <div className="type">
+            {appointment.modality === 'telehealth' && <Video size={11} style={{ marginRight: 3, verticalAlign: 'middle', color: luxuryColors.primary }} />}
+            {formatType(appointment.type)}
+          </div>
         </KanbanPatientInfo>
       </KanbanCardHeader>
       <KanbanCardDetails>
@@ -1387,6 +1393,7 @@ const AdminAppointmentsPage: React.FC = () => {
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [providerFilter, setProviderFilter] = useState<string>('all');
+  const [modalityFilter, setModalityFilter] = useState<string>('all');
   const [providerOptions, setProviderOptions] = useState<ProviderOption[]>([]);
 
   // Navegação horizontal do Kanban
@@ -1792,6 +1799,10 @@ const AdminAppointmentsPage: React.FC = () => {
       result = result.filter(apt => apt.status === statusFilter);
     }
 
+    if (modalityFilter !== 'all') {
+      result = result.filter(apt => (apt.modality || 'in_office') === modalityFilter);
+    }
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(apt =>
@@ -1801,7 +1812,7 @@ const AdminAppointmentsPage: React.FC = () => {
     }
 
     return result;
-  }, [appointments, statusFilter, searchQuery]);
+  }, [appointments, statusFilter, modalityFilter, searchQuery]);
 
   const statusTabs = [
     { key: 'all', label: t('appointments.filterAll'), count: totalCount, icon: CalendarDays },
@@ -1858,6 +1869,14 @@ const AdminAppointmentsPage: React.FC = () => {
               ))}
             </ProviderFilterSelect>
           )}
+          <ProviderFilterSelect
+            value={modalityFilter}
+            onChange={(e) => setModalityFilter(e.target.value)}
+          >
+            <option value="all">{t('appointments.allModalities', 'All Modalities')}</option>
+            <option value="in_office">{t('booking.inOffice', 'In-Office')}</option>
+            <option value="telehealth">{t('booking.telehealth', 'Telehealth')}</option>
+          </ProviderFilterSelect>
         </ControlsBar>
 
         {loading ? (

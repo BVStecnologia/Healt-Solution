@@ -22,6 +22,7 @@ import {
   Save,
   Lock,
   Trash2,
+  Video,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -1431,6 +1432,7 @@ interface CalendarEvent {
   patientName: string;
   providerName: string;
   type: string;
+  modality?: string;
   isBlock?: boolean;
   blockReason?: string;
 }
@@ -1472,10 +1474,13 @@ const CustomTimeEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
   const isShort = duration <= 30;
   const timeStr = `${format(event.start, 'HH:mm')} — ${format(event.end, 'HH:mm')}`;
 
+  const isTelehealth = event.modality === 'telehealth';
+
   if (isShort) {
     // Evento curto: tudo em uma linha compacta
     return (
       <div style={{ lineHeight: 1.2, overflow: 'hidden' }}>
+        {isTelehealth && <Video size={10} style={{ marginRight: 3, verticalAlign: 'middle', opacity: 0.8 }} />}
         <span style={{ fontSize: '11px', fontWeight: 700 }}>
           {event.patientName.split(' ')[0]}
         </span>
@@ -1489,7 +1494,10 @@ const CustomTimeEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
   // Evento normal: horário + nome + tipo
   return (
     <div style={{ lineHeight: 1.3, overflow: 'hidden' }}>
-      <div style={{ fontSize: '10px', opacity: 0.75, fontWeight: 500 }}>{timeStr}</div>
+      <div style={{ fontSize: '10px', opacity: 0.75, fontWeight: 500 }}>
+        {isTelehealth && <Video size={10} style={{ marginRight: 3, verticalAlign: 'middle' }} />}
+        {timeStr}
+      </div>
       <div style={{ fontSize: '12px', fontWeight: 700 }}>{event.patientName}</div>
       <div style={{ fontSize: '10px', opacity: 0.7 }}>{formatTypeShort(event.type)}</div>
     </div>
@@ -1510,6 +1518,7 @@ const CustomAgendaEvent: React.FC<{ event: CalendarEvent }> = ({ event }) => {
   };
   return (
     <AgendaEventContent>
+      {event.modality === 'telehealth' && <Video size={14} style={{ color: theme.colors.primary, flexShrink: 0 }} />}
       <AgendaPatientName>{event.patientName}</AgendaPatientName>
       <AgendaSeparator>·</AgendaSeparator>
       <AgendaType>{formatTypeShort(event.type)}</AgendaType>
@@ -1774,6 +1783,7 @@ const CalendarPage: React.FC = () => {
           patientName,
           providerName,
           type: apt.type,
+          modality: apt.modality || 'in_office',
         };
       });
 

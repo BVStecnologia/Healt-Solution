@@ -17,11 +17,17 @@ export type PatientType =
   | 'trt' | 'hormone' | 'general';
 export type AppointmentType =
   // Active types
-  | 'initial_consultation' | 'follow_up'
+  | 'initial_consultation' | 'follow_up' | 'inbody' | 'calorimetry' | 'nutritionist_consult' | 'mid_level_consultation'
   | 'functional_medicine' | 'bhrt' | 'male_hypertrophy' | 'female_hypertrophy'
-  | 'insulin_resistance' | 'chronic_inflammation' | 'thyroid_support'
+  | 'weight_loss_injection' | 'testosterone_injection' | 'nandrolone_injection'
+  | 'tirzepatide_2_5mg' | 'tirzepatide_5mg' | 'tirzepatide_7_5mg'
+  | 'insulin_resistance' | 'chronic_inflammation' | 'thyroid_support' | 'high_cortisol'
+  | 'male_pellet' | 'female_pellet'
   | 'morpheus8' | 'botulinum_toxin' | 'fillers' | 'skin_boosters'
   | 'iv_protocols' | 'customized_iv_nutrition' | 'nutrient_testing' | 'nad_therapy' | 'vitamin_injections'
+  | 'iron_infusions' | 'chelation_therapy'
+  | 'high_dose_vitamin_c' | 'inflammation_iv' | 'metabolic_iv' | 'homocysteine_iv' | 'insulin_resistance_iv'
+  | 'bpc_157' | 'thymosin_alpha_1' | 'cjc_1295_ipamorelin' | 'pt_141' | 'selank' | 'kpv' | 'dihexa' | 'mots_c'
   // Legacy (kept for backward compat)
   | 'hormone_check' | 'lab_review' | 'nutrition' | 'health_coaching' | 'therapy' | 'personal_training';
 export type AppointmentStatus =
@@ -76,6 +82,21 @@ export interface Profile {
   referred_by: string | null;
   primary_care_physician: string | null;
   patient_notes: string | null;
+  // Insurance fields (migration 028)
+  insurance_provider: string | null;
+  insurance_member_id: string | null;
+  insurance_group_number: string | null;
+  insurance_copay: number | null;
+  insurance_coinsurance: number | null;
+  insurance_deductible: number | null;
+  insurance_payer_id: string | null;
+  sec_insurance_provider: string | null;
+  sec_insurance_member_id: string | null;
+  sec_insurance_group_number: string | null;
+  sec_insurance_copay: number | null;
+  sec_insurance_coinsurance: number | null;
+  sec_insurance_deductible: number | null;
+  sec_insurance_payer_id: string | null;
 }
 
 export interface Provider {
@@ -113,6 +134,8 @@ export interface Appointment {
   cancelled_at: string | null;
   cancellation_reason: string | null;
   price_at_booking: number | null;
+  modality: 'in_office' | 'telehealth';
+  video_link: string | null;
   created_at: string;
   updated_at: string;
   provider?: Provider;
@@ -162,6 +185,20 @@ export type Database = {
           referred_by?: string | null;
           primary_care_physician?: string | null;
           patient_notes?: string | null;
+          insurance_provider?: string | null;
+          insurance_member_id?: string | null;
+          insurance_group_number?: string | null;
+          insurance_copay?: number | null;
+          insurance_coinsurance?: number | null;
+          insurance_deductible?: number | null;
+          insurance_payer_id?: string | null;
+          sec_insurance_provider?: string | null;
+          sec_insurance_member_id?: string | null;
+          sec_insurance_group_number?: string | null;
+          sec_insurance_copay?: number | null;
+          sec_insurance_coinsurance?: number | null;
+          sec_insurance_deductible?: number | null;
+          sec_insurance_payer_id?: string | null;
         };
         Update: {
           id?: string;
@@ -199,6 +236,20 @@ export type Database = {
           referred_by?: string | null;
           primary_care_physician?: string | null;
           patient_notes?: string | null;
+          insurance_provider?: string | null;
+          insurance_member_id?: string | null;
+          insurance_group_number?: string | null;
+          insurance_copay?: number | null;
+          insurance_coinsurance?: number | null;
+          insurance_deductible?: number | null;
+          insurance_payer_id?: string | null;
+          sec_insurance_provider?: string | null;
+          sec_insurance_member_id?: string | null;
+          sec_insurance_group_number?: string | null;
+          sec_insurance_copay?: number | null;
+          sec_insurance_coinsurance?: number | null;
+          sec_insurance_deductible?: number | null;
+          sec_insurance_payer_id?: string | null;
         };
         Relationships: [];
       };
@@ -260,6 +311,8 @@ export type Database = {
           cancelled_at?: string | null;
           cancellation_reason?: string | null;
           price_at_booking?: number | null;
+          modality?: 'in_office' | 'telehealth';
+          video_link?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -274,6 +327,8 @@ export type Database = {
           cancelled_at?: string | null;
           cancellation_reason?: string | null;
           price_at_booking?: number | null;
+          modality?: 'in_office' | 'telehealth';
+          video_link?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -309,6 +364,8 @@ export type Database = {
           p_type: AppointmentType;
           p_scheduled_at: string;
           p_notes?: string;
+          p_modality?: string;
+          p_video_link?: string;
         };
         Returns: Appointment;
       };
@@ -361,4 +418,6 @@ export interface CreateAppointmentDTO {
   type: AppointmentType;
   scheduled_at: string;
   notes?: string;
+  modality?: 'in_office' | 'telehealth';
+  video_link?: string;
 }

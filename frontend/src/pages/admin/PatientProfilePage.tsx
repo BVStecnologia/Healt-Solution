@@ -969,6 +969,10 @@ const PatientProfilePage: React.FC = () => {
     address_line1: '', address_line2: '', city: '', state: '', zip_code: '', country: 'US',
     emergency_contact_name: '', emergency_contact_phone: '', emergency_contact_relation: '',
     referred_by: '', primary_care_physician: '', patient_notes: '',
+    insurance_provider: '', insurance_member_id: '', insurance_group_number: '',
+    insurance_copay: '', insurance_coinsurance: '', insurance_deductible: '', insurance_payer_id: '',
+    sec_insurance_provider: '', sec_insurance_member_id: '', sec_insurance_group_number: '',
+    sec_insurance_copay: '', sec_insurance_coinsurance: '', sec_insurance_deductible: '', sec_insurance_payer_id: '',
   });
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -1117,6 +1121,20 @@ const PatientProfilePage: React.FC = () => {
         referred_by: patient.referred_by || '',
         primary_care_physician: patient.primary_care_physician || '',
         patient_notes: patient.patient_notes || '',
+        insurance_provider: patient.insurance_provider || '',
+        insurance_member_id: patient.insurance_member_id || '',
+        insurance_group_number: patient.insurance_group_number || '',
+        insurance_copay: patient.insurance_copay != null ? String(patient.insurance_copay) : '',
+        insurance_coinsurance: patient.insurance_coinsurance != null ? String(patient.insurance_coinsurance) : '',
+        insurance_deductible: patient.insurance_deductible != null ? String(patient.insurance_deductible) : '',
+        insurance_payer_id: patient.insurance_payer_id || '',
+        sec_insurance_provider: patient.sec_insurance_provider || '',
+        sec_insurance_member_id: patient.sec_insurance_member_id || '',
+        sec_insurance_group_number: patient.sec_insurance_group_number || '',
+        sec_insurance_copay: patient.sec_insurance_copay != null ? String(patient.sec_insurance_copay) : '',
+        sec_insurance_coinsurance: patient.sec_insurance_coinsurance != null ? String(patient.sec_insurance_coinsurance) : '',
+        sec_insurance_deductible: patient.sec_insurance_deductible != null ? String(patient.sec_insurance_deductible) : '',
+        sec_insurance_payer_id: patient.sec_insurance_payer_id || '',
       });
       setSaveSuccess(false);
       setIsEditModalOpen(true);
@@ -1160,6 +1178,20 @@ const PatientProfilePage: React.FC = () => {
         referred_by: editForm.referred_by || null,
         primary_care_physician: editForm.primary_care_physician || null,
         patient_notes: editForm.patient_notes || null,
+        insurance_provider: editForm.insurance_provider || null,
+        insurance_member_id: editForm.insurance_member_id || null,
+        insurance_group_number: editForm.insurance_group_number || null,
+        insurance_copay: editForm.insurance_copay ? parseFloat(editForm.insurance_copay) : null,
+        insurance_coinsurance: editForm.insurance_coinsurance ? parseFloat(editForm.insurance_coinsurance) : null,
+        insurance_deductible: editForm.insurance_deductible ? parseFloat(editForm.insurance_deductible) : null,
+        insurance_payer_id: editForm.insurance_payer_id || null,
+        sec_insurance_provider: editForm.sec_insurance_provider || null,
+        sec_insurance_member_id: editForm.sec_insurance_member_id || null,
+        sec_insurance_group_number: editForm.sec_insurance_group_number || null,
+        sec_insurance_copay: editForm.sec_insurance_copay ? parseFloat(editForm.sec_insurance_copay) : null,
+        sec_insurance_coinsurance: editForm.sec_insurance_coinsurance ? parseFloat(editForm.sec_insurance_coinsurance) : null,
+        sec_insurance_deductible: editForm.sec_insurance_deductible ? parseFloat(editForm.sec_insurance_deductible) : null,
+        sec_insurance_payer_id: editForm.sec_insurance_payer_id || null,
         updated_at: new Date().toISOString(),
       };
 
@@ -1422,6 +1454,85 @@ const PatientProfilePage: React.FC = () => {
                     <InfoValue style={{ whiteSpace: 'pre-wrap' }}>{patient.patient_notes}</InfoValue>
                   </InfoItem>
                 )}
+              </InfoGrid>
+            </CardBody>
+          </Card>
+        </SectionGrid>
+
+        {/* ===== INSURANCE ===== */}
+        <SectionGrid>
+          <Card $delay={500}>
+            <CardHeader>
+              <CardTitle><Shield /> {t('patient.insurancePrimary', 'Primary Insurance')}</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceProvider', 'Insurance Provider')}</InfoLabel>
+                  <InfoValue>{patient.insurance_provider || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceMemberId', 'Member ID')}</InfoLabel>
+                  <InfoValue>{patient.insurance_member_id || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceGroupNumber', 'Group Number')}</InfoLabel>
+                  <InfoValue>{patient.insurance_group_number || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceCopay', 'Copay')}</InfoLabel>
+                  <InfoValue>{patient.insurance_copay != null ? `$${patient.insurance_copay}` : '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceCoinsurance', 'Co-Insurance')}</InfoLabel>
+                  <InfoValue>{patient.insurance_coinsurance != null ? `${patient.insurance_coinsurance}%` : '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceDeductible', 'Deductible')}</InfoLabel>
+                  <InfoValue>{patient.insurance_deductible != null ? `$${patient.insurance_deductible}` : '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insurancePayerId', 'Payer ID')}</InfoLabel>
+                  <InfoValue>{patient.insurance_payer_id || '-'}</InfoValue>
+                </InfoItem>
+              </InfoGrid>
+            </CardBody>
+          </Card>
+
+          <Card $delay={540}>
+            <CardHeader>
+              <CardTitle><Shield /> {t('patient.insuranceSecondary', 'Secondary Insurance')}</CardTitle>
+            </CardHeader>
+            <CardBody>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceProvider', 'Insurance Provider')}</InfoLabel>
+                  <InfoValue>{patient.sec_insurance_provider || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceMemberId', 'Member ID')}</InfoLabel>
+                  <InfoValue>{patient.sec_insurance_member_id || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceGroupNumber', 'Group Number')}</InfoLabel>
+                  <InfoValue>{patient.sec_insurance_group_number || '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceCopay', 'Copay')}</InfoLabel>
+                  <InfoValue>{patient.sec_insurance_copay != null ? `$${patient.sec_insurance_copay}` : '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceCoinsurance', 'Co-Insurance')}</InfoLabel>
+                  <InfoValue>{patient.sec_insurance_coinsurance != null ? `${patient.sec_insurance_coinsurance}%` : '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insuranceDeductible', 'Deductible')}</InfoLabel>
+                  <InfoValue>{patient.sec_insurance_deductible != null ? `$${patient.sec_insurance_deductible}` : '-'}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>{t('patient.insurancePayerId', 'Payer ID')}</InfoLabel>
+                  <InfoValue>{patient.sec_insurance_payer_id || '-'}</InfoValue>
+                </InfoItem>
               </InfoGrid>
             </CardBody>
           </Card>
@@ -1830,6 +1941,67 @@ const PatientProfilePage: React.FC = () => {
                     onChange={e => setEditForm(prev => ({ ...prev, patient_notes: e.target.value }))}
                     placeholder="Internal notes (admin only)..."
                   />
+                </FormGroup>
+
+                {/* — Section: Insurance — */}
+                <SectionDivider><span>{t('patient.insurancePrimary', 'Primary Insurance')}</span></SectionDivider>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceProvider', 'Insurance Provider')}</FormLabel>
+                  <FormInput type="text" value={editForm.insurance_provider} onChange={e => setEditForm(prev => ({ ...prev, insurance_provider: e.target.value }))} placeholder="e.g. OSCAR SILVER SIMPLE" />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceMemberId', 'Member ID')}</FormLabel>
+                  <FormInput type="text" value={editForm.insurance_member_id} onChange={e => setEditForm(prev => ({ ...prev, insurance_member_id: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceGroupNumber', 'Group Number')}</FormLabel>
+                  <FormInput type="text" value={editForm.insurance_group_number} onChange={e => setEditForm(prev => ({ ...prev, insurance_group_number: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceCopay', 'Copay ($)')}</FormLabel>
+                  <FormInput type="number" step="0.01" value={editForm.insurance_copay} onChange={e => setEditForm(prev => ({ ...prev, insurance_copay: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceCoinsurance', 'Co-Insurance (%)')}</FormLabel>
+                  <FormInput type="number" step="0.01" value={editForm.insurance_coinsurance} onChange={e => setEditForm(prev => ({ ...prev, insurance_coinsurance: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceDeductible', 'Deductible ($)')}</FormLabel>
+                  <FormInput type="number" step="0.01" value={editForm.insurance_deductible} onChange={e => setEditForm(prev => ({ ...prev, insurance_deductible: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insurancePayerId', 'Payer ID')}</FormLabel>
+                  <FormInput type="text" value={editForm.insurance_payer_id} onChange={e => setEditForm(prev => ({ ...prev, insurance_payer_id: e.target.value }))} />
+                </FormGroup>
+
+                <SectionDivider><span>{t('patient.insuranceSecondary', 'Secondary Insurance')}</span></SectionDivider>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceProvider', 'Insurance Provider')}</FormLabel>
+                  <FormInput type="text" value={editForm.sec_insurance_provider} onChange={e => setEditForm(prev => ({ ...prev, sec_insurance_provider: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceMemberId', 'Member ID')}</FormLabel>
+                  <FormInput type="text" value={editForm.sec_insurance_member_id} onChange={e => setEditForm(prev => ({ ...prev, sec_insurance_member_id: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceGroupNumber', 'Group Number')}</FormLabel>
+                  <FormInput type="text" value={editForm.sec_insurance_group_number} onChange={e => setEditForm(prev => ({ ...prev, sec_insurance_group_number: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceCopay', 'Copay ($)')}</FormLabel>
+                  <FormInput type="number" step="0.01" value={editForm.sec_insurance_copay} onChange={e => setEditForm(prev => ({ ...prev, sec_insurance_copay: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceCoinsurance', 'Co-Insurance (%)')}</FormLabel>
+                  <FormInput type="number" step="0.01" value={editForm.sec_insurance_coinsurance} onChange={e => setEditForm(prev => ({ ...prev, sec_insurance_coinsurance: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insuranceDeductible', 'Deductible ($)')}</FormLabel>
+                  <FormInput type="number" step="0.01" value={editForm.sec_insurance_deductible} onChange={e => setEditForm(prev => ({ ...prev, sec_insurance_deductible: e.target.value }))} />
+                </FormGroup>
+                <FormGroup>
+                  <FormLabel>{t('patient.insurancePayerId', 'Payer ID')}</FormLabel>
+                  <FormInput type="text" value={editForm.sec_insurance_payer_id} onChange={e => setEditForm(prev => ({ ...prev, sec_insurance_payer_id: e.target.value }))} />
                 </FormGroup>
               </FormGrid>
             </ModalBody>

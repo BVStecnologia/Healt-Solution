@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { format } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
-import { Calendar, Clock, User, MoreVertical } from 'lucide-react';
+import { Calendar, Clock, User, MoreVertical, Video } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import Card from '../ui/Card';
 import Badge, { getAppointmentStatusBadge } from '../ui/Badge';
@@ -106,10 +106,16 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       <Header>
         <div>
           <TypeLabel>
+            {appointment.modality === 'telehealth' && <Video size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />}
             {getTreatmentLabel(appointment.type, i18n.language as 'pt' | 'en')}
           </TypeLabel>
         </div>
-        <Badge variant={variant}>{label}</Badge>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {appointment.modality === 'telehealth' && (
+            <Badge variant="info">{t('appointments.card.telehealth', 'Telehealth')}</Badge>
+          )}
+          <Badge variant={variant}>{label}</Badge>
+        </div>
       </Header>
 
       <InfoRow>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { ArrowLeft, ArrowRight, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Dna, Clock, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Dna, Clock, ChevronLeft, Video, Building2 } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
 import { theme } from '../../styles/GlobalStyle';
 import { useAppointments } from '../../hooks/useAppointments';
@@ -362,6 +362,45 @@ const PriceBadge = styled.span<{ $variable?: boolean }>`
   font-style: ${props => props.$variable ? 'italic' : 'normal'};
 `;
 
+const ModalityToggle = styled.div`
+  display: flex;
+  gap: ${theme.spacing.sm};
+  margin-top: ${theme.spacing.lg};
+  margin-bottom: ${theme.spacing.sm};
+`;
+
+const ModalityOption = styled.button<{ $active: boolean }>`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${theme.spacing.sm};
+  padding: ${theme.spacing.md} ${theme.spacing.lg};
+  border: 2px solid ${props => props.$active ? theme.colors.primary : theme.colors.border};
+  border-radius: ${theme.borderRadius.lg};
+  background: ${props => props.$active ? theme.colors.primaryA10 : theme.colors.surface};
+  color: ${props => props.$active ? theme.colors.primary : theme.colors.textSecondary};
+  font-size: 14px;
+  font-weight: ${props => props.$active ? 600 : 400};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${theme.colors.primary};
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+`;
+
+const ModalityLabel = styled.span`
+  font-size: 13px;
+  font-weight: 500;
+  color: ${theme.colors.textSecondary};
+  margin-top: ${theme.spacing.lg};
+`;
+
 const NewAppointmentPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -377,6 +416,7 @@ const NewAppointmentPage: React.FC = () => {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   // Iniciar com amanhã (regra de 24h mínimas, sincronizado com TimeSlotPicker)
   const [selectedDate, setSelectedDate] = useState<Date>(() => addDays(startOfDay(new Date()), 1));
+  const [selectedModality, setSelectedModality] = useState<'in_office' | 'telehealth'>('in_office');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -425,6 +465,7 @@ const NewAppointmentPage: React.FC = () => {
         provider_id: selectedProvider.id,
         type: selectedType,
         scheduled_at: selectedSlot.start,
+        modality: selectedModality,
       });
       navigate('/appointments');
     } catch (error: any) {
@@ -563,12 +604,32 @@ const NewAppointmentPage: React.FC = () => {
                   </TypeGrid>
 
                   {selectedType && (
-                    <div style={{ marginTop: theme.spacing.lg }}>
-                      <EligibilityAlert
-                        eligibility={eligibility}
-                        loading={eligibilityLoading}
-                      />
-                    </div>
+                    <>
+                      <div style={{ marginTop: theme.spacing.lg }}>
+                        <EligibilityAlert
+                          eligibility={eligibility}
+                          loading={eligibilityLoading}
+                        />
+                      </div>
+
+                      <ModalityLabel>{t('booking.modalityLabel', 'Modality')}</ModalityLabel>
+                      <ModalityToggle>
+                        <ModalityOption
+                          $active={selectedModality === 'in_office'}
+                          onClick={() => setSelectedModality('in_office')}
+                        >
+                          <Building2 size={18} />
+                          {t('booking.inOffice', 'In-Office')}
+                        </ModalityOption>
+                        <ModalityOption
+                          $active={selectedModality === 'telehealth'}
+                          onClick={() => setSelectedModality('telehealth')}
+                        >
+                          <Video size={18} />
+                          {t('booking.telehealth', 'Telehealth')}
+                        </ModalityOption>
+                      </ModalityToggle>
+                    </>
                   )}
 
                   <Actions style={{ marginTop: theme.spacing.xl }}>
@@ -655,6 +716,13 @@ const NewAppointmentPage: React.FC = () => {
               <SummaryRow>
                 <SummaryLabel>{t('booking.summaryProvider')}</SummaryLabel>
                 <SummaryValue>{getProviderName()}</SummaryValue>
+              </SummaryRow>
+              <SummaryRow>
+                <SummaryLabel>{t('booking.modalityLabel', 'Modality')}</SummaryLabel>
+                <SummaryValue style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {selectedModality === 'telehealth' ? <Video size={14} /> : <Building2 size={14} />}
+                  {selectedModality === 'telehealth' ? t('booking.telehealth', 'Telehealth') : t('booking.inOffice', 'In-Office')}
+                </SummaryValue>
               </SummaryRow>
               <SummaryRow>
                 <SummaryLabel>{t('booking.summaryDate')}</SummaryLabel>

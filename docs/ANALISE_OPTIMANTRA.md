@@ -202,12 +202,14 @@
 | Patient Portal (basico) | Login, Dashboard, Appointments | OK |
 | i18n (PT/EN/ES) | react-i18next | OK |
 | Upload de documentos | PatientDocumentsPage + Storage | OK (migration 020) |
+| Precos e custos nos servicos | ServicesPage + treatment_types | OK (migration 023) |
+| Pagina admin Services & Pricing | ServicesPage (accordion, edit, create) | OK (migration 024) |
 
 ### GAPS - Prioridade ALTA (essencial para a clinica operar)
 
 | # | Funcionalidade | Status | Complexidade | Estimativa |
 |---|---------------|--------|-------------|------------|
-| 1 | **Precos nos servicos** | PENDENTE | Baixa | 1-2 dias |
+| 1 | ~~Precos nos servicos~~ | **FEITO** (10/02) | - | - |
 | 2 | **Pagamento com cartao** | PENDENTE | Alta | 1-2 semanas |
 | 3 | ~~Perfil completo do paciente~~ | FEITO (10/02) | - | - |
 | 4 | **Insurance (seguro saude)** | PENDENTE | Media | 3-4 dias |
@@ -215,7 +217,7 @@
 | 6 | **Telehealth flag** | PENDENTE | Baixa | 1 dia |
 
 **Detalhes dos gaps ALTA pendentes:**
-- **#1 Precos**: Adicionar `price` e `cost` na tabela `treatment_types` + UI admin para gerenciar. Dados ja disponiveis na tabela de servicos do OptiMantra (65 servicos com precos)
+- ~~**#1 Precos**~~: **FEITO** — Migration 023 (price_usd, cost_usd, price_at_booking) + ServicesPage com accordion, edição, criação de serviço + preços nos cards de agendamento
 - **#2 Pagamento**: Integracao com gateway (Stripe recomendado). Clinica processa ~$1,800/dia. Precisa confirmar qual processador querem usar
 - **#4 Insurance**: Tabela com plano, ID, copay, grupo, payer. Ex: paciente tem OSCAR SILVER SIMPLE. So armazenar (nao processar claims)
 - **#5 Superbill**: Gerar PDF/recibo por consulta com servicos, precos, codigos CPT. Essencial para faturamento
@@ -307,7 +309,7 @@ Comparando os 65 servicos do OptiMantra com nossos 18 tipos ativos:
 
 ### Fase 1 - Essencial (proximo sprint)
 1. ~~Expandir perfil do paciente~~ — **FEITO** (migrations 021+022, 10/02/2026)
-2. **Adicionar precos nos servicos** — Campo `price` e `cost` na tabela `treatment_types`
+2. ~~Adicionar precos nos servicos~~ — **FEITO** (migration 023, ServicesPage, 10/02/2026)
 3. **Servicos faltantes** — Adicionar os ~8 que faltam do OptiMantra (parcial: 11 ja adicionados em 018)
 4. **Flag Telehealth** — Diferenciar In-Office vs Telehealth nos appointments
 
@@ -339,10 +341,10 @@ Comparando os 65 servicos do OptiMantra com nossos 18 tipos ativos:
 | Gestao providers/admins | **100%** | CRUD completo |
 | Portal do paciente | **80%** | Falta: Intake forms |
 | Documentos | **70%** | Upload basico OK. Falta: consent forms, intake |
-| Financeiro | **0%** | Gap principal: precos, pagamento, superbill |
+| Financeiro | **20%** | Precos OK. Falta: pagamento, superbill |
 | Inventario | **0%** | Modulo novo necessario |
 | Labs/Exames | **0%** | Modulo novo necessario |
-| **TOTAL (uso real)** | **~75%** | Core OK. Falta parte financeira |
+| **TOTAL (uso real)** | **~80%** | Core OK. Falta parte financeira (pagamento, superbill) |
 
 ## Observacoes Importantes
 

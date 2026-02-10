@@ -880,5 +880,22 @@
   "services.errorCreate": "Failed to create service",
 
   "booking.summaryPrice": "Price",
-  "booking.priceVariable": "Variable - check with clinic"
+  "booking.priceVariable": "Variable - check with clinic",
+
+  "booking.modalityLabel": "Modality",
+  "booking.inOffice": "In-Office",
+  "booking.telehealth": "Telehealth",
+
+  "appointments.card.telehealth": "Telehealth",
+  "appointments.allModalities": "All Modalities",
+
+  "patient.insurancePrimary": "Primary Insurance",
+  "patient.insuranceSecondary": "Secondary Insurance",
+  "patient.insuranceProvider": "Insurance Provider",
+  "patient.insuranceMemberId": "Member ID",
+  "patient.insuranceGroupNumber": "Group Number",
+  "patient.insuranceCopay": "Copay ($)",
+  "patient.insuranceCoinsurance": "Co-Insurance (%)",
+  "patient.insuranceDeductible": "Deductible ($)",
+  "patient.insurancePayerId": "Payer ID"
 }

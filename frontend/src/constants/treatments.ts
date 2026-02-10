@@ -52,7 +52,7 @@ export const CATEGORIES: CategoryInfo[] = [
 ];
 
 // =============================================
-// TREATMENT TYPES (all 35: 29 active + 6 legacy)
+// TREATMENT TYPES (all 52: 46 active + 6 legacy)
 // =============================================
 
 export const TREATMENT_TYPES: TreatmentType[] = [
@@ -68,6 +68,30 @@ export const TREATMENT_TYPES: TreatmentType[] = [
     shortLabel: 'Retorno', shortLabelEn: 'Follow-up',
     description: 'Acompanhamento de tratamento', descriptionEn: 'Treatment follow-up',
     duration: 30, category: 'general', active: true, priceUsd: 125, costUsd: null,
+  },
+  {
+    key: 'inbody', label: 'Composicao Corporal InBody', labelEn: 'InBody Composition',
+    shortLabel: 'InBody', shortLabelEn: 'InBody',
+    description: 'Analise de composicao corporal com InBody', descriptionEn: 'Body composition analysis with InBody',
+    duration: 10, category: 'general', active: true, priceUsd: 50, costUsd: null,
+  },
+  {
+    key: 'calorimetry', label: 'Calorimetria', labelEn: 'Calorimetry',
+    shortLabel: 'Calorim.', shortLabelEn: 'Calorim.',
+    description: 'Teste de calorimetria para metabolismo', descriptionEn: 'Calorimetry test for metabolism',
+    duration: 15, category: 'general', active: true, priceUsd: 70, costUsd: 20,
+  },
+  {
+    key: 'nutritionist_consult', label: 'Consulta com Nutricionista', labelEn: 'Nutritionist Consult',
+    shortLabel: 'Nutric.', shortLabelEn: 'Nutric.',
+    description: 'Consulta completa com nutricionista', descriptionEn: 'Full consultation with nutritionist',
+    duration: 60, category: 'general', active: true, priceUsd: 120, costUsd: null,
+  },
+  {
+    key: 'mid_level_consultation', label: 'Consulta Mid-Level', labelEn: 'Mid-Level Consultation',
+    shortLabel: 'Mid-Level', shortLabelEn: 'Mid-Level',
+    description: 'Consulta com profissional mid-level', descriptionEn: 'Consultation with mid-level provider',
+    duration: 45, category: 'general', active: true, priceUsd: 200, costUsd: null,
   },
   // Well-being
   {
@@ -94,6 +118,42 @@ export const TREATMENT_TYPES: TreatmentType[] = [
     description: 'Protocolo de hipertrofia feminina', descriptionEn: 'Female hypertrophy protocol',
     duration: 45, category: 'wellbeing', active: true, priceUsd: 200, costUsd: null,
   },
+  {
+    key: 'weight_loss_injection', label: 'Injecao para Perda de Peso', labelEn: 'Weight Loss Injection',
+    shortLabel: 'Weight Loss', shortLabelEn: 'Weight Loss',
+    description: 'Injecao para auxilio na perda de peso', descriptionEn: 'Weight loss injection',
+    duration: 10, category: 'wellbeing', active: true, priceUsd: 75, costUsd: null,
+  },
+  {
+    key: 'testosterone_injection', label: 'Injecao de Testosterona', labelEn: 'Testosterone Injection',
+    shortLabel: 'Testo. Inj.', shortLabelEn: 'Testo. Inj.',
+    description: 'Injecao de testosterona', descriptionEn: 'Testosterone injection',
+    duration: 10, category: 'wellbeing', active: true, priceUsd: 25, costUsd: null,
+  },
+  {
+    key: 'nandrolone_injection', label: 'Injecao de Nandrolona', labelEn: 'Nandrolone Injection',
+    shortLabel: 'Nandrolona', shortLabelEn: 'Nandrolone',
+    description: 'Injecao de nandrolona', descriptionEn: 'Nandrolone injection',
+    duration: 10, category: 'wellbeing', active: true, priceUsd: 30, costUsd: null,
+  },
+  {
+    key: 'tirzepatide_2_5mg', label: 'Tirzepatide 2.5mg', labelEn: 'Tirzepatide 2.5mg',
+    shortLabel: 'Tirz. 2.5', shortLabelEn: 'Tirz. 2.5',
+    description: 'Tirzepatide dose 2.5mg', descriptionEn: 'Tirzepatide 2.5mg dose',
+    duration: 5, category: 'wellbeing', active: true, priceUsd: 300, costUsd: 50,
+  },
+  {
+    key: 'tirzepatide_5mg', label: 'Tirzepatide 5mg', labelEn: 'Tirzepatide 5mg',
+    shortLabel: 'Tirz. 5', shortLabelEn: 'Tirz. 5',
+    description: 'Tirzepatide dose 5mg', descriptionEn: 'Tirzepatide 5mg dose',
+    duration: 5, category: 'wellbeing', active: true, priceUsd: 350, costUsd: 100,
+  },
+  {
+    key: 'tirzepatide_7_5mg', label: 'Tirzepatide 7.5mg', labelEn: 'Tirzepatide 7.5mg',
+    shortLabel: 'Tirz. 7.5', shortLabelEn: 'Tirz. 7.5',
+    description: 'Tirzepatide dose 7.5mg', descriptionEn: 'Tirzepatide 7.5mg dose',
+    duration: 5, category: 'wellbeing', active: true, priceUsd: 375, costUsd: 130,
+  },
   // Personalized Medicine
   {
     key: 'insulin_resistance', label: 'Resistencia a Insulina', labelEn: 'Insulin Resistance Management',
@@ -118,6 +178,18 @@ export const TREATMENT_TYPES: TreatmentType[] = [
     shortLabel: 'Cortisol', shortLabelEn: 'Cortisol',
     description: 'Gerenciamento de niveis elevados de cortisol', descriptionEn: 'High cortisol level management',
     duration: 45, category: 'personalized', active: true, priceUsd: 200, costUsd: null,
+  },
+  {
+    key: 'male_pellet', label: 'Insercao de Pellet Masculino', labelEn: 'Male Pellet Insertion',
+    shortLabel: 'Pellet Masc.', shortLabelEn: 'Male Pellet',
+    description: 'Insercao de pellet hormonal masculino', descriptionEn: 'Male hormone pellet insertion',
+    duration: 30, category: 'personalized', active: true, priceUsd: 850, costUsd: 150,
+  },
+  {
+    key: 'female_pellet', label: 'Insercao de Pellet Feminino', labelEn: 'Female Pellet Insertion',
+    shortLabel: 'Pellet Fem.', shortLabelEn: 'Female Pellet',
+    description: 'Insercao de pellet hormonal feminino', descriptionEn: 'Female hormone pellet insertion',
+    duration: 30, category: 'personalized', active: true, priceUsd: 450, costUsd: 75,
   },
   // Rejuvenation
   {
@@ -186,6 +258,36 @@ export const TREATMENT_TYPES: TreatmentType[] = [
     shortLabel: 'Quelacao', shortLabelEn: 'Chelation',
     description: 'Terapia de quelacao para desintoxicacao de metais pesados', descriptionEn: 'Chelation therapy for heavy metal detoxification',
     duration: 90, category: 'iv_therapy', active: true, priceUsd: 300, costUsd: null,
+  },
+  {
+    key: 'high_dose_vitamin_c', label: 'Vitamina C Alta Dose', labelEn: 'High Dose Vitamin C',
+    shortLabel: 'Vit. C HD', shortLabelEn: 'Vit. C HD',
+    description: 'Infusao de vitamina C em alta dose', descriptionEn: 'High dose vitamin C infusion',
+    duration: 45, category: 'iv_therapy', active: true, priceUsd: 220, costUsd: null,
+  },
+  {
+    key: 'inflammation_iv', label: 'IV Anti-Inflamatorio', labelEn: 'Inflammation IV',
+    shortLabel: 'Inflam. IV', shortLabelEn: 'Inflam. IV',
+    description: 'Protocolo IV anti-inflamatorio', descriptionEn: 'Anti-inflammation IV protocol',
+    duration: 60, category: 'iv_therapy', active: true, priceUsd: 220, costUsd: 50,
+  },
+  {
+    key: 'metabolic_iv', label: 'IV Metabolico', labelEn: 'Metabolic IV',
+    shortLabel: 'Metab. IV', shortLabelEn: 'Metab. IV',
+    description: 'Protocolo IV para suporte metabolico', descriptionEn: 'Metabolic support IV protocol',
+    duration: 60, category: 'iv_therapy', active: true, priceUsd: 220, costUsd: 50,
+  },
+  {
+    key: 'homocysteine_iv', label: 'IV Homocisteina', labelEn: 'Homocysteine Management IV',
+    shortLabel: 'Homocist. IV', shortLabelEn: 'Homocyst. IV',
+    description: 'Protocolo IV para gerenciamento de homocisteina', descriptionEn: 'Homocysteine management IV protocol',
+    duration: 60, category: 'iv_therapy', active: true, priceUsd: 220, costUsd: 50,
+  },
+  {
+    key: 'insulin_resistance_iv', label: 'IV Resistencia a Insulina', labelEn: 'Insulin Resistance IV',
+    shortLabel: 'Insul. IV', shortLabelEn: 'Insul. IV',
+    description: 'Protocolo IV para resistencia a insulina', descriptionEn: 'Insulin resistance IV protocol',
+    duration: 60, category: 'iv_therapy', active: true, priceUsd: 220, costUsd: 100,
   },
   // Peptide Therapy
   {

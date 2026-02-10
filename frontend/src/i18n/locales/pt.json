@@ -873,5 +873,22 @@
   "services.errorCreate": "Erro ao criar servico",
 
   "booking.summaryPrice": "Preco",
-  "booking.priceVariable": "Variavel - consultar clinica"
+  "booking.priceVariable": "Variavel - consultar clinica",
+
+  "booking.modalityLabel": "Modalidade",
+  "booking.inOffice": "Presencial",
+  "booking.telehealth": "Telehealth",
+
+  "appointments.card.telehealth": "Telehealth",
+  "appointments.allModalities": "Todas Modalidades",
+
+  "patient.insurancePrimary": "Seguro Principal",
+  "patient.insuranceSecondary": "Seguro Secundario",
+  "patient.insuranceProvider": "Plano de Saude",
+  "patient.insuranceMemberId": "ID do Membro",
+  "patient.insuranceGroupNumber": "Numero do Grupo",
+  "patient.insuranceCopay": "Copay ($)",
+  "patient.insuranceCoinsurance": "Co-Insurance (%)",
+  "patient.insuranceDeductible": "Franquia ($)",
+  "patient.insurancePayerId": "ID do Pagador"
 }
