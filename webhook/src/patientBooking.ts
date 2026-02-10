@@ -1,0 +1,302 @@
+import { Language } from './types';
+import { UserInfo } from './userIdentifier';
+import { sendMessage } from './whatsappResponder';
+import {
+  getState,
+  setBookingState,
+  clearAllState,
+  BookingState,
+} from './stateManager';
+import {
+  getActiveProviders,
+  getAvailableDates,
+  getAvailableTimeSlots,
+  bookAppointment,
+  getEligibleTypes,
+} from './patientManager';
+import {
+  formatSelectTypeStep,
+  formatSelectProviderStep,
+  formatSelectDateStep,
+  formatSelectTimeStep,
+  formatBookingConfirmation,
+  formatBookingSuccess,
+  formatBookingCancelled,
+  formatNoAvailableDates,
+  formatIneligibleMessage,
+  formatBookingError,
+  formatInvalidOption,
+} from './patientResponder';
+import { getTypeLabel } from './whatsappResponder';
+
+/**
+ * Starts the booking flow by showing eligible appointment types.
+ */
+export async function startBookingFlow(
+  instance: string,
+  remoteJid: string,
+  patient: UserInfo
+): Promise<void> {
+  const lang = patient.language;
+  const types = await getEligibleTypes(patient.userId, patient.patientType || 'general', lang);
+
+  if (types.length === 0) {
+    await sendMessage(instance, remoteJid, formatIneligibleMessage(lang));
+    return;
+  }
+
+  setBookingState(remoteJid, {
+    step: 'select_type',
+    typeOptions: types,
+  });
+
+  await sendMessage(instance, remoteJid, formatSelectTypeStep(types, lang));
+}
+
+/**
+ * Starts booking flow pre-selecting a specific treatment type.
+ * Used when patient selects "Book this service" from service detail.
+ */
+export async function startBookingFlowWithType(
+  instance: string,
+  remoteJid: string,
+  patient: UserInfo,
+  treatmentKey: string
+): Promise<void> {
+  const lang = patient.language;
+  const providers = await getActiveProviders();
+
+  if (providers.length === 0) {
+    await sendMessage(instance, remoteJid, lang === 'pt'
+      ? '⚠️ Nenhum médico disponível no momento.'
+      : '⚠️ No providers available at the moment.');
+    return;
+  }
+
+  if (providers.length === 1) {
+    setBookingState(remoteJid, {
+      step: 'select_date',
+      appointmentType: treatmentKey,
+      providerId: providers[0].id,
+      providerName: providers[0].name,
+    });
+    await showAvailableDates(instance, remoteJid, providers[0].id, treatmentKey, lang);
+    return;
+  }
+
+  setBookingState(remoteJid, {
+    step: 'select_provider',
+    appointmentType: treatmentKey,
+    providerOptions: providers,
+  });
+  await sendMessage(instance, remoteJid, formatSelectProviderStep(providers, lang));
+}
+
+/**
+ * Handles each step of the booking flow.
+ */
+export async function handleBookingStep(
+  instance: string,
+  remoteJid: string,
+  input: string,
+  patient: UserInfo,
+  state: BookingState
+): Promise<void> {
+  const lang = patient.language;
+
+  // Special case: confirm selection (option 2 from menu)
+  if (state.appointmentType === '__confirm__') {
+    const { confirmAppointment } = await import('./patientManager');
+    const idx = parseInt(input, 10);
+    if (isNaN(idx) || idx < 1 || !state.typeOptions || idx > state.typeOptions.length) {
+      await sendMessage(instance, remoteJid, formatInvalidOption(lang));
+      return;
+    }
+    const aptId = state.typeOptions[idx - 1].key;
+    const success = await confirmAppointment(aptId);
+    clearAllState(remoteJid);
+    const { formatConfirmationSuccess } = await import('./patientResponder');
+    await sendMessage(instance, remoteJid,
+      success ? formatConfirmationSuccess(lang) : formatInvalidOption(lang)
+    );
+    return;
+  }
+
+  switch (state.step) {
+    case 'select_type': {
+      const idx = parseInt(input, 10);
+      if (isNaN(idx) || idx < 1 || !state.typeOptions || idx > state.typeOptions.length) {
+        await sendMessage(instance, remoteJid, formatInvalidOption(lang));
+        return;
+      }
+
+      const selectedType = state.typeOptions[idx - 1];
+      const providers = await getActiveProviders();
+
+      if (providers.length === 0) {
+        clearAllState(remoteJid);
+        await sendMessage(instance, remoteJid, lang === 'pt'
+          ? '⚠️ Nenhum médico disponível no momento.'
+          : '⚠️ No providers available at the moment.');
+        return;
+      }
+
+      if (providers.length === 1) {
+        setBookingState(remoteJid, {
+          step: 'select_date',
+          appointmentType: selectedType.key,
+          providerId: providers[0].id,
+          providerName: providers[0].name,
+        });
+        await showAvailableDates(instance, remoteJid, providers[0].id, selectedType.key, lang);
+        return;
+      }
+
+      setBookingState(remoteJid, {
+        step: 'select_provider',
+        appointmentType: selectedType.key,
+        providerOptions: providers,
+      });
+      await sendMessage(instance, remoteJid, formatSelectProviderStep(providers, lang));
+      break;
+    }
+
+    case 'select_provider': {
+      const idx = parseInt(input, 10);
+      if (isNaN(idx) || idx < 1 || !state.providerOptions || idx > state.providerOptions.length) {
+        await sendMessage(instance, remoteJid, formatInvalidOption(lang));
+        return;
+      }
+
+      const provider = state.providerOptions[idx - 1];
+      setBookingState(remoteJid, {
+        step: 'select_date',
+        appointmentType: state.appointmentType!,
+        providerId: provider.id,
+        providerName: provider.name,
+      });
+      await showAvailableDates(instance, remoteJid, provider.id, state.appointmentType!, lang);
+      break;
+    }
+
+    case 'select_date': {
+      const idx = parseInt(input, 10);
+      if (isNaN(idx) || idx < 1 || !state.dateOptions || idx > state.dateOptions.length) {
+        await sendMessage(instance, remoteJid, formatInvalidOption(lang));
+        return;
+      }
+
+      const selectedDate = state.dateOptions[idx - 1];
+      const slots = await getAvailableTimeSlots(
+        state.providerId!,
+        selectedDate.date,
+        state.appointmentType!
+      );
+
+      if (slots.length === 0) {
+        await sendMessage(instance, remoteJid, lang === 'pt'
+          ? '⚠️ Nenhum horário disponível nesta data. Escolha outra.'
+          : '⚠️ No slots available on this date. Choose another.');
+        return;
+      }
+
+      setBookingState(remoteJid, {
+        step: 'select_time',
+        appointmentType: state.appointmentType!,
+        providerId: state.providerId!,
+        providerName: state.providerName!,
+        date: selectedDate.date,
+        timeOptions: slots,
+      });
+      await sendMessage(instance, remoteJid, formatSelectTimeStep(slots, lang));
+      break;
+    }
+
+    case 'select_time': {
+      const idx = parseInt(input, 10);
+      if (isNaN(idx) || idx < 1 || !state.timeOptions || idx > state.timeOptions.length) {
+        await sendMessage(instance, remoteJid, formatInvalidOption(lang));
+        return;
+      }
+
+      const slot = state.timeOptions[idx - 1];
+      const typeName = getTypeLabel(state.appointmentType!, lang);
+
+      setBookingState(remoteJid, {
+        step: 'confirm',
+        appointmentType: state.appointmentType!,
+        providerId: state.providerId!,
+        providerName: state.providerName!,
+        date: state.date!,
+        selectedSlot: slot.scheduledAt,
+        timeOptions: state.timeOptions,
+      });
+
+      await sendMessage(instance, remoteJid,
+        formatBookingConfirmation(typeName, state.providerName!, state.date!, slot.time, lang)
+      );
+      break;
+    }
+
+    case 'confirm': {
+      if (input === '1') {
+        const result = await bookAppointment(
+          patient.userId,
+          state.providerId!,
+          state.appointmentType!,
+          state.selectedSlot!
+        );
+
+        clearAllState(remoteJid);
+
+        if (result.success) {
+          const typeName = getTypeLabel(state.appointmentType!, lang);
+          const dt = new Date(state.selectedSlot!);
+          const hours = dt.getUTCHours().toString().padStart(2, '0');
+          const minutes = dt.getUTCMinutes().toString().padStart(2, '0');
+          await sendMessage(instance, remoteJid,
+            formatBookingSuccess(typeName, state.providerName!, state.date!, `${hours}:${minutes}`, lang)
+          );
+        } else {
+          await sendMessage(instance, remoteJid, formatBookingError(lang));
+        }
+      } else if (input === '2') {
+        clearAllState(remoteJid);
+        await sendMessage(instance, remoteJid, formatBookingCancelled(lang));
+      } else {
+        await sendMessage(instance, remoteJid, formatInvalidOption(lang));
+      }
+      break;
+    }
+  }
+}
+
+/**
+ * Shows available dates for the selected provider and type.
+ */
+async function showAvailableDates(
+  instance: string,
+  remoteJid: string,
+  providerId: string,
+  appointmentType: string,
+  lang: Language
+): Promise<void> {
+  const dates = await getAvailableDates(providerId, appointmentType, 5);
+
+  if (dates.length === 0) {
+    clearAllState(remoteJid);
+    await sendMessage(instance, remoteJid, formatNoAvailableDates(lang));
+    return;
+  }
+
+  const currentState = getState(remoteJid);
+  if (currentState?.type === 'booking') {
+    setBookingState(remoteJid, {
+      ...currentState.data,
+      step: 'select_date',
+      dateOptions: dates,
+    });
+  }
+
+  await sendMessage(instance, remoteJid, formatSelectDateStep(dates, lang));
+}

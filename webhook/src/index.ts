@@ -1,14 +1,12 @@
 import express from 'express';
 import { config } from './config';
 import { EvolutionWebhookPayload } from './types';
-import { parseCommand } from './commandParser';
-import { getSchedule, createBlock, removeBlocks, generateMagicLink } from './scheduleManager';
-import { shortenUrl, resolveCode } from './urlShortener';
-import { toProviderInfo } from './userIdentifier';
-import { handlePatientMessage } from './patientHandler';
+import { resolveCode } from './urlShortener';
+import { handlePatientMessage } from './patientMainMenu';
+import { handleProviderMessage } from './providerMainMenu';
 import { startReminderScheduler } from './reminderScheduler';
 import { refreshCache } from './treatmentCache';
-import { logIncoming, logOutgoing } from './messageLogger';
+import { logIncoming } from './messageLogger';
 import {
   identifyAllRoles,
   showRoleSelectionMenu,
@@ -18,18 +16,6 @@ import {
 } from './router';
 import { clearAllState } from './stateManager';
 import { extractPhoneFromJid } from './phoneUtils';
-import {
-  sendMessage,
-  formatScheduleResponse,
-  formatBlockResponse,
-  formatUnblockResponse,
-  formatHelpResponse,
-  formatCommandsResponse,
-  formatDateRequiredResponse,
-  formatPatientsResponse,
-  appendLink,
-} from './whatsappResponder';
-
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 
@@ -54,15 +40,6 @@ app.get('/go/:code', (req, res) => {
   }
   res.status(404).send('Link expirado ou inválido. Solicite um novo pelo WhatsApp.');
 });
-
-/**
- * Generates a magic link, shortens it, and returns the short URL.
- */
-async function getShortLink(email: string, redirectPath: string): Promise<string | null> {
-  const fullLink = await generateMagicLink(email, redirectPath);
-  if (!fullLink) return null;
-  return shortenUrl(fullLink);
-}
 
 // Webhook endpoint for Evolution API
 // Evolution API v2.3+ appends event name to URL when WEBHOOK_BY_EVENTS=true
@@ -128,8 +105,7 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
         const providerProfile = roles.find(u => u.role === 'provider' || u.role === 'admin');
         if (providerProfile) {
           console.log(`[Webhook] Dual-role → Provider: ${providerProfile.firstName} ${providerProfile.lastName}`);
-          const response = formatHelpResponse(providerProfile.language);
-          await sendMessage(instance, remoteJid, response);
+          await handleProviderMessage(instance, remoteJid, 'menu', providerProfile);
           return res.sendStatus(200);
         }
       }
@@ -178,103 +154,10 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
     if (activeUser.role === 'patient') {
       console.log(`[Webhook] Patient: ${activeUser.firstName} ${activeUser.lastName} | Message: "${input}"`);
       await handlePatientMessage(instance, remoteJid, text, activeUser);
-      return res.sendStatus(200);
-    }
-
-    // Provider/Admin flow (unchanged)
-    const provider = toProviderInfo(activeUser);
-    const command = parseCommand(text);
-
-    // For numbered menu selections, use the provider's language preference
-    if (/^\d+$/.test(input)) {
-      command.language = provider.language;
-    }
-
-    const lang = command.language;
-
-    console.log(`[Webhook] Provider: ${provider.firstName} ${provider.lastName} | Command: ${command.type} | Raw: "${command.raw}"`);
-    logIncoming(phone, input, activeUser.userId, activeUser.role);
-
-    switch (command.type) {
-      case 'schedule': {
-        const date = command.date || new Date();
-        const { appointments, blocks } = await getSchedule(provider.providerId, date);
-        let response = formatScheduleResponse(date, appointments, blocks, lang);
-        const link = await getShortLink(provider.email, '/admin/calendar');
-        response = appendLink(response, link, lang);
-        await sendMessage(instance, remoteJid, response);
-        break;
-      }
-
-      case 'block': {
-        if (!command.date) {
-          await sendMessage(instance, remoteJid, formatDateRequiredResponse(lang));
-          break;
-        }
-
-        const startTime = command.period === 'full_day' ? null : (command.startTime || null);
-        const endTime = command.period === 'full_day' ? null : (command.endTime || null);
-
-        const result = await createBlock(
-          provider.providerId,
-          command.date,
-          startTime,
-          endTime,
-          null
-        );
-
-        let response = formatBlockResponse(
-          command.date,
-          startTime,
-          endTime,
-          result.conflicts || [],
-          lang
-        );
-        const link = await getShortLink(provider.email, '/admin/calendar');
-        response = appendLink(response, link, lang);
-        await sendMessage(instance, remoteJid, response);
-        break;
-      }
-
-      case 'unblock': {
-        if (!command.date) {
-          await sendMessage(instance, remoteJid, formatDateRequiredResponse(lang));
-          break;
-        }
-
-        const removedCount = await removeBlocks(provider.providerId, command.date);
-        let response = formatUnblockResponse(command.date, removedCount, lang);
-        const link = await getShortLink(provider.email, '/admin/calendar');
-        response = appendLink(response, link, lang);
-        await sendMessage(instance, remoteJid, response);
-        break;
-      }
-
-      case 'patients': {
-        const link = await getShortLink(provider.email, '/admin/patients');
-        const response = formatPatientsResponse(link, lang);
-        await sendMessage(instance, remoteJid, response);
-        break;
-      }
-
-      case 'commands': {
-        const response = formatCommandsResponse(lang);
-        await sendMessage(instance, remoteJid, response);
-        break;
-      }
-
-      case 'help': {
-        const response = formatHelpResponse(lang);
-        await sendMessage(instance, remoteJid, response);
-        break;
-      }
-
-      case 'unknown':
-      default: {
-        const response = formatHelpResponse(lang);
-        await sendMessage(instance, remoteJid, response);
-        break;
-      }
+    } else {
+      // Provider/Admin flow — now uses numbered menus
+      console.log(`[Webhook] Provider: ${activeUser.firstName} ${activeUser.lastName} | Message: "${input}"`);
+      await handleProviderMessage(instance, remoteJid, text, activeUser);
     }
 
     res.sendStatus(200);
