@@ -80,4 +80,7 @@ frontend/.playwright-mcp/
 # Brand assets (originais no Google Drive)
 *.pdf
 
+# Docs internos (não versionar)
+docs/INTEGRACOES_DECISOES.md
+
 # Local folders (removido Servidor/ para versionar)

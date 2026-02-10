@@ -1,7 +1,26 @@
 import { Language } from './types';
 import { UserInfo } from './userIdentifier';
 import { sendMessage } from './whatsappResponder';
-import { getState, setBookingState, setCancelState, clearState, BookingState, CancelState } from './conversationState';
+import {
+  getState,
+  setBookingState,
+  setCancelState,
+  BookingState,
+  CancelState,
+} from './conversationState';
+import {
+  getMenuState,
+  setMenuState,
+  clearMenuState,
+  clearAllState,
+  resolveMenuOption,
+} from './stateManager';
+import { buildPatientMainMenu } from './menuBuilder';
+import { loadPatientContext } from './router';
+import { logIncoming, logOutgoing } from './messageLogger';
+import { showServicesMenu, handleServicesInput } from './patientServices';
+import { showClinicInfoMenu, handleClinicInfoInput } from './patientClinicInfo';
+import { extractPhoneFromJid } from './phoneUtils';
 import {
   getUpcomingAppointments,
   getActiveProviders,
@@ -15,7 +34,6 @@ import {
   recordPatientConfirmation,
 } from './patientManager';
 import {
-  formatPatientMenu,
   formatUpcomingAppointments,
   formatSelectAppointment,
   formatConfirmationSuccess,
@@ -31,7 +49,6 @@ import {
   formatBookingCancelled,
   formatNoAvailableDates,
   formatIneligibleMessage,
-  formatClinicContact,
   formatBookingError,
   formatInvalidOption,
   formatLateCancellationWarning,
@@ -44,6 +61,7 @@ const CONFIRMATION_WORDS = ['ok', 'sim', 'yes', 'confirmo', 'confirmed', 'confir
 
 /**
  * Main handler for patient WhatsApp messages.
+ * Dynamic menus, services browsing, clinic info, and conversation logging.
  */
 export async function handlePatientMessage(
   instance: string,
@@ -54,15 +72,19 @@ export async function handlePatientMessage(
   const input = text.trim();
   const lower = input.toLowerCase();
   const lang = patient.language;
+  const phone = extractPhoneFromJid(remoteJid);
 
-  // Check for exit words - always clear state and show menu
+  // Log incoming message (non-blocking)
+  logIncoming(phone, input, patient.userId, 'patient');
+
+  // Check for exit words — clear all state and show main menu
   if (EXIT_WORDS.includes(lower)) {
-    clearState(remoteJid);
-    await sendMessage(instance, remoteJid, formatPatientMenu(patient.firstName, lang));
+    clearAllState(remoteJid);
+    await showMainMenu(instance, remoteJid, patient);
     return;
   }
 
-  // If there's an active conversation state, route to it
+  // If there's an active booking/cancel flow, route to it first
   const state = getState(remoteJid);
   if (state) {
     if (state.type === 'booking') {
@@ -73,7 +95,47 @@ export async function handlePatientMessage(
     return;
   }
 
-  // Check for quick presence confirmation (OK, sim, yes, confirmo)
+  // Check sub-menu states (services, clinic info)
+  const menuState = getMenuState(remoteJid);
+  if (menuState) {
+    const handler = menuState.handler;
+
+    // Services flow
+    if (['services', 'services_category', 'service_detail'].includes(handler)) {
+      const result = await handleServicesInput(instance, remoteJid, input, lang, patient.userId);
+      if (result.handled) return;
+
+      // Book specific service from detail view
+      if (result.action === 'book_specific' && result.data?.treatmentKey) {
+        await startBookingFlowWithType(instance, remoteJid, patient, result.data.treatmentKey);
+        return;
+      }
+
+      // Return to main menu
+      if (result.action === 'main_menu') {
+        await showMainMenu(instance, remoteJid, patient);
+        return;
+      }
+    }
+
+    // Clinic info flow
+    if (handler === 'clinic_info') {
+      const result = await handleClinicInfoInput(instance, remoteJid, input, lang, patient.userId);
+      if (result.handled) return;
+    }
+
+    // Main menu option mapping
+    if (handler === 'main_menu') {
+      const option = resolveMenuOption(remoteJid, input);
+      if (option) {
+        clearMenuState(remoteJid);
+        await dispatchMainMenuAction(instance, remoteJid, option.action, patient);
+        return;
+      }
+    }
+  }
+
+  // Quick presence confirmation (OK, sim, yes, confirmo)
   if (CONFIRMATION_WORDS.includes(lower)) {
     const nextApt = await getNextConfirmedAppointment(patient.userId);
     if (nextApt) {
@@ -82,67 +144,86 @@ export async function handlePatientMessage(
       const dateStr = formatDateShort(dt, lang);
       const hours = dt.getUTCHours().toString().padStart(2, '0');
       const minutes = dt.getUTCMinutes().toString().padStart(2, '0');
-      await sendMessage(instance, remoteJid,
-        formatPresenceConfirmation(dateStr, `${hours}:${minutes}`, lang)
-      );
+      const msg = formatPresenceConfirmation(dateStr, `${hours}:${minutes}`, lang);
+      await sendMessage(instance, remoteJid, msg);
+      logOutgoing(phone, msg, patient.userId, 'patient', 'quick_confirm');
       return;
     }
-    // No upcoming confirmed appointment, fall through to menu
+    // No upcoming confirmed appointment — fall through to show menu
   }
 
-  // No active state - handle as menu selection
-  await handleMenuSelection(instance, remoteJid, lower, patient);
+  // No active state — show dynamic main menu
+  await showMainMenu(instance, remoteJid, patient);
 }
 
+// =============================================
+// Main Menu (Dynamic)
+// =============================================
+
 /**
- * Handles the main menu selection.
+ * Shows the dynamic main menu based on patient context.
+ * Only shows options relevant to the patient's current state.
  */
-async function handleMenuSelection(
+async function showMainMenu(
   instance: string,
   remoteJid: string,
-  input: string,
   patient: UserInfo
 ): Promise<void> {
   const lang = patient.language;
+  const phone = extractPhoneFromJid(remoteJid);
+  const context = await loadPatientContext(patient.userId);
 
-  switch (input) {
-    case '1': {
-      // My appointments
+  const menu = buildPatientMainMenu(patient.firstName, lang, {
+    hasUpcoming: context.upcomingCount > 0,
+    hasPending: context.pendingCount > 0,
+    hasCancellable: context.cancellableCount > 0,
+  });
+
+  setMenuState(remoteJid, 'main_menu', menu.optionMap);
+  await sendMessage(instance, remoteJid, menu.text);
+  logOutgoing(phone, menu.text, patient.userId, 'patient', 'main_menu');
+}
+
+/**
+ * Dispatches the selected action from the main menu.
+ */
+async function dispatchMainMenuAction(
+  instance: string,
+  remoteJid: string,
+  action: string,
+  patient: UserInfo
+): Promise<void> {
+  const lang = patient.language;
+  const phone = extractPhoneFromJid(remoteJid);
+
+  switch (action) {
+    case 'appointments': {
       const appointments = await getUpcomingAppointments(patient.userId);
-      await sendMessage(instance, remoteJid, formatUpcomingAppointments(appointments, lang));
+      const msg = formatUpcomingAppointments(appointments, lang);
+      await sendMessage(instance, remoteJid, msg);
+      logOutgoing(phone, msg, patient.userId, 'patient', 'appointments');
       break;
     }
 
-    case '2': {
-      // Confirm appointment
+    case 'confirm': {
       const appointments = await getUpcomingAppointments(patient.userId);
       const pending = appointments.filter(a => a.status === 'pending');
 
       if (pending.length === 0) {
-        await sendMessage(instance, remoteJid, formatNoPendingAppointments('confirm', lang));
+        const msg = formatNoPendingAppointments('confirm', lang);
+        await sendMessage(instance, remoteJid, msg);
         break;
       }
 
       if (pending.length === 1) {
-        // Auto-confirm the only pending one
         const success = await confirmAppointment(pending[0].id);
-        await sendMessage(instance, remoteJid,
-          success ? formatConfirmationSuccess(lang) : formatInvalidOption(lang)
-        );
+        const msg = success ? formatConfirmationSuccess(lang) : formatInvalidOption(lang);
+        await sendMessage(instance, remoteJid, msg);
         break;
       }
 
-      // Multiple pending - ask which one
+      // Multiple pending — ask which one
       await sendMessage(instance, remoteJid, formatSelectAppointment(pending, 'confirm', lang));
-      // Store temporarily so we handle the response
-      setBookingState(remoteJid, {
-        step: 'select_type', // reuse step field
-        typeOptions: pending.map((a, i) => ({ key: a.id, label: `${i + 1}`, duration: 0 })),
-      });
-      // Actually use a special marker in state
-      clearState(remoteJid);
-      // We need a simpler approach: just wait for their number response
-      // Use a pseudo-state to track "waiting for confirm selection"
       setBookingState(remoteJid, {
         step: 'select_type',
         appointmentType: '__confirm__',
@@ -151,18 +232,17 @@ async function handleMenuSelection(
       break;
     }
 
-    case '3': {
-      // Cancel appointment
+    case 'cancel': {
       const appointments = await getUpcomingAppointments(patient.userId);
       const cancellable = appointments.filter(a => ['pending', 'confirmed'].includes(a.status));
 
       if (cancellable.length === 0) {
-        await sendMessage(instance, remoteJid, formatNoPendingAppointments('cancel', lang));
+        const msg = formatNoPendingAppointments('cancel', lang);
+        await sendMessage(instance, remoteJid, msg);
         break;
       }
 
       if (cancellable.length === 1) {
-        // Only one - check for late cancellation
         const hoursUntil = (new Date(cancellable[0].scheduled_at).getTime() - Date.now()) / (1000 * 60 * 60);
         if (hoursUntil < 24 && hoursUntil > 0) {
           setCancelState(remoteJid, {
@@ -181,7 +261,7 @@ async function handleMenuSelection(
         break;
       }
 
-      // Multiple - ask which one
+      // Multiple — ask which one
       await sendMessage(instance, remoteJid, formatSelectAppointment(cancellable, 'cancel', lang));
       setCancelState(remoteJid, {
         step: 'select_appointment',
@@ -190,25 +270,31 @@ async function handleMenuSelection(
       break;
     }
 
-    case '4': {
-      // Book appointment - start booking flow
+    case 'book': {
       await startBookingFlow(instance, remoteJid, patient);
       break;
     }
 
-    case '5': {
-      // Contact clinic
-      await sendMessage(instance, remoteJid, formatClinicContact(lang));
+    case 'services': {
+      await showServicesMenu(instance, remoteJid, lang, patient.userId);
+      break;
+    }
+
+    case 'clinic_info': {
+      await showClinicInfoMenu(instance, remoteJid, lang, patient.userId);
       break;
     }
 
     default: {
-      // Unknown input - show menu
-      await sendMessage(instance, remoteJid, formatPatientMenu(patient.firstName, lang));
+      await showMainMenu(instance, remoteJid, patient);
       break;
     }
   }
 }
+
+// =============================================
+// Booking Flow
+// =============================================
 
 /**
  * Starts the booking flow by showing eligible appointment types.
@@ -235,6 +321,46 @@ async function startBookingFlow(
 }
 
 /**
+ * Starts booking flow pre-selecting a specific treatment type.
+ * Used when patient selects "Book this service" from service detail.
+ */
+async function startBookingFlowWithType(
+  instance: string,
+  remoteJid: string,
+  patient: UserInfo,
+  treatmentKey: string
+): Promise<void> {
+  const lang = patient.language;
+  const providers = await getActiveProviders();
+
+  if (providers.length === 0) {
+    await sendMessage(instance, remoteJid, lang === 'pt'
+      ? '⚠️ Nenhum médico disponível no momento.'
+      : '⚠️ No providers available at the moment.');
+    return;
+  }
+
+  if (providers.length === 1) {
+    // Skip provider selection
+    setBookingState(remoteJid, {
+      step: 'select_date',
+      appointmentType: treatmentKey,
+      providerId: providers[0].id,
+      providerName: providers[0].name,
+    });
+    await showAvailableDates(instance, remoteJid, providers[0].id, treatmentKey, lang);
+    return;
+  }
+
+  setBookingState(remoteJid, {
+    step: 'select_provider',
+    appointmentType: treatmentKey,
+    providerOptions: providers,
+  });
+  await sendMessage(instance, remoteJid, formatSelectProviderStep(providers, lang));
+}
+
+/**
  * Handles each step of the booking flow.
  */
 async function handleBookingStep(
@@ -255,7 +381,7 @@ async function handleBookingStep(
     }
     const aptId = state.typeOptions[idx - 1].key;
     const success = await confirmAppointment(aptId);
-    clearState(remoteJid);
+    clearAllState(remoteJid);
     await sendMessage(instance, remoteJid,
       success ? formatConfirmationSuccess(lang) : formatInvalidOption(lang)
     );
@@ -274,7 +400,7 @@ async function handleBookingStep(
       const providers = await getActiveProviders();
 
       if (providers.length === 0) {
-        clearState(remoteJid);
+        clearAllState(remoteJid);
         await sendMessage(instance, remoteJid, lang === 'pt'
           ? '⚠️ Nenhum médico disponível no momento.'
           : '⚠️ No providers available at the moment.');
@@ -282,7 +408,6 @@ async function handleBookingStep(
       }
 
       if (providers.length === 1) {
-        // Skip provider selection
         setBookingState(remoteJid, {
           step: 'select_date',
           appointmentType: selectedType.key,
@@ -381,7 +506,6 @@ async function handleBookingStep(
 
     case 'confirm': {
       if (input === '1') {
-        // Confirm booking
         const result = await bookAppointment(
           patient.userId,
           state.providerId!,
@@ -389,7 +513,7 @@ async function handleBookingStep(
           state.selectedSlot!
         );
 
-        clearState(remoteJid);
+        clearAllState(remoteJid);
 
         if (result.success) {
           const typeName = getTypeLabel(state.appointmentType!, lang);
@@ -403,8 +527,7 @@ async function handleBookingStep(
           await sendMessage(instance, remoteJid, formatBookingError(lang));
         }
       } else if (input === '2') {
-        // Cancel booking
-        clearState(remoteJid);
+        clearAllState(remoteJid);
         await sendMessage(instance, remoteJid, formatBookingCancelled(lang));
       } else {
         await sendMessage(instance, remoteJid, formatInvalidOption(lang));
@@ -414,9 +537,10 @@ async function handleBookingStep(
   }
 }
 
-/**
- * Shows available dates for the selected provider + type.
- */
+// =============================================
+// Available Dates Helper
+// =============================================
+
 async function showAvailableDates(
   instance: string,
   remoteJid: string,
@@ -427,7 +551,7 @@ async function showAvailableDates(
   const dates = await getAvailableDates(providerId, appointmentType, 5);
 
   if (dates.length === 0) {
-    clearState(remoteJid);
+    clearAllState(remoteJid);
     await sendMessage(instance, remoteJid, formatNoAvailableDates(lang));
     return;
   }
@@ -445,9 +569,10 @@ async function showAvailableDates(
   await sendMessage(instance, remoteJid, formatSelectDateStep(dates, lang));
 }
 
-/**
- * Handles steps of the cancellation flow.
- */
+// =============================================
+// Cancel Flow
+// =============================================
+
 async function handleCancelStep(
   instance: string,
   remoteJid: string,
@@ -491,15 +616,13 @@ async function handleCancelStep(
 
     case 'confirm_late': {
       if (input === '1') {
-        // User confirmed late cancellation, proceed to reason
         setCancelState(remoteJid, {
           step: 'enter_reason',
           appointmentId: cancel.appointmentId!,
         });
         await sendMessage(instance, remoteJid, formatAskCancelReason(lang));
       } else if (input === '2') {
-        // User decided not to cancel
-        clearState(remoteJid);
+        clearAllState(remoteJid);
         await sendMessage(instance, remoteJid, lang === 'pt'
           ? 'ℹ️ Cancelamento não realizado. Sua consulta está mantida.\n\n_Envie *menu* para voltar_'
           : 'ℹ️ Cancellation not made. Your appointment is still active.\n\n_Send *menu* to go back_');
@@ -512,7 +635,7 @@ async function handleCancelStep(
     case 'enter_reason': {
       const reason = input;
       const success = await cancelAppointment(cancel.appointmentId!, reason);
-      clearState(remoteJid);
+      clearAllState(remoteJid);
 
       if (success) {
         await sendMessage(instance, remoteJid, formatCancellationSuccess(lang));
