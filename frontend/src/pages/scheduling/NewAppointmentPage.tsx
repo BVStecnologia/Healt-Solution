@@ -17,7 +17,7 @@ import ProviderSelect from '../../components/scheduling/ProviderSelect';
 import TimeSlotPicker from '../../components/scheduling/TimeSlotPicker';
 import EligibilityAlert from '../../components/scheduling/EligibilityAlert';
 import type { AppointmentType, Provider, TimeSlot } from '../../types/database';
-import { getTreatmentLabel, getTreatmentsByCategory, getTreatmentDuration } from '../../constants/treatments';
+import { getTreatmentLabel, getTreatmentsByCategory, getTreatmentDuration, getTreatmentPrice, formatPriceShort } from '../../constants/treatments';
 
 const PageHeader = styled.div`
   display: flex;
@@ -330,6 +330,14 @@ const SubStepTitle = styled.div<{ $color: string }>`
   }
 `;
 
+const BadgeRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+`;
+
 const DurationBadge = styled.span`
   display: inline-flex;
   align-items: center;
@@ -339,7 +347,19 @@ const DurationBadge = styled.span`
   background: ${theme.colors.background};
   padding: 2px 6px;
   border-radius: 8px;
-  margin-top: 4px;
+`;
+
+const PriceBadge = styled.span<{ $variable?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: ${props => props.$variable ? theme.colors.textSecondary : theme.colors.primary};
+  background: ${props => props.$variable ? theme.colors.background : `${theme.colors.primary}10`};
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-style: ${props => props.$variable ? 'italic' : 'normal'};
 `;
 
 const NewAppointmentPage: React.FC = () => {
@@ -529,10 +549,15 @@ const NewAppointmentPage: React.FC = () => {
                       >
                         <TypeName $selected={selectedType === tr.key}>{i18n.language === 'en' ? tr.labelEn : tr.label}</TypeName>
                         <TypeDescription>{i18n.language === 'en' ? tr.descriptionEn : tr.description}</TypeDescription>
-                        <DurationBadge>
-                          <Clock size={10} />
-                          {tr.duration} min
-                        </DurationBadge>
+                        <BadgeRow>
+                          <DurationBadge>
+                            <Clock size={10} />
+                            {tr.duration} min
+                          </DurationBadge>
+                          <PriceBadge $variable={tr.priceUsd === null}>
+                            {formatPriceShort(tr.priceUsd)}
+                          </PriceBadge>
+                        </BadgeRow>
                       </TypeCard>
                     ))}
                   </TypeGrid>
@@ -649,6 +674,19 @@ const NewAppointmentPage: React.FC = () => {
                   })()}
                 </SummaryValue>
               </SummaryRow>
+              {selectedType && (
+                <SummaryRow>
+                  <SummaryLabel>{t('booking.summaryPrice')}</SummaryLabel>
+                  <SummaryValue style={{
+                    color: getTreatmentPrice(selectedType) === null ? theme.colors.textSecondary : theme.colors.primary,
+                    fontStyle: getTreatmentPrice(selectedType) === null ? 'italic' : 'normal',
+                  }}>
+                    {getTreatmentPrice(selectedType) !== null
+                      ? formatPriceShort(getTreatmentPrice(selectedType))
+                      : t('booking.priceVariable')}
+                  </SummaryValue>
+                </SummaryRow>
+              )}
             </Summary>
 
             {submitError && (

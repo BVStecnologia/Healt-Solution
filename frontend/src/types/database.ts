@@ -112,6 +112,7 @@ export interface Appointment {
   notes: string | null;
   cancelled_at: string | null;
   cancellation_reason: string | null;
+  price_at_booking: number | null;
   created_at: string;
   updated_at: string;
   provider?: Provider;
@@ -258,6 +259,7 @@ export type Database = {
           notes?: string | null;
           cancelled_at?: string | null;
           cancellation_reason?: string | null;
+          price_at_booking?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -271,6 +273,7 @@ export type Database = {
           notes?: string | null;
           cancelled_at?: string | null;
           cancellation_reason?: string | null;
+          price_at_booking?: number | null;
           updated_at?: string;
         };
         Relationships: [];

@@ -17,6 +17,8 @@ export interface TreatmentType {
   duration: number;
   category: TreatmentCategory;
   active: boolean;
+  priceUsd: number | null;
+  costUsd: number | null;
 }
 
 export interface CategoryInfo {
@@ -41,12 +43,12 @@ export interface PatientTypeInfo {
 // =============================================
 
 export const CATEGORIES: CategoryInfo[] = [
-  { key: 'wellbeing', label: 'Bem-estar', labelEn: 'Well-being', icon: 'Heart', color: '#B48F7A' },
+  { key: 'general', label: 'Geral', labelEn: 'General', icon: 'Stethoscope', color: '#6B7B8D' },
+  { key: 'wellbeing', label: 'Bem-estar', labelEn: 'Well-being', icon: 'Heart', color: '#2A9D8F' },
   { key: 'personalized', label: 'Medicina Personalizada', labelEn: 'Personalized Medicine', icon: 'Brain', color: '#92563E' },
-  { key: 'rejuvenation', label: 'Rejuvenescimento', labelEn: 'Rejuvenation', icon: 'Sparkles', color: '#C4836A' },
-  { key: 'iv_therapy', label: 'Terapia IV', labelEn: 'IV Therapy', icon: 'Droplets', color: '#B48F7A' },
-  { key: 'peptide_therapy', label: 'Terapia de Peptideos', labelEn: 'Peptide Therapy', icon: 'Dna', color: '#D4A574' },
-  { key: 'general', label: 'Geral', labelEn: 'General', icon: 'Stethoscope', color: '#7A6355' },
+  { key: 'rejuvenation', label: 'Rejuvenescimento', labelEn: 'Rejuvenation', icon: 'Sparkles', color: '#C46B8A' },
+  { key: 'iv_therapy', label: 'Terapia IV', labelEn: 'IV Therapy', icon: 'Droplets', color: '#4A7FB5' },
+  { key: 'peptide_therapy', label: 'Terapia de Peptideos', labelEn: 'Peptide Therapy', icon: 'Dna', color: '#7B68AE' },
 ];
 
 // =============================================
@@ -59,217 +61,217 @@ export const TREATMENT_TYPES: TreatmentType[] = [
     key: 'initial_consultation', label: 'Consulta Inicial', labelEn: 'Initial Consultation',
     shortLabel: 'Inicial', shortLabelEn: 'Initial',
     description: 'Primeira consulta com o medico', descriptionEn: 'First consultation with the doctor',
-    duration: 60, category: 'general', active: true,
+    duration: 60, category: 'general', active: true, priceUsd: 100, costUsd: null,
   },
   {
     key: 'follow_up', label: 'Retorno', labelEn: 'Follow-up',
     shortLabel: 'Retorno', shortLabelEn: 'Follow-up',
     description: 'Acompanhamento de tratamento', descriptionEn: 'Treatment follow-up',
-    duration: 30, category: 'general', active: true,
+    duration: 30, category: 'general', active: true, priceUsd: 125, costUsd: null,
   },
   // Well-being
   {
     key: 'functional_medicine', label: 'Medicina Funcional', labelEn: 'Functional Medicine',
     shortLabel: 'Funcional', shortLabelEn: 'Functional',
     description: 'Medicina funcional personalizada', descriptionEn: 'Personalized functional medicine',
-    duration: 60, category: 'wellbeing', active: true,
+    duration: 60, category: 'wellbeing', active: true, priceUsd: 300, costUsd: null,
   },
   {
     key: 'bhrt', label: 'Terapia Hormonal Bioidentica', labelEn: 'Bio-Identical Hormone Therapy',
     shortLabel: 'BHRT', shortLabelEn: 'BHRT',
     description: 'Reposicao hormonal bioidentica', descriptionEn: 'Bio-identical hormone replacement therapy',
-    duration: 45, category: 'wellbeing', active: true,
+    duration: 45, category: 'wellbeing', active: true, priceUsd: 200, costUsd: null,
   },
   {
     key: 'male_hypertrophy', label: 'Hipertrofia Masculina', labelEn: 'Male Hypertrophy Protocol',
     shortLabel: 'Hipert. Masc.', shortLabelEn: 'Male Hyper.',
     description: 'Protocolo de hipertrofia masculina', descriptionEn: 'Male hypertrophy protocol',
-    duration: 45, category: 'wellbeing', active: true,
+    duration: 45, category: 'wellbeing', active: true, priceUsd: 200, costUsd: null,
   },
   {
     key: 'female_hypertrophy', label: 'Hipertrofia Feminina', labelEn: 'Female Hypertrophy Protocol',
     shortLabel: 'Hipert. Fem.', shortLabelEn: 'Female Hyper.',
     description: 'Protocolo de hipertrofia feminina', descriptionEn: 'Female hypertrophy protocol',
-    duration: 45, category: 'wellbeing', active: true,
+    duration: 45, category: 'wellbeing', active: true, priceUsd: 200, costUsd: null,
   },
   // Personalized Medicine
   {
     key: 'insulin_resistance', label: 'Resistencia a Insulina', labelEn: 'Insulin Resistance Management',
     shortLabel: 'Insulina', shortLabelEn: 'Insulin',
     description: 'Gerenciamento de resistencia a insulina', descriptionEn: 'Insulin resistance management',
-    duration: 45, category: 'personalized', active: true,
+    duration: 45, category: 'personalized', active: true, priceUsd: 200, costUsd: null,
   },
   {
     key: 'chronic_inflammation', label: 'Inflamacao Cronica', labelEn: 'Chronic Inflammation Management',
     shortLabel: 'Inflamacao', shortLabelEn: 'Inflammation',
     description: 'Gerenciamento de inflamacao cronica', descriptionEn: 'Chronic inflammation management',
-    duration: 45, category: 'personalized', active: true,
+    duration: 45, category: 'personalized', active: true, priceUsd: 200, costUsd: null,
   },
   {
     key: 'thyroid_support', label: 'Suporte de Tireoide', labelEn: 'Thyroid Support',
     shortLabel: 'Tireoide', shortLabelEn: 'Thyroid',
     description: 'Suporte e otimizacao tireoidiana', descriptionEn: 'Thyroid support and optimization',
-    duration: 45, category: 'personalized', active: true,
+    duration: 45, category: 'personalized', active: true, priceUsd: 200, costUsd: null,
   },
   {
     key: 'high_cortisol', label: 'Gerenciamento de Cortisol Alto', labelEn: 'High Cortisol Management',
     shortLabel: 'Cortisol', shortLabelEn: 'Cortisol',
     description: 'Gerenciamento de niveis elevados de cortisol', descriptionEn: 'High cortisol level management',
-    duration: 45, category: 'personalized', active: true,
+    duration: 45, category: 'personalized', active: true, priceUsd: 200, costUsd: null,
   },
   // Rejuvenation
   {
     key: 'morpheus8', label: 'Morpheus8', labelEn: 'Morpheus8',
     shortLabel: 'Morpheus8', shortLabelEn: 'Morpheus8',
     description: 'Estimulacao de colageno com Morpheus8', descriptionEn: 'Collagen stimulation with Morpheus8',
-    duration: 60, category: 'rejuvenation', active: true,
+    duration: 60, category: 'rejuvenation', active: true, priceUsd: 1000, costUsd: 145,
   },
   {
     key: 'botulinum_toxin', label: 'Toxina Botulinica', labelEn: 'Botulinum Toxin',
     shortLabel: 'Botox', shortLabelEn: 'Botox',
     description: 'Aplicacao de toxina botulinica', descriptionEn: 'Botulinum toxin application',
-    duration: 30, category: 'rejuvenation', active: true,
+    duration: 30, category: 'rejuvenation', active: true, priceUsd: 600, costUsd: 100,
   },
   {
     key: 'fillers', label: 'Preenchimento', labelEn: 'Fillers',
     shortLabel: 'Preenchi.', shortLabelEn: 'Fillers',
     description: 'Preenchimento dermico com acido hialuronico', descriptionEn: 'Dermal fillers with hyaluronic acid',
-    duration: 45, category: 'rejuvenation', active: true,
+    duration: 45, category: 'rejuvenation', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'skin_boosters', label: 'Skin Boosters', labelEn: 'Skin Boosters',
     shortLabel: 'Skin Boost', shortLabelEn: 'Skin Boost',
     description: 'Hidratacao profunda da pele', descriptionEn: 'Deep skin hydration treatment',
-    duration: 30, category: 'rejuvenation', active: true,
+    duration: 30, category: 'rejuvenation', active: true, priceUsd: 150, costUsd: null,
   },
   // IV Therapy
   {
     key: 'iv_protocols', label: 'Protocolos IV', labelEn: 'IV Protocols',
     shortLabel: 'IV Proto.', shortLabelEn: 'IV Proto.',
     description: 'Protocolos de infusao intravenosa', descriptionEn: 'Intravenous infusion protocols',
-    duration: 60, category: 'iv_therapy', active: true,
+    duration: 60, category: 'iv_therapy', active: true, priceUsd: 250, costUsd: null,
   },
   {
     key: 'customized_iv_nutrition', label: 'Nutricao IV Personalizada', labelEn: 'Customized IV Nutrition',
     shortLabel: 'IV Nutri.', shortLabelEn: 'IV Nutri.',
     description: 'Nutricao intravenosa personalizada', descriptionEn: 'Customized intravenous nutrition',
-    duration: 60, category: 'iv_therapy', active: true,
+    duration: 60, category: 'iv_therapy', active: true, priceUsd: 180, costUsd: null,
   },
   {
     key: 'nutrient_testing', label: 'Teste de Nutrientes', labelEn: 'Nutrient Testing',
     shortLabel: 'Nutrientes', shortLabelEn: 'Nutrients',
     description: 'Teste de micronutrientes', descriptionEn: 'Micronutrient testing',
-    duration: 30, category: 'iv_therapy', active: true,
+    duration: 30, category: 'iv_therapy', active: true, priceUsd: 70, costUsd: 20,
   },
   {
     key: 'nad_therapy', label: 'Terapia NAD+', labelEn: 'NAD+ Therapy',
     shortLabel: 'NAD+', shortLabelEn: 'NAD+',
     description: 'Infusao de NAD+ para energia celular', descriptionEn: 'NAD+ infusion for cellular energy',
-    duration: 90, category: 'iv_therapy', active: true,
+    duration: 90, category: 'iv_therapy', active: true, priceUsd: 350, costUsd: null,
   },
   {
     key: 'vitamin_injections', label: 'Injecoes de Vitaminas', labelEn: 'Vitamin Injections',
     shortLabel: 'Vitaminas', shortLabelEn: 'Vitamins',
     description: 'Injecoes intramusculares de vitaminas', descriptionEn: 'Intramuscular vitamin injections',
-    duration: 20, category: 'iv_therapy', active: true,
+    duration: 20, category: 'iv_therapy', active: true, priceUsd: 30, costUsd: 5,
   },
   {
     key: 'iron_infusions', label: 'Infusao de Ferro', labelEn: 'Iron Infusions',
     shortLabel: 'Ferro', shortLabelEn: 'Iron',
     description: 'Infusao intravenosa de ferro', descriptionEn: 'Intravenous iron infusion',
-    duration: 60, category: 'iv_therapy', active: true,
+    duration: 60, category: 'iv_therapy', active: true, priceUsd: 180, costUsd: null,
   },
   {
     key: 'chelation_therapy', label: 'Terapia de Quelacao', labelEn: 'Chelation Therapy',
     shortLabel: 'Quelacao', shortLabelEn: 'Chelation',
     description: 'Terapia de quelacao para desintoxicacao de metais pesados', descriptionEn: 'Chelation therapy for heavy metal detoxification',
-    duration: 90, category: 'iv_therapy', active: true,
+    duration: 90, category: 'iv_therapy', active: true, priceUsd: 300, costUsd: null,
   },
   // Peptide Therapy
   {
     key: 'bpc_157', label: 'BPC-157', labelEn: 'BPC-157',
     shortLabel: 'BPC-157', shortLabelEn: 'BPC-157',
     description: 'Peptideo para recuperacao e saude intestinal', descriptionEn: 'Peptide for recovery and gut healing',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'thymosin_alpha_1', label: 'Thymosin Alpha-1', labelEn: 'Thymosin Alpha-1',
     shortLabel: 'Thymosin', shortLabelEn: 'Thymosin',
     description: 'Peptideo para suporte imunologico', descriptionEn: 'Peptide for immune system support',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'cjc_1295_ipamorelin', label: 'CJC-1295/Ipamorelin', labelEn: 'CJC-1295/Ipamorelin',
     shortLabel: 'CJC/Ipam.', shortLabelEn: 'CJC/Ipam.',
     description: 'Combo de peptideos para GH e anti-aging', descriptionEn: 'Peptide combo for GH release and anti-aging',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'pt_141', label: 'PT-141', labelEn: 'PT-141',
     shortLabel: 'PT-141', shortLabelEn: 'PT-141',
     description: 'Peptideo para saude sexual e bem-estar', descriptionEn: 'Peptide for sexual wellness',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'selank', label: 'Selank', labelEn: 'Selank',
     shortLabel: 'Selank', shortLabelEn: 'Selank',
     description: 'Peptideo para ansiedade e funcao cognitiva', descriptionEn: 'Peptide for anxiety and cognitive function',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'kpv', label: 'KPV', labelEn: 'KPV',
     shortLabel: 'KPV', shortLabelEn: 'KPV',
     description: 'Peptideo anti-inflamatorio', descriptionEn: 'Anti-inflammatory peptide',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'dihexa', label: 'Dihexa', labelEn: 'Dihexa',
     shortLabel: 'Dihexa', shortLabelEn: 'Dihexa',
     description: 'Peptideo para neuroprotecao e memoria', descriptionEn: 'Peptide for neuroprotection and memory',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   {
     key: 'mots_c', label: 'MOTS-c', labelEn: 'MOTS-c',
     shortLabel: 'MOTS-c', shortLabelEn: 'MOTS-c',
     description: 'Peptideo para metabolismo e performance fisica', descriptionEn: 'Peptide for metabolism and physical performance',
-    duration: 30, category: 'peptide_therapy', active: true,
+    duration: 30, category: 'peptide_therapy', active: true, priceUsd: null, costUsd: null,
   },
   // Legacy types (inactive, kept for backward compatibility)
   {
     key: 'hormone_check', label: 'Avaliacao Hormonal', labelEn: 'Hormone Check',
     shortLabel: 'Hormonal', shortLabelEn: 'Hormone',
     description: 'Verificacao de niveis hormonais', descriptionEn: 'Hormone level check',
-    duration: 45, category: 'general', active: false,
+    duration: 45, category: 'general', active: false, priceUsd: null, costUsd: null,
   },
   {
     key: 'lab_review', label: 'Revisao de Exames', labelEn: 'Lab Review',
     shortLabel: 'Exames', shortLabelEn: 'Lab Review',
     description: 'Analise de resultados laboratoriais', descriptionEn: 'Laboratory results analysis',
-    duration: 20, category: 'general', active: false,
+    duration: 20, category: 'general', active: false, priceUsd: null, costUsd: null,
   },
   {
     key: 'nutrition', label: 'Nutricao', labelEn: 'Nutrition',
     shortLabel: 'Nutricao', shortLabelEn: 'Nutrition',
     description: 'Consulta com nutricionista', descriptionEn: 'Nutrition consultation',
-    duration: 45, category: 'general', active: false,
+    duration: 45, category: 'general', active: false, priceUsd: null, costUsd: null,
   },
   {
     key: 'health_coaching', label: 'Health Coaching', labelEn: 'Health Coaching',
     shortLabel: 'Coaching', shortLabelEn: 'Coaching',
     description: 'Sessao de coaching de saude', descriptionEn: 'Health coaching session',
-    duration: 30, category: 'general', active: false,
+    duration: 30, category: 'general', active: false, priceUsd: null, costUsd: null,
   },
   {
     key: 'therapy', label: 'Terapia', labelEn: 'Therapy',
     shortLabel: 'Terapia', shortLabelEn: 'Therapy',
     description: 'Sessao de terapia', descriptionEn: 'Therapy session',
-    duration: 50, category: 'general', active: false,
+    duration: 50, category: 'general', active: false, priceUsd: null, costUsd: null,
   },
   {
     key: 'personal_training', label: 'Personal Training', labelEn: 'Personal Training',
     shortLabel: 'Personal', shortLabelEn: 'Personal',
     description: 'Sessao de personal training', descriptionEn: 'Personal training session',
-    duration: 60, category: 'general', active: false,
+    duration: 60, category: 'general', active: false, priceUsd: null, costUsd: null,
   },
 ];
 
@@ -298,6 +300,28 @@ export function getTreatmentShortLabel(key: string, lang: 'pt' | 'en' = 'pt'): s
 export function getTreatmentDuration(key: string): number {
   const found = TREATMENT_TYPES.find(t => t.key === key);
   return found?.duration ?? 30;
+}
+
+export function getTreatmentPrice(key: string): number | null {
+  const found = TREATMENT_TYPES.find(t => t.key === key);
+  return found?.priceUsd ?? null;
+}
+
+export function getTreatmentCost(key: string): number | null {
+  const found = TREATMENT_TYPES.find(t => t.key === key);
+  return found?.costUsd ?? null;
+}
+
+export function formatPrice(price: number | null | undefined): string {
+  if (price === null || price === undefined) return 'Variable';
+  if (price === 0) return 'Free';
+  return `$${price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+export function formatPriceShort(price: number | null | undefined): string {
+  if (price === null || price === undefined) return 'Varies';
+  if (price === 0) return 'Free';
+  return `$${price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
 export function getTreatmentsByCategory(): { category: CategoryInfo; treatments: TreatmentType[] }[] {
