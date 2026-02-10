@@ -44,11 +44,11 @@ export interface PatientTypeInfo {
 
 export const CATEGORIES: CategoryInfo[] = [
   { key: 'general', label: 'Geral', labelEn: 'General', icon: 'Stethoscope', color: '#6B7B8D' },
-  { key: 'wellbeing', label: 'Bem-estar', labelEn: 'Well-being', icon: 'Heart', color: '#2A9D8F' },
-  { key: 'personalized', label: 'Medicina Personalizada', labelEn: 'Personalized Medicine', icon: 'Brain', color: '#92563E' },
-  { key: 'rejuvenation', label: 'Rejuvenescimento', labelEn: 'Rejuvenation', icon: 'Sparkles', color: '#C46B8A' },
-  { key: 'iv_therapy', label: 'Terapia IV', labelEn: 'IV Therapy', icon: 'Droplets', color: '#4A7FB5' },
-  { key: 'peptide_therapy', label: 'Terapia de Peptideos', labelEn: 'Peptide Therapy', icon: 'Dna', color: '#7B68AE' },
+  { key: 'wellbeing', label: 'Bem-estar', labelEn: 'Well-being', icon: 'Heart', color: '#6B7B8D' },
+  { key: 'personalized', label: 'Medicina Personalizada', labelEn: 'Personalized Medicine', icon: 'Brain', color: '#6B7B8D' },
+  { key: 'rejuvenation', label: 'Rejuvenescimento', labelEn: 'Rejuvenation', icon: 'Sparkles', color: '#6B7B8D' },
+  { key: 'iv_therapy', label: 'Terapia IV', labelEn: 'IV Therapy', icon: 'Droplets', color: '#6B7B8D' },
+  { key: 'peptide_therapy', label: 'Terapia de Peptideos', labelEn: 'Peptide Therapy', icon: 'Dna', color: '#6B7B8D' },
 ];
 
 // =============================================
