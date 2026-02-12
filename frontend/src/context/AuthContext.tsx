@@ -123,6 +123,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
 
+      // Auto-detect language for new Google OAuth users (trigger creates profile without preferred_language)
+      if (!data.preferred_language) {
+        const detectedLang = detectBrowserLanguage();
+        const { error: langError } = await supabase
+          .from('profiles')
+          .update({ preferred_language: detectedLang })
+          .eq('id', userId);
+
+        if (!langError) {
+          data.preferred_language = detectedLang;
+          console.log(`[Auth] Auto-detected language for new user: ${detectedLang}`);
+        }
+      }
+
       setProfile(data);
       return true;
     } catch (error) {
