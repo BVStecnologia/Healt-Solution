@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import {
   Headphones,
   RefreshCw,
@@ -422,11 +423,11 @@ function formatPhone(phone: string): string {
     .replace(/^(\d{1,3})(\d+)$/, '+$1 $2');
 }
 
-function formatElapsed(createdAt: string): string {
+function formatElapsed(createdAt: string, nowLabel: string): string {
   const diff = Date.now() - new Date(createdAt).getTime();
   const minutes = Math.floor(diff / 60000);
 
-  if (minutes < 1) return 'agora';
+  if (minutes < 1) return nowLabel;
   if (minutes < 60) return `${minutes}min`;
 
   const hours = Math.floor(minutes / 60);
@@ -445,21 +446,21 @@ function formatDate(dateStr: string): string {
   return `${day}/${month} ${hours}:${minutes}`;
 }
 
-function getResolvedByLabel(resolvedBy: string | null): string {
+function getResolvedByLabel(resolvedBy: string | null, t: (key: string) => string): string {
   switch (resolvedBy) {
-    case 'attendant_keyword': return 'Atendente (#fechar)';
-    case 'admin_panel': return 'Admin (painel)';
-    case 'auto_timeout': return 'Auto (timeout)';
-    case 'patient_return': return 'Paciente (bot)';
+    case 'attendant_keyword': return t('handoff.resolvedByAttendant');
+    case 'admin_panel': return t('handoff.resolvedByAdmin');
+    case 'auto_timeout': return t('handoff.resolvedByTimeout');
+    case 'patient_return': return t('handoff.resolvedByPatient');
     default: return resolvedBy || '-';
   }
 }
 
-function getStatusLabel(status: string): string {
+function getStatusLabel(status: string, t: (key: string) => string): string {
   switch (status) {
-    case 'waiting': return 'Aguardando';
-    case 'active': return 'Ativo';
-    case 'resolved': return 'Encerrado';
+    case 'waiting': return t('handoff.statusWaiting');
+    case 'active': return t('handoff.statusActive');
+    case 'resolved': return t('handoff.statusResolved');
     default: return status;
   }
 }
@@ -470,6 +471,7 @@ function getStatusLabel(status: string): string {
 type FilterType = 'active' | 'resolved' | 'all';
 
 const HandoffSessionsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [sessions, setSessions] = useState<HandoffSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('active');
@@ -530,7 +532,7 @@ const HandoffSessionsPage: React.FC = () => {
       await fetchSessions();
     } catch (err) {
       console.error('Error resolving session:', err);
-      alert('Erro ao encerrar sessão');
+      alert(t('handoff.resolveError'));
     } finally {
       setResolvingId(null);
     }
@@ -546,12 +548,12 @@ const HandoffSessionsPage: React.FC = () => {
       <PageContainer>
         <Header>
           <div>
-            <h1>Handoff</h1>
-            <p>Sessões de atendimento humano via WhatsApp</p>
+            <h1>{t('handoff.title')}</h1>
+            <p>{t('handoff.subtitle')}</p>
           </div>
           <RefreshButton onClick={fetchSessions} $loading={loading}>
             <RefreshCw size={16} />
-            Atualizar
+            {t('handoff.refresh')}
           </RefreshButton>
         </Header>
 
@@ -559,19 +561,19 @@ const HandoffSessionsPage: React.FC = () => {
           <StatPill>
             <Headphones />
             <StatValue>{activeSessions.length}</StatValue>
-            <StatLabel>Ativas</StatLabel>
+            <StatLabel>{t('handoff.statActive')}</StatLabel>
           </StatPill>
           {waitingSessions.length > 0 && (
             <StatPill>
               <Clock />
               <StatValue>{waitingSessions.length}</StatValue>
-              <StatLabel>Aguardando</StatLabel>
+              <StatLabel>{t('handoff.statWaiting')}</StatLabel>
             </StatPill>
           )}
           <StatPill>
             <CheckCircle />
             <StatValue>{resolvedSessions.length}</StatValue>
-            <StatLabel>Encerradas</StatLabel>
+            <StatLabel>{t('handoff.statResolved')}</StatLabel>
           </StatPill>
         </StatsRow>
 
@@ -581,41 +583,41 @@ const HandoffSessionsPage: React.FC = () => {
             onClick={() => setFilter('active')}
           >
             <Headphones size={14} />
-            Ativas
+            {t('handoff.filterActive')}
           </FilterButton>
           <FilterButton
             $active={filter === 'resolved'}
             onClick={() => setFilter('resolved')}
           >
             <CheckCircle size={14} />
-            Encerradas
+            {t('handoff.filterResolved')}
           </FilterButton>
           <FilterButton
             $active={filter === 'all'}
             onClick={() => setFilter('all')}
           >
             <Filter size={14} />
-            Todas
+            {t('handoff.filterAll')}
           </FilterButton>
         </FiltersSection>
 
         {loading ? (
           <EmptyState>
             <SpinnerIcon><RefreshCw /></SpinnerIcon>
-            <h3>Carregando...</h3>
+            <h3>{t('handoff.loading')}</h3>
           </EmptyState>
         ) : sessions.length === 0 ? (
           <EmptyState>
             <Headphones />
             <h3>
-              {filter === 'active' ? 'Nenhuma sessão ativa' :
-               filter === 'resolved' ? 'Nenhuma sessão encerrada' :
-               'Nenhuma sessão encontrada'}
+              {filter === 'active' ? t('handoff.emptyActive') :
+               filter === 'resolved' ? t('handoff.emptyResolved') :
+               t('handoff.emptyAll')}
             </h3>
             <p>
               {filter === 'active'
-                ? 'Quando um paciente solicitar atendimento humano pelo WhatsApp, a sessão aparecerá aqui.'
-                : 'O histórico de sessões encerradas aparecerá aqui.'}
+                ? t('handoff.emptyActiveHint')
+                : t('handoff.emptyResolvedHint')}
             </p>
           </EmptyState>
         ) : (
@@ -634,7 +636,7 @@ const HandoffSessionsPage: React.FC = () => {
 
                 <SessionInfo>
                   <SessionName>
-                    {session.patient_name || 'Paciente desconhecido'}
+                    {session.patient_name || t('handoff.unknownPatient')}
                   </SessionName>
                   <SessionMeta>
                     <span>
@@ -647,7 +649,7 @@ const HandoffSessionsPage: React.FC = () => {
                     </span>
                     {session.status !== 'resolved' && (
                       <span>
-                        <ElapsedTime>{formatElapsed(session.created_at)}</ElapsedTime>
+                        <ElapsedTime>{formatElapsed(session.created_at, t('handoff.now'))}</ElapsedTime>
                       </span>
                     )}
                     {session.reason && (
@@ -660,12 +662,12 @@ const HandoffSessionsPage: React.FC = () => {
                 </SessionInfo>
 
                 <StatusBadge $status={session.status}>
-                  {getStatusLabel(session.status)}
+                  {getStatusLabel(session.status, t)}
                 </StatusBadge>
 
                 {session.status === 'resolved' && session.resolved_by && (
                   <ResolvedByBadge>
-                    {getResolvedByLabel(session.resolved_by)}
+                    {getResolvedByLabel(session.resolved_by, t)}
                   </ResolvedByBadge>
                 )}
 
@@ -677,7 +679,7 @@ const HandoffSessionsPage: React.FC = () => {
                       disabled={resolvingId === session.id}
                     >
                       <XCircle size={16} />
-                      {resolvingId === session.id ? 'Encerrando...' : 'Encerrar'}
+                      {resolvingId === session.id ? t('handoff.resolving') : t('handoff.resolve')}
                     </ActionButton>
                   </SessionActions>
                 )}

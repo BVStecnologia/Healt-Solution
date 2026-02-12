@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import {
   Headphones, Plus, Search, Edit2, X, Check, AlertCircle,
   Phone, Mail, Calendar, Clock, Users, Activity,
@@ -962,14 +963,14 @@ const ConfirmBtn = styled.button<{ $danger?: boolean }>`
 // ============================================
 // CONSTANTS
 // ============================================
-const DAY_LABELS = [
-  { value: 0, label: 'Dom' },
-  { value: 1, label: 'Seg' },
-  { value: 2, label: 'Ter' },
-  { value: 3, label: 'Qua' },
-  { value: 4, label: 'Qui' },
-  { value: 5, label: 'Sex' },
-  { value: 6, label: 'S\u00e1b' },
+const DAY_KEYS = [
+  { value: 0, key: 'days.sunShort' },
+  { value: 1, key: 'days.monShort' },
+  { value: 2, key: 'days.tueShort' },
+  { value: 3, key: 'days.wedShort' },
+  { value: 4, key: 'days.thuShort' },
+  { value: 5, key: 'days.friShort' },
+  { value: 6, key: 'days.satShort' },
 ];
 
 const ITEMS_PER_PAGE = 9;
@@ -978,6 +979,7 @@ const ITEMS_PER_PAGE = 9;
 // COMPONENT
 // ============================================
 const AttendantsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [attendants, setAttendants] = useState<Attendant[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -995,7 +997,7 @@ const AttendantsPage: React.FC = () => {
     is_active: true,
   });
   const [schedules, setSchedules] = useState<AttendantScheduleItem[]>(
-    DAY_LABELS.map(day => ({
+    DAY_KEYS.map(day => ({
       day_of_week: day.value,
       start_time: '10:00',
       end_time: '18:00',
@@ -1083,7 +1085,7 @@ const AttendantsPage: React.FC = () => {
       if (schedError) throw schedError;
 
       if (data && data.length > 0) {
-        const mergedSchedules = DAY_LABELS.map(day => {
+        const mergedSchedules = DAY_KEYS.map(day => {
           const existing = data.find((s: any) => s.day_of_week === day.value);
           if (existing) {
             return {
@@ -1103,7 +1105,7 @@ const AttendantsPage: React.FC = () => {
         setSchedules(mergedSchedules);
       } else {
         setSchedules(
-          DAY_LABELS.map(day => ({
+          DAY_KEYS.map(day => ({
             day_of_week: day.value,
             start_time: '10:00',
             end_time: '18:00',
@@ -1155,12 +1157,12 @@ const AttendantsPage: React.FC = () => {
         if (insertError) throw insertError;
       }
 
-      setSuccess('Hor\u00e1rios salvos com sucesso!');
+      setSuccess(t('attendants.successSchedules'));
       setTimeout(() => {
         handleCloseScheduleModal();
       }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar hor\u00e1rios');
+      setError(err.message || t('common.error'));
     } finally {
       setSaving(false);
     }
@@ -1168,22 +1170,22 @@ const AttendantsPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!formData.name) {
-      setError('O nome \u00e9 obrigat\u00f3rio.');
+      setError(t('attendants.errorRequired'));
       return;
     }
 
     if (!formData.phone && !formData.email) {
-      setError('Informe pelo menos um telefone ou email.');
+      setError(t('attendants.phoneHint') + ' / ' + t('attendants.emailHint'));
       return;
     }
 
     if (formData.notify_whatsapp && !formData.phone) {
-      setError('Para notifica\u00e7\u00f5es WhatsApp, o telefone \u00e9 obrigat\u00f3rio.');
+      setError(t('attendants.phoneHint'));
       return;
     }
 
     if (formData.notify_email && !formData.email) {
-      setError('Para notifica\u00e7\u00f5es por email, o email \u00e9 obrigat\u00f3rio.');
+      setError(t('attendants.emailHint'));
       return;
     }
 
@@ -1206,7 +1208,7 @@ const AttendantsPage: React.FC = () => {
           .eq('id', editingAttendant.id);
 
         if (updateError) throw updateError;
-        setSuccess('Atendente atualizado com sucesso!');
+        setSuccess(t('attendants.successUpdate'));
       } else {
         const { error: insertError } = await supabaseAdmin
           .from('attendants')
@@ -1220,7 +1222,7 @@ const AttendantsPage: React.FC = () => {
           });
 
         if (insertError) throw insertError;
-        setSuccess('Atendente criado com sucesso!');
+        setSuccess(t('attendants.successCreate'));
       }
 
       await fetchAttendants();
@@ -1229,7 +1231,7 @@ const AttendantsPage: React.FC = () => {
         handleCloseModal();
       }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar atendente.');
+      setError(err.message || t('common.error'));
     } finally {
       setSaving(false);
     }
@@ -1299,12 +1301,12 @@ const AttendantsPage: React.FC = () => {
       <PageContainer>
         <Header>
           <div>
-            <h1>Atendentes</h1>
-            <p>Gerencie os atendentes para handoff humano do chatbot WhatsApp</p>
+            <h1>{t('attendants.title')}</h1>
+            <p>{t('attendants.subtitle')}</p>
           </div>
           <AddButton onClick={() => handleOpenModal()}>
             <Plus size={18} />
-            Novo Atendente
+            {t('attendants.newAttendant')}
           </AddButton>
         </Header>
 
@@ -1312,18 +1314,18 @@ const AttendantsPage: React.FC = () => {
           <StatPill>
             <Headphones />
             <StatValue>{stats.total}</StatValue>
-            <StatLabel>Total</StatLabel>
+            <StatLabel>{t('attendants.total')}</StatLabel>
           </StatPill>
           <StatPill>
             <Activity />
             <StatValue>{stats.active}</StatValue>
-            <StatLabel>Ativos</StatLabel>
+            <StatLabel>{t('attendants.active')}</StatLabel>
           </StatPill>
           {stats.inactive > 0 && (
             <StatPill style={{ opacity: 0.5 }}>
               <Users />
               <StatValue>{stats.inactive}</StatValue>
-              <StatLabel>Inativos</StatLabel>
+              <StatLabel>{t('status.inactive')}</StatLabel>
             </StatPill>
           )}
         </StatsRow>
@@ -1333,7 +1335,7 @@ const AttendantsPage: React.FC = () => {
             <Search size={18} />
             <SearchInput
               type="text"
-              placeholder="Buscar por nome, telefone ou email..."
+              placeholder={t('attendants.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -1356,17 +1358,17 @@ const AttendantsPage: React.FC = () => {
             <Headphones />
             {attendants.length === 0 ? (
               <>
-                <h3>Nenhum atendente cadastrado</h3>
-                <p>Adicione atendentes para receber notifica\u00e7\u00f5es de handoff do chatbot WhatsApp.</p>
+                <h3>{t('attendants.emptyTitle')}</h3>
+                <p>{t('attendants.emptyDescription')}</p>
                 <EmptyStateCTA onClick={() => handleOpenModal()}>
                   <Plus size={16} />
-                  Novo Atendente
+                  {t('attendants.newAttendant')}
                 </EmptyStateCTA>
               </>
             ) : (
               <>
-                <h3>Nenhum resultado encontrado</h3>
-                <p>Tente ajustar sua busca para encontrar o atendente desejado.</p>
+                <h3>{t('attendants.emptyTitle')}</h3>
+                <p>{t('common.tryAdjustSearch')}</p>
               </>
             )}
           </EmptyState>
@@ -1407,18 +1409,18 @@ const AttendantsPage: React.FC = () => {
                   </NotificationBadges>
 
                   <AttendantActions>
-                    <ActionButton $variant="info" onClick={() => handleOpenScheduleModal(attendant)} title="Hor\u00e1rios">
+                    <ActionButton $variant="info" onClick={() => handleOpenScheduleModal(attendant)} title={t('attendants.scheduleTitle')}>
                       <Clock size={16} />
                     </ActionButton>
-                    <ActionButton onClick={() => handleOpenModal(attendant)} title="Editar">
+                    <ActionButton onClick={() => handleOpenModal(attendant)} title={t('common.edit')}>
                       <Edit2 size={16} />
                     </ActionButton>
                     {attendant.is_active ? (
-                      <ActionButton $variant="danger" onClick={() => handleToggleActive(attendant)} title="Desativar">
+                      <ActionButton $variant="danger" onClick={() => handleToggleActive(attendant)} title={t('attendants.deactivate')}>
                         <ToggleRight size={16} />
                       </ActionButton>
                     ) : (
-                      <ActionButton $variant="primary" onClick={() => handleToggleActive(attendant)} title="Reativar">
+                      <ActionButton $variant="primary" onClick={() => handleToggleActive(attendant)} title={t('attendants.activate')}>
                         <RotateCcw size={16} />
                       </ActionButton>
                     )}
@@ -1465,7 +1467,7 @@ const AttendantsPage: React.FC = () => {
                 <div>
                   <h2>
                     <Headphones size={22} />
-                    {editingAttendant ? 'Editar Atendente' : 'Novo Atendente'}
+                    {editingAttendant ? t('attendants.editTitle') : t('attendants.newAttendant')}
                   </h2>
                 </div>
                 <CloseButton onClick={handleCloseModal}>
@@ -1489,35 +1491,35 @@ const AttendantsPage: React.FC = () => {
                 )}
 
                 <FormGroup>
-                  <label>Nome <span>*</span></label>
+                  <label>{t('attendants.name')} <span>*</span></label>
                   <FormInput
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nome completo do atendente"
+                    placeholder={t('attendants.namePlaceholder')}
                   />
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Telefone</label>
+                  <label>{t('attendants.phone')}</label>
                   <FormInput
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+1 (954) 000-0000"
+                    placeholder={t('attendants.phonePlaceholder')}
                   />
-                  <small>Obrigat\u00f3rio para notifica\u00e7\u00f5es via WhatsApp</small>
+                  <small>{t('attendants.phoneHint')}</small>
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Email</label>
+                  <label>{t('attendants.email')}</label>
                   <FormInput
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="email@exemplo.com"
+                    placeholder={t('attendants.emailPlaceholder')}
                   />
-                  <small>Obrigat\u00f3rio para notifica\u00e7\u00f5es por email</small>
+                  <small>{t('attendants.emailHint')}</small>
                 </FormGroup>
 
                 <FormGroup>
@@ -1528,7 +1530,7 @@ const AttendantsPage: React.FC = () => {
                       checked={formData.notify_whatsapp}
                       onChange={(e) => setFormData({ ...formData, notify_whatsapp: e.target.checked })}
                     />
-                    <label htmlFor="notify_whatsapp">Notificar via WhatsApp</label>
+                    <label htmlFor="notify_whatsapp">{t('attendants.notifyWhatsapp')}</label>
                   </CheckboxGroup>
                 </FormGroup>
 
@@ -1540,7 +1542,7 @@ const AttendantsPage: React.FC = () => {
                       checked={formData.notify_email}
                       onChange={(e) => setFormData({ ...formData, notify_email: e.target.checked })}
                     />
-                    <label htmlFor="notify_email">Notificar via Email</label>
+                    <label htmlFor="notify_email">{t('attendants.notifyEmail')}</label>
                   </CheckboxGroup>
                 </FormGroup>
 
@@ -1552,17 +1554,17 @@ const AttendantsPage: React.FC = () => {
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     />
-                    <label htmlFor="is_active">Atendente ativo</label>
+                    <label htmlFor="is_active">{t('attendants.activeCheckbox')}</label>
                   </CheckboxGroup>
                 </FormGroup>
               </ModalBody>
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={handleCloseModal}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button $variant="primary" onClick={handleSave} disabled={saving}>
-                  {saving ? 'Salvando...' : 'Salvar'}
+                  {saving ? t('common.saving') : t('common.save')}
                 </Button>
               </ModalFooter>
             </ModalContent>
@@ -1578,23 +1580,22 @@ const AttendantsPage: React.FC = () => {
                   {confirmAction.action === 'reactivate' ? <RotateCcw size={28} /> : <AlertTriangle size={28} />}
                 </ConfirmIconCircle>
                 <ConfirmTitle>
-                  {confirmAction.action === 'reactivate' ? 'Reativar Atendente' : 'Desativar Atendente'}
+                  {confirmAction.action === 'reactivate' ? t('attendants.activateTitle') : t('attendants.deactivateTitle')}
                 </ConfirmTitle>
                 <ConfirmText>
                   {confirmAction.action === 'reactivate'
-                    ? 'Deseja reativar'
-                    : 'Deseja desativar'}{' '}
-                  <ConfirmName>{confirmAction.attendant.name}</ConfirmName>?
+                    ? t('attendants.activateConfirm', { name: confirmAction.attendant.name })
+                    : t('attendants.deactivateConfirm', { name: confirmAction.attendant.name })}
                 </ConfirmText>
                 <ConfirmText style={{ fontSize: 13, opacity: 0.7 }}>
                   {confirmAction.action === 'reactivate'
-                    ? 'O atendente voltar\u00e1 a receber notifica\u00e7\u00f5es de handoff.'
-                    : 'O atendente n\u00e3o receber\u00e1 mais notifica\u00e7\u00f5es de handoff.'}
+                    ? t('attendants.activateDescription')
+                    : t('attendants.deactivateDescription')}
                 </ConfirmText>
               </ConfirmBody>
               <ConfirmFooter>
                 <ConfirmBtn onClick={() => setConfirmAction(null)}>
-                  Cancelar
+                  {t('common.cancel')}
                 </ConfirmBtn>
                 <ConfirmBtn
                   $danger={confirmAction.action === 'deactivate'}
@@ -1605,7 +1606,7 @@ const AttendantsPage: React.FC = () => {
                   } : undefined}
                   onClick={executeConfirmAction}
                 >
-                  {confirmAction.action === 'reactivate' ? 'Reativar' : 'Desativar'}
+                  {confirmAction.action === 'reactivate' ? t('attendants.activate') : t('attendants.deactivate')}
                 </ConfirmBtn>
               </ConfirmFooter>
             </ConfirmCard>
@@ -1620,7 +1621,7 @@ const AttendantsPage: React.FC = () => {
                 <div>
                   <h2>
                     <Calendar size={22} />
-                    Hor\u00e1rios de Atendimento
+                    {t('attendants.scheduleTitle')}
                   </h2>
                   <p>{selectedAttendantForSchedule.name}</p>
                 </div>
@@ -1647,14 +1648,14 @@ const AttendantsPage: React.FC = () => {
                 <Alert $variant="info">
                   <AlertCircle size={18} />
                   <div>
-                    Define os hor\u00e1rios em que este atendente est\u00e1 dispon\u00edvel para receber handoff do chatbot.
+                    {t('attendants.scheduleHint')}
                   </div>
                 </Alert>
 
                 <ScheduleGrid>
-                  {DAY_LABELS.map((day, index) => (
+                  {DAY_KEYS.map((day, index) => (
                     <ScheduleRow key={day.value} $active={schedules[index]?.is_active}>
-                      <span className="day-label">{day.label}</span>
+                      <span className="day-label">{t(day.key)}</span>
                       <input
                         type="time"
                         value={schedules[index]?.start_time || '10:00'}
@@ -1691,10 +1692,10 @@ const AttendantsPage: React.FC = () => {
 
               <ModalFooter>
                 <Button $variant="secondary" onClick={handleCloseScheduleModal}>
-                  Cancelar
+                  {t('common.cancel')}
                 </Button>
                 <Button $variant="primary" onClick={handleSaveSchedules} disabled={saving}>
-                  {saving ? 'Salvando...' : 'Salvar Hor\u00e1rios'}
+                  {saving ? t('common.saving') : t('attendants.saveSchedules')}
                 </Button>
               </ModalFooter>
             </ModalContent>
