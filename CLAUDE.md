@@ -437,29 +437,10 @@ CREATE TABLE schema_migrations (
 
 ### Migrações Existentes
 
+**31 migrações (000-030).** Últimas 10:
+
 | Versão | Nome | Descrição |
 |--------|------|-----------|
-| 000 | schema_migrations | Tabela de controle |
-| 001 | scheduling_tables | Profiles, providers, appointments, RLS, RPCs |
-| 002 | whatsapp_notifications | Instâncias, templates, logs de mensagens |
-| 003 | admin_rls_policies | Políticas RLS para admins |
-| 004 | avatar_url | Campo avatar_url nos profiles |
-| 005 | add_preferred_language | Idioma preferido + templates EN |
-| 006 | provider_notifications | Templates de notificação para médicos |
-| 007 | provider_blocks | Bloqueios de agenda |
-| 008 | admin_provider_schedules | Gestão de horários pelo admin |
-| 009 | multiple_schedule_segments | Múltiplos turnos por dia |
-| 010 | patient_theme | Tema escuro/claro do paciente |
-| 011 | notification_rules | Regras de notificação configuráveis + templates provider_reminder_2h/15min |
-| 012 | no_show_system | no_show_count, confirmed_by_patient_at, trigger auto-increment, templates no_show_patient/provider |
-| 013 | auto_create_profile | Trigger on auth.users para auto-criar profile (Google OAuth + email/senha) |
-| 014 | message_retry | retry_count e last_retry_at no message_logs + índice para retry |
-| 015 | add_enum_values | Novos valores nos ENUMs appointment_type (16) e patient_type (4) |
-| 016 | treatment_types | Tabela treatment_types + fix duração no create_appointment + elegibilidade novos patient_types |
-| 017 | add_new_treatments_enum | Novos ENUMs: high_cortisol, iron_infusions, chelation_therapy + 8 peptide types |
-| 018 | new_treatments_data | Dados dos novos tratamentos na tabela treatment_types |
-| 019 | provider_view_patients | RLS para providers verem pacientes |
-| 020 | patient_documents | Tabela patient_documents + Storage bucket + RLS |
 | 021 | patient_profile_fields | Campos extras no perfil do paciente |
 | 022 | admin_update_profiles | RPC para admin atualizar profiles |
 | 023 | treatment_prices | Preços nos treatment_types |
@@ -471,35 +452,7 @@ CREATE TABLE schema_migrations (
 | 029 | conversation_logs | Tabela conversation_logs |
 | 030 | handoff_system | Tabelas attendants, attendant_schedules, handoff_sessions + RLS |
 
-### Aplicar Migrações
-
-**Local:**
-```bash
-./scripts/migrate.sh local
-```
-
-**VPS:**
-```bash
-./scripts/migrate.sh vps
-```
-
-**Manual (SQL direto):**
-```bash
-docker exec -i supabase-db psql -U postgres -d postgres < supabase/migrations/002_whatsapp_notifications.sql
-```
-
-### Verificar Status
-```bash
-docker exec -i supabase-db psql -U postgres -d postgres -c "SELECT * FROM schema_migrations ORDER BY version;"
-```
-
-### Criar Nova Migração
-1. Criar arquivo `supabase/migrations/XXX_nome.sql`
-2. Adicionar no final: `INSERT INTO schema_migrations (version, name) VALUES ('XXX', 'nome');`
-3. Rodar `./scripts/migrate.sh`
-
-### Rollback
-Criar script manual `XXX_nome_down.sql` com os DROPs necessários.
+Migrações 000-020: ver `supabase/migrations/`. Aplicar: `./scripts/migrate.sh local|vps`. Nova: criar `XXX_nome.sql` + INSERT em `schema_migrations`.
 
 ---
 
@@ -650,398 +603,72 @@ EVOLUTION_API_KEY=sua-chave-evolution
 
 ## Funcionalidades Implementadas
 
-### Dashboard Admin
-- [x] Estatísticas (pacientes, médicos, consultas pendentes, consultas hoje)
-- [x] Lista de consultas pendentes com aprovação/rejeição
-- [x] Status do WhatsApp em tempo real (polling 10s)
-- [x] Número conectado exibido
-
-### Calendário
-- [x] Visualização mês/semana/dia/agenda
-- [x] Cores por status de consulta
-- [x] Legenda de status
-- [x] Navegação por URL (?view=week&date=2026-02-04)
-- [x] Modal de detalhes ao clicar no evento
-- [x] Botões: Confirmar, Cancelar, Ver Ficha
-
-### Gestão de Pacientes
-- [x] Lista com busca e filtro por tipo
-- [x] Estatísticas por tipo de paciente
-- [x] Edição de dados
-- [x] **Ficha completa** (`/admin/patients/:id`):
-  - Header com avatar colorido por tipo
-  - Dados pessoais e médicos
-  - Estatísticas de consultas
-  - Próximas consultas agendadas
-  - Histórico de consultas
-
-### Gestão de Médicos
-- [x] CRUD completo
-- [x] Vinculação com profile
-- [x] Especialidade e bio
-- [x] Ativar/Desativar
-
-### Gestão de Admins
-- [x] CRUD completo
-- [x] Lista de administradores
-
-### WhatsApp
-- [x] Lista de instâncias
-- [x] Criar nova instância
-- [x] Conectar (QR Code)
-- [x] Desconectar
-- [x] Deletar instância
-- [x] Status em tempo real
-
-### Lembretes Automáticos (WhatsApp)
-- [x] Tabela `notification_rules` com regras configuráveis
-- [x] Cron job a cada 5 min no webhook (node-cron)
-- [x] Deduplica por `message_logs` (appointment_id + template_name + phone)
-- [x] Bilíngue (PT/EN) baseado no `preferred_language` do destinatário
-- [x] Override: regra específica do médico substitui global (mesmo minutes_before)
-- [x] UI Admin: `/admin/notifications` - CRUD de regras para pacientes
-- [x] UI Médico: `/doctor/notifications` - "Meus Lembretes" (auto-configurável) + "Regras da Clínica" (read-only)
-- [x] Templates: reminder_24h, reminder_1h, provider_reminder_2h, provider_reminder_15min, no_show_patient, no_show_provider
-
-### Cancelamento Inteligente e No-Show
-- [x] Bug fix: `rejection_reason` → `cancellation_reason` + `cancelled_at` no admin
-- [x] Admin pede motivo via `window.prompt()` ao rejeitar consulta
-- [x] Aviso de cancelamento tardio (<24h) no portal do paciente e WhatsApp
-- [x] Link de reagendamento ({link}) nos templates de cancelamento
-- [x] Detecção automática de no-show (30min após fim da consulta)
-- [x] Notificação WhatsApp de no-show para paciente e médico
-- [x] `no_show_count` no profiles com trigger auto-increment
-- [x] Badge de no-show na lista de pacientes e ficha
-- [x] Confirmação de presença via WhatsApp ("OK", "sim", "yes", "confirmo")
-- [x] `confirmed_by_patient_at` registrado na appointments
-
-### Confiabilidade WhatsApp (Retry + Monitoramento)
-- [x] Webhook `sendMessage()` retorna `boolean` (sucesso/falha)
-- [x] Falhas de envio gravadas no `message_logs` com `status: 'failed'`
-- [x] Dedup ignora mensagens falhas (permite retry)
-- [x] Retry automático: até 3 tentativas via cron (5min)
-- [x] `retry_count` e `last_retry_at` no `message_logs` (migration 014)
-- [x] Admin alertado via `window.alert` quando notificação WhatsApp falha
-- [x] Página "Mensagens Falhas" (`/admin/failed-messages`) com retry manual
-- [x] Sidebar admin: link "Msgs Falhas" na seção configurações
-
-### Human Handoff (Atendimento Humano)
-- [x] 3 tabelas: `attendants`, `attendant_schedules`, `handoff_sessions` (migration 030)
-- [x] `handoffManager.ts`: Set<string> in-memory + DB para O(1) lookup + auto-close 30min
-- [x] `attendantNotifier.ts`: notifica atendentes disponíveis via WhatsApp pessoal (bilíngue PT/EN)
-- [x] Timezone-aware: schedules comparados em horário local (EST/EDT via `Intl.DateTimeFormat`)
-- [x] Trigger: paciente envia "ajuda"/"help"/"atendente"/"human" → cria handoff session
-- [x] Bot silencia durante handoff (`isInHandoff()` guard no index.ts)
-- [x] 4 formas de encerrar: `#fechar`/`#close` (atendente), admin panel, auto-timeout 30min, "bot"/"menu" (paciente)
-- [x] "trocar"/"switch" bloqueado durante handoff ativo
-- [x] Rollback automático se sendMessage falhar ao notificar paciente
-- [x] Dual-role routing: `router.ts` gerencia paciente + provider no mesmo número
-- [x] Frontend admin: `AttendantsPage` (CRUD + horários) + `HandoffSessionsPage` (monitor + encerrar)
-- [x] HandoffSessionsPage resolve via webhook API (`REACT_APP_WEBHOOK_URL`) → limpa Set in-memory imediatamente
-- [x] i18n completo (PT/EN) em ambas as páginas
-
-### Chatbot WhatsApp (Bot Inteligente)
-- [x] Menu dinâmico numerado baseado no contexto do paciente
-- [x] Sub-menus: serviços (por categoria), informações da clínica, agendamento, cancelamento
-- [x] Rate limiting (3 msgs/10s com aviso bilíngue)
-- [x] Session timeout (15min inatividade → aviso de expiração)
-- [x] Confirmação rápida ("ok"/"sim" → confirma próxima consulta)
-- [x] Conversation logging (`message_logs` + `conversation_logs`)
-- [x] URL shortener para links de agendamento
-- [x] Dual-role: seleção de perfil para quem é paciente + provider
-- [x] Role persistence (1h TTL, "trocar" reseta)
-
-### Internacionalização
-- [x] Português (padrão)
-- [x] Inglês
-- [x] Espanhol
-- [x] Seletor de idioma fixo no canto
+- **Dashboard Admin**: Estatísticas, consultas pendentes com aprovação/rejeição, status WhatsApp em tempo real
+- **Calendário**: Mês/semana/dia/agenda, cores por status, modal de detalhes, navegação por URL
+- **Gestão de Pacientes**: CRUD, busca/filtro, ficha completa (`/admin/patients/:id`)
+- **Gestão de Médicos/Admins**: CRUD completo, ativar/desativar
+- **WhatsApp**: CRUD de instâncias, QR Code, status em tempo real
+- **Lembretes Automáticos**: `notification_rules`, cron 5min, bilíngue, override por médico, UI admin + médico
+- **Cancelamento e No-Show**: Aviso tardio (<24h), no-show automático (30min), `no_show_count`, confirmação via WhatsApp
+- **Confiabilidade WhatsApp**: Retry até 3x, `message_logs` com status, página "Msgs Falhas", alertas admin
+- **Human Handoff**: 3 tabelas (migration 030), Set in-memory + DB, timezone-aware (EST/EDT), 4 formas de encerrar, bloqueio de "trocar" durante handoff, rollback se sendMessage falhar, dual-role routing, resolve via webhook API
+- **Chatbot WhatsApp**: Menu dinâmico numerado, sub-menus (serviços, clínica, agendamento), rate limiting, session timeout, confirmação rápida, conversation logging, URL shortener, dual-role
+- **Internacionalização**: PT/EN/ES, seletor fixo
 
 ---
 
 ## TODO / Pendências
 
-### Crítico para Produção
-- [x] Configurar Google OAuth no Supabase (via nip.io — 217-216-81-92.nip.io)
-- [x] Trigger para criar profile automático em novo usuário (migration 013)
-- [ ] Configurar HTTPS/SSL para produção (precisa de domínio)
-- [x] Variáveis de ambiente de produção (configuradas na VPS)
-- [x] Backup pré-deploy (`scripts/backup.sh` + integrado no `migrate.sh`)
-
-### Funcionalidades Futuras
-- [x] Envio de lembretes por WhatsApp (webhook cron + notification_rules)
-- [x] Confirmação de consulta por WhatsApp
-- [x] Histórico de mensagens (message_logs)
 - [ ] Upload de documentos/exames
 - [ ] Relatórios e analytics
 - [ ] Notificações push
 - [ ] Pagamentos online
-
-### Melhorias
 - [ ] Testes automatizados
 - [ ] CI/CD pipeline
-- [ ] Logs estruturados
 - [ ] Monitoramento (Sentry, etc)
 
 ---
 
 ## Dados de Demonstração
 
-### Usuários Admin
-```
-Email: valdair3d@gmail.com
-Role: admin
-```
-
-### Médicos de Teste
-- Dr. Carlos Mendes (dr.carlos@teste.com)
-- Dra. Ana Costa (dr.ana.costa@teste.com)
-- Dr. Pedro Santos (dr.pedro.santos@teste.com)
-
-### Pacientes de Teste
-- 10 pacientes criados com diferentes tipos (new, general, trt, hormone, vip)
-- Emails: joao.pereira@email.com, ana.souza@email.com, etc.
-- Senha demo: `demo123456`
+- **Admin:** valdair3d@gmail.com
+- **Médicos:** dr.carlos@teste.com, dr.ana.costa@teste.com, dr.pedro.santos@teste.com
+- **Pacientes:** 10 pacientes (tipos variados), emails @email.com, senha `demo123456`
 
 ---
 
 ## Servidor de Produção (VPS)
 
-### Pasta `Servidor/` (Espelho do VPS)
-A pasta `Servidor/` contém o estado atual de produção para comparar antes de deploy:
-```
-Servidor/
-├── README.md              # Visão geral + comandos
-├── supabase/VERSOES.md    # Containers + migrations aplicadas
-├── evolution/VERSOES.md   # Containers + config
-└── frontend/VERSOES.md    # Commit atual + pendentes
-```
-**Sempre consultar antes de deploy** para ver diferenças entre local e VPS.
-
-### Acesso SSH
-```bash
-# Conexão rápida (configurado em ~/.ssh/config)
-ssh clinica-vps
-
-# Conexão completa
-ssh -i ~/.ssh/clinica_vps root@217.216.81.92
-```
-
-### Dados do Servidor
-| Campo | Valor |
-|-------|-------|
-| **IP** | 217.216.81.92 |
-| **Região** | US-east (Orangeburg, SC) |
-| **OS** | Ubuntu 24.04.3 LTS |
-| **CPU** | 8 cores |
-| **RAM** | 24 GB |
-| **Disco** | 400 GB SSD |
-| **Provedor** | Contabo |
-
-### Portainer (Gerenciador Docker)
-| Campo | Valor |
-|-------|-------|
-| **URL** | http://217.216.81.92:9000 |
-| **Usuário** | admin |
-| **Senha** | 2026projectessence@ |
-
-### Comandos Úteis VPS
-```bash
-# Ver containers
-ssh clinica-vps "docker ps"
-
-# Ver logs
-ssh clinica-vps "docker logs <container>"
-
-# Reiniciar
-ssh clinica-vps "docker restart <container>"
-
-# Ver uso de recursos
-ssh clinica-vps "docker stats --no-stream"
-```
+**IP:** 217.216.81.92 | **OS:** Ubuntu 24.04 | **CPU:** 8 cores | **RAM:** 24 GB | **Disco:** 400 GB SSD | **Provedor:** Contabo
+**SSH:** `ssh clinica-vps` | **Portainer:** http://217.216.81.92:9000 (admin / 2026projectessence@)
+**Espelho:** `Servidor/` contém estado VPS para comparar antes de deploy.
 
 ---
 
 ## Deploy para Produção
 
-### Estrutura das Stacks
+Usar **skill `/deploy`** para deploy assistido completo. Detalhes em `docs/DEPLOY.md`.
 
-O projeto usa **3 stacks** Docker separadas:
+**3 stacks Docker:** supabase (8000), evolution (8082), webhook (3002), frontend (nginx 443)
 
-| Stack | Serviços | Porta |
-|-------|----------|-------|
-| **supabase** | db, kong, auth, rest, realtime, storage, imgproxy, meta, functions, analytics, vector, supavisor, studio | 8000, 5432, 3001, 4000 |
-| **evolution** | api, db (postgres), redis | 8082 |
-| **frontend** | nginx + react build | 80, 443 |
-
-### Passo a Passo do Deploy
-
-#### 1. Clonar Repositório no VPS
-```bash
-ssh clinica-vps
-cd /root
-git clone https://github.com/SEU_USUARIO/Clinica.git
-cd Clinica
-```
-
-#### 2. Configurar Variáveis de Ambiente
-
-**supabase/.env** - Alterar para produção:
-```env
-# Mudar URLs para o domínio/IP público
-SITE_URL=https://seudominio.com
-API_EXTERNAL_URL=https://seudominio.com
-SUPABASE_PUBLIC_URL=https://seudominio.com
-
-# Google OAuth - Atualizar redirect URI
-GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=https://seudominio.com/auth/v1/callback
-
-# IMPORTANTE: Gerar novas chaves para produção!
-# Usar: openssl rand -base64 32
-POSTGRES_PASSWORD=<nova_senha_segura>
-JWT_SECRET=<novo_jwt_secret_32_chars>
-```
-
-**evolution/.env** - Alterar para produção:
-```env
-EVOLUTION_API_KEY=<sua_chave_segura>
-POSTGRES_PASSWORD=<senha_evolution>
-```
-
-**frontend/.env** - Alterar para produção:
-```env
-REACT_APP_SUPABASE_URL=https://seudominio.com
-REACT_APP_SUPABASE_ANON_KEY=<mesma_anon_key_do_supabase>
-```
-
-#### 3. Build do Frontend para Produção
-```bash
-cd /root/Clinica/frontend
-npm install
-npm run build
-```
-
-#### 4. Subir Stacks via Portainer
-
-**Opção A - Via Portainer UI:**
-1. Acessar http://217.216.81.92:9000
-2. Ir em Stacks > Add Stack
-3. Colar conteúdo do docker-compose.yml
-4. Configurar variáveis de ambiente
-5. Deploy
-
-**Opção B - Via CLI:**
-```bash
-# Stack Supabase
-cd /root/Clinica/supabase
-docker compose up -d
-
-# Stack Evolution
-cd /root/Clinica/evolution
-docker compose up -d
-```
-
-#### 5. Configurar Nginx + SSL (Produção com Domínio)
-```bash
-# Instalar certbot
-apt install certbot python3-certbot-nginx -y
-
-# Gerar certificado SSL
-certbot --nginx -d seudominio.com
-
-# Configurar nginx
-cp /root/Clinica/nginx/nginx.conf /etc/nginx/nginx.conf
-nginx -t && systemctl reload nginx
-```
-
-### Deploy Rápido (Sem Domínio - Apenas IP)
-
-Para teste rápido usando apenas IP (sem SSL):
-
+**Deploy rápido:**
 ```bash
 ssh clinica-vps "cd /root/Clinica && git pull"
-
-# Rebuild frontend
-ssh clinica-vps "cd /root/Clinica/frontend && npm install && npm run build"
-
-# Restart stacks
-ssh clinica-vps "cd /root/Clinica/supabase && docker compose down && docker compose up -d"
-ssh clinica-vps "cd /root/Clinica/evolution && docker compose down && docker compose up -d"
-```
-
-### Verificar Deploy
-```bash
-# Status dos containers
-ssh clinica-vps "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
-
-# Logs de erro
-ssh clinica-vps "docker logs supabase-kong --tail 50"
-ssh clinica-vps "docker logs evolution_api --tail 50"
-
-# Testar API
-curl http://217.216.81.92:8000/rest/v1/
-curl http://217.216.81.92:8082/api/health
-```
-
-### Rollback
-```bash
-# Voltar para versão anterior
-ssh clinica-vps "cd /root/Clinica && git checkout HEAD~1"
-
-# Rebuild e restart
-ssh clinica-vps "cd /root/Clinica/supabase && docker compose down && docker compose up -d"
+ssh clinica-vps "cd /root/Clinica && ./scripts/migrate.sh vps"
+ssh clinica-vps "cd /root/Clinica/webhook && docker compose up -d --build"
+ssh clinica-vps "cd /root/Clinica/frontend && npm install --legacy-peer-deps && npm run build"
+ssh clinica-vps "systemctl reload nginx"
 ```
 
 ---
 
-## Backup e Segurança de Dados
+## Backup e Segurança
 
-### Estratégia de Backup
-| Camada | O que protege | Frequência |
-|--------|--------------|------------|
-| **Contabo VPS** | Disco inteiro (OS + Docker + tudo) | Snapshots nativos (7 dias) |
-| **scripts/backup.sh** | Banco PostgreSQL (pg_dump) | Antes de cada deploy |
-| **migrate.sh** | Banco antes de migrações | Automático (VPS) |
+**Backup:** `scripts/backup.sh manual|pre-deploy` → `/root/backups/db-*.sql.gz`
+**Restaurar:** `gunzip < backup.sql.gz | docker exec -i supabase-db psql -U postgres -d postgres`
+**Migrações:** `migrate.sh` usa transações (BEGIN/COMMIT) + backup automático (VPS) + `ON_ERROR_STOP=1`
 
-### Scripts de Backup
-
-**Backup manual:**
-```bash
-ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh manual"
-```
-
-**Backup pré-deploy (automático na skill /deploy):**
-```bash
-ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh pre-deploy"
-```
-
-**Listar backups:**
-```bash
-ssh clinica-vps "ls -1th /root/backups/db-*.sql.gz"
-```
-
-**Restaurar backup:**
-```bash
-ssh clinica-vps "gunzip < /root/backups/db-<arquivo>.sql.gz | docker exec -i supabase-db psql -U postgres -d postgres"
-```
-
-### Segurança do Versionamento
-- `.gitignore` bloqueia todos `.env.*` (exceto `.env.example`)
-- Repositório público — NUNCA commitar secrets
-- `is_admin()` usa SECURITY DEFINER para evitar recursão RLS
-- Migration 013: trigger auto-cria profile para Google OAuth
-
-### Migrações Seguras
-- `migrate.sh` executa cada migração dentro de BEGIN/COMMIT (transação)
-- Flag `-v ON_ERROR_STOP=1` reverte automaticamente se houver erro
-- Backup automático antes de migrações (ambiente VPS)
-- Migrações são idempotentes (`ON CONFLICT DO NOTHING`, `IF EXISTS`)
-
-### NUNCA fazer em produção
-- `docker compose down -v` (deleta TODOS os volumes/dados!)
-- `DROP TABLE` sem backup
-- Commitar arquivos `.env` com secrets
-- Rodar migrações sem backup prévio
+**NUNCA em produção:** `docker compose down -v`, `DROP TABLE` sem backup, commitar `.env` com secrets
 
 ---
 
