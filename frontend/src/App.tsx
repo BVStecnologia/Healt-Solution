@@ -34,6 +34,7 @@ const NotificationRulesPage = lazy(() => import('./pages/admin/NotificationRules
 const ServicesPage = lazy(() => import('./pages/admin/ServicesPage'));
 const AttendantsPage = lazy(() => import('./pages/admin/AttendantsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
+const HandoffSessionsPage = lazy(() => import('./pages/admin/HandoffSessionsPage'));
 
 // Smart redirect: admins/providers vão para sua área, pacientes ficam no dashboard
 // ?as=patient permite admin/provider visualizar o portal do paciente
@@ -171,6 +172,12 @@ const App: React.FC = () => {
         <Route path="/admin/attendants" element={
           <AdminProtectedRoute>
             <AttendantsPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/handoff" element={
+          <AdminProtectedRoute>
+            <HandoffSessionsPage />
           </AdminProtectedRoute>
         } />
 

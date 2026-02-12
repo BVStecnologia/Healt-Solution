@@ -7,7 +7,6 @@ import {
   Bell,
   MessageCircle,
   AlertTriangle,
-  Headphones,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -15,12 +14,11 @@ import { ClinicSettingsContent } from './ClinicSettingsPage';
 import { NotificationRulesContent } from './NotificationRulesPage';
 import { WhatsAppContent } from './WhatsAppPage';
 import { FailedMessagesContent } from './FailedMessagesPage';
-import { HandoffSessionsContent } from './HandoffSessionsPage';
 
 // ============================================
 // TYPES
 // ============================================
-type TabKey = 'general' | 'notifications' | 'whatsapp' | 'failed-messages' | 'handoff';
+type TabKey = 'general' | 'notifications' | 'whatsapp' | 'failed-messages';
 
 interface TabConfig {
   key: TabKey;
@@ -33,7 +31,6 @@ const TABS: TabConfig[] = [
   { key: 'notifications', labelKey: 'settings.tabNotifications', icon: Bell },
   { key: 'whatsapp', labelKey: 'settings.tabWhatsapp', icon: MessageCircle },
   { key: 'failed-messages', labelKey: 'settings.tabFailedMessages', icon: AlertTriangle },
-  { key: 'handoff', labelKey: 'settings.tabHandoff', icon: Headphones },
 ];
 
 // ============================================
@@ -136,8 +133,6 @@ const AdminSettingsPage: React.FC = () => {
         return <WhatsAppContent />;
       case 'failed-messages':
         return <FailedMessagesContent />;
-      case 'handoff':
-        return <HandoffSessionsContent />;
       default:
         return <ClinicSettingsContent />;
     }
