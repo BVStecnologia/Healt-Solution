@@ -72,7 +72,7 @@
   "nav.logout": "Sign Out",
   "nav.management": "Management",
   "nav.config": "Settings",
-  "nav.calendar": "Calendar",
+  "nav.calendar": "Scheduling",
   "nav.mySchedule": "My Schedule",
   "nav.providerSchedules": "Provider Schedules",
   "nav.patients": "Patients",
@@ -169,7 +169,7 @@
   "dashboard.dayNames.fri": "Fri",
   "dashboard.dayNames.sat": "Sat",
 
-  "calendar.title": "Calendar",
+  "calendar.title": "Scheduling",
   "calendar.myScheduleTitle": "My Schedule",
   "calendar.today": "Today",
   "calendar.previous": "Previous",
@@ -228,6 +228,7 @@
   "calendar.consultationCount_other": "{{count}} appointments",
   "calendar.helpTip": "<strong>Tip:</strong> Click on an appointment to view details and change status. Use the buttons above to switch between month, week or day view. In week/day view, the height of each card represents the actual appointment duration.",
   "calendar.helpTipAdmin": " Filter by provider to see individual schedules.",
+  "calendar.slotWarning24h": "Appointments require at least 24 hours advance notice",
 
   "appointments.title": "Appointments",
   "appointments.new": "New Appointment",
@@ -1012,5 +1013,22 @@
 
   "aria.selectLanguage": "Select language",
   "language.pt": "Português",
-  "language.en": "English"
+  "language.en": "English",
+
+  "nav.clinicSettings": "Clinic Settings",
+
+  "clinicSettings.title": "Clinic Settings",
+  "clinicSettings.subtitle": "Configure booking rules and clinic preferences",
+  "clinicSettings.bookingRulesTitle": "Booking Rules",
+  "clinicSettings.bookingRulesDescription": "Control how far in advance patients must book appointments. This affects the patient portal, admin calendar, and WhatsApp chatbot.",
+  "clinicSettings.minBookingHours": "Minimum advance notice",
+  "clinicSettings.hour": "hour",
+  "clinicSettings.hours": "hours",
+  "clinicSettings.save": "Save",
+  "clinicSettings.saving": "Saving...",
+  "clinicSettings.saved": "Saved!",
+  "clinicSettings.currentValue": "Currently set to {{hours}}h",
+
+  "calendar.slotWarningMinHours": "Appointments require at least {{hours}} hours advance notice",
+  "booking.errorMinHours": "Appointments must be scheduled at least {{hours}} hours in advance."
 }

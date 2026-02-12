@@ -22,6 +22,7 @@ import {
   formatInvalidOption,
   formatLateCancellationWarning,
 } from './patientResponder';
+import { getMinBookingHours } from './scheduleManager';
 
 /**
  * Shows upcoming appointments for the patient.
@@ -88,15 +89,17 @@ export async function handleCancelInit(
     return;
   }
 
+  const minHours = await getMinBookingHours();
+
   if (cancellable.length === 1) {
     const hoursUntil = (new Date(cancellable[0].scheduled_at).getTime() - Date.now()) / (1000 * 60 * 60);
-    if (hoursUntil < 24 && hoursUntil > 0) {
+    if (hoursUntil < minHours && hoursUntil > 0) {
       setCancelState(remoteJid, {
         step: 'confirm_late',
         appointmentId: cancellable[0].id,
         appointmentScheduledAt: cancellable[0].scheduled_at,
       });
-      await sendMessage(instance, remoteJid, formatLateCancellationWarning(lang));
+      await sendMessage(instance, remoteJid, formatLateCancellationWarning(lang, minHours));
       return;
     }
     setCancelState(remoteJid, {
@@ -137,16 +140,17 @@ export async function handleCancelStep(
 
       const selected = cancel.appointments[idx - 1];
 
-      // Check for late cancellation (< 24h)
+      // Check for late cancellation (< configured hours)
       if (selected.scheduled_at) {
+        const minHoursCancel = await getMinBookingHours();
         const hoursUntil = (new Date(selected.scheduled_at).getTime() - Date.now()) / (1000 * 60 * 60);
-        if (hoursUntil < 24 && hoursUntil > 0) {
+        if (hoursUntil < minHoursCancel && hoursUntil > 0) {
           setCancelState(remoteJid, {
             step: 'confirm_late',
             appointmentId: selected.id,
             appointmentScheduledAt: selected.scheduled_at,
           });
-          await sendMessage(instance, remoteJid, formatLateCancellationWarning(lang));
+          await sendMessage(instance, remoteJid, formatLateCancellationWarning(lang, minHoursCancel));
           return;
         }
       }

@@ -19,6 +19,7 @@ import {
   DollarSign,
   Headphones,
   UserCheck,
+  Settings,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
@@ -414,6 +415,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
     { subpath: '/whatsapp', label: t('nav.whatsapp'), icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
     { subpath: '/failed-messages', label: t('nav.failedMessages'), icon: AlertTriangle, section: 'config', envs: ['admin'] as Environment[] },
     { subpath: '/handoff', label: t('nav.handoff'), icon: Headphones, section: 'config', envs: ['admin'] as Environment[] },
+    { subpath: '/clinic-settings', label: t('nav.clinicSettings'), icon: Settings, section: 'config', envs: ['admin'] as Environment[] },
   ];
 
   // Detectar ambiente atual pela URL

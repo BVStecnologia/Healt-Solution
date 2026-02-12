@@ -13,6 +13,7 @@ interface TimeSlotPickerProps {
   onSelectSlot: (slot: TimeSlot) => void;
   onDateChange: (date: Date) => void;
   loading?: boolean;
+  minBookingHours?: number;
 }
 
 const Container = styled.div`
@@ -167,6 +168,7 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   onSelectSlot,
   onDateChange,
   loading = false,
+  minBookingHours = 24,
 }) => {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'pt' ? ptBR : enUS;
@@ -174,8 +176,12 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
   const [currentWeekStart, setCurrentWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
-  // Iniciar com amanhã (regra de 24h mínimas de antecedência)
-  const [selectedDate, setSelectedDate] = useState<Date>(() => addDays(startOfDay(new Date()), 1));
+  // Iniciar com a primeira data permitida pela regra de antecedência mínima
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const minDate = new Date(Date.now() + minBookingHours * 60 * 60 * 1000);
+    // Usar o próximo dia inteiro após o limite
+    return addDays(startOfDay(minDate), minDate.getHours() > 0 ? 1 : 0);
+  });
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
 
@@ -214,9 +220,9 @@ const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
         {weekDays.map(day => {
           const isSelected = isSameDay(day, selectedDate);
           const isToday = isSameDay(day, new Date());
-          // Bloquear datas passadas e hoje (regra de 24h mínimas)
-          const tomorrow = addDays(startOfDay(new Date()), 1);
-          const isPast = isBefore(day, tomorrow);
+          // Bloquear datas que não atendem à antecedência mínima
+          const minAllowedDate = new Date(Date.now() + minBookingHours * 60 * 60 * 1000);
+          const isPast = isBefore(day, startOfDay(minAllowedDate));
 
           return (
             <DayButton

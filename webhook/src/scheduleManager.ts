@@ -231,3 +231,31 @@ function formatDateISO(date: Date): string {
   const d = date.getDate().toString().padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
+
+/**
+ * Fetches the min_booking_hours clinic setting from DB.
+ * Returns 24 as fallback if not found.
+ */
+let cachedMinBookingHours: { value: number; fetchedAt: number } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+export async function getMinBookingHours(): Promise<number> {
+  if (cachedMinBookingHours && Date.now() - cachedMinBookingHours.fetchedAt < CACHE_TTL_MS) {
+    return cachedMinBookingHours.value;
+  }
+
+  try {
+    const client = getClient();
+    const { data, error } = await client
+      .from('clinic_settings')
+      .select('value')
+      .eq('key', 'min_booking_hours')
+      .single();
+
+    const hours = data && !error ? parseInt(data.value, 10) || 24 : 24;
+    cachedMinBookingHours = { value: hours, fetchedAt: Date.now() };
+    return hours;
+  } catch {
+    return 24;
+  }
+}

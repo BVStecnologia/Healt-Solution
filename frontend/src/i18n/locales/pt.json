@@ -72,7 +72,7 @@
   "nav.logout": "Sair",
   "nav.management": "Gestão",
   "nav.config": "Configurações",
-  "nav.calendar": "Calendário",
+  "nav.calendar": "Agendamentos",
   "nav.mySchedule": "Minha Agenda",
   "nav.providerSchedules": "Agenda Médicos",
   "nav.patients": "Pacientes",
@@ -169,7 +169,7 @@
   "dashboard.dayNames.fri": "Sex",
   "dashboard.dayNames.sat": "Sáb",
 
-  "calendar.title": "Calendário",
+  "calendar.title": "Agendamentos",
   "calendar.myScheduleTitle": "Minha Agenda",
   "calendar.today": "Hoje",
   "calendar.previous": "Anterior",
@@ -228,6 +228,7 @@
   "calendar.consultationCount_other": "{{count}} consultas",
   "calendar.helpTip": "<strong>Dica:</strong> Clique em uma consulta para ver detalhes e alterar o status. Use os botões acima para alternar entre visão de mês, semana ou dia. Na visão semanal/diária, a altura de cada card representa a duração real da consulta.",
   "calendar.helpTipAdmin": " Filtre por médico para ver a agenda individual.",
+  "calendar.slotWarning24h": "Agendamentos precisam de pelo menos 24 horas de antecedência",
 
   "appointments.title": "Agendamentos",
   "appointments.new": "Novo Agendamento",
@@ -1005,5 +1006,22 @@
 
   "aria.selectLanguage": "Selecionar idioma",
   "language.pt": "Português",
-  "language.en": "English"
+  "language.en": "English",
+
+  "nav.clinicSettings": "Config. Clínica",
+
+  "clinicSettings.title": "Configurações da Clínica",
+  "clinicSettings.subtitle": "Configure regras de agendamento e preferências da clínica",
+  "clinicSettings.bookingRulesTitle": "Regras de Agendamento",
+  "clinicSettings.bookingRulesDescription": "Controle com quanto tempo de antecedência os pacientes devem agendar consultas. Afeta o portal do paciente, calendário admin e chatbot WhatsApp.",
+  "clinicSettings.minBookingHours": "Antecedência mínima",
+  "clinicSettings.hour": "hora",
+  "clinicSettings.hours": "horas",
+  "clinicSettings.save": "Salvar",
+  "clinicSettings.saving": "Salvando...",
+  "clinicSettings.saved": "Salvo!",
+  "clinicSettings.currentValue": "Atualmente configurado para {{hours}}h",
+
+  "calendar.slotWarningMinHours": "Agendamentos precisam de pelo menos {{hours}} horas de antecedência",
+  "booking.errorMinHours": "Agendamentos devem ser feitos com pelo menos {{hours}} horas de antecedência."
 }

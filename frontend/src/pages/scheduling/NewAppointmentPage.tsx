@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { ArrowLeft, ArrowRight, Check, AlertTriangle, Heart, Brain, Sparkles, Droplets, Stethoscope, Dna, Clock, ChevronLeft, Video, Building2 } from 'lucide-react';
 import { format, addDays, startOfDay } from 'date-fns';
+import { callRPC } from '../../lib/supabaseClient';
 import { theme } from '../../styles/GlobalStyle';
 import { useAppointments } from '../../hooks/useAppointments';
 import { useProviders } from '../../hooks/useProviders';
@@ -414,11 +415,27 @@ const NewAppointmentPage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<AppointmentType | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  // Iniciar com amanhã (regra de 24h mínimas, sincronizado com TimeSlotPicker)
+  const [minBookingHours, setMinBookingHours] = useState(24);
+  // Iniciar com a primeira data permitida pela antecedência mínima
   const [selectedDate, setSelectedDate] = useState<Date>(() => addDays(startOfDay(new Date()), 1));
   const [selectedModality, setSelectedModality] = useState<'in_office' | 'telehealth'>('in_office');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Fetch configurable min booking hours
+  useEffect(() => {
+    callRPC<string>('get_clinic_setting', { p_key: 'min_booking_hours' })
+      .then(val => {
+        if (val) {
+          const hours = parseInt(val, 10) || 24;
+          setMinBookingHours(hours);
+          // Update initial date based on actual setting
+          const minDate = new Date(Date.now() + hours * 60 * 60 * 1000);
+          setSelectedDate(addDays(startOfDay(minDate), minDate.getHours() > 0 ? 1 : 0));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Verificar elegibilidade quando tipo é selecionado
   useEffect(() => {
@@ -471,8 +488,8 @@ const NewAppointmentPage: React.FC = () => {
     } catch (error: any) {
       console.error('Error creating appointment:', error);
       const msg = error?.message || error?.details || '';
-      if (msg.includes('24')) {
-        setSubmitError(t('booking.error24h'));
+      if (msg.includes('antecedencia') || msg.includes('advance')) {
+        setSubmitError(t('booking.errorMinHours', { hours: minBookingHours }));
       } else if (msg.includes('conflict') || msg.includes('já existe') || msg.includes('already')) {
         setSubmitError(t('booking.errorConflict'));
       } else if (msg.includes('slot') || msg.includes('disponível') || msg.includes('available')) {
@@ -683,6 +700,7 @@ const NewAppointmentPage: React.FC = () => {
               onSelectSlot={handleSlotSelect}
               onDateChange={handleDateChange}
               loading={slotsLoading}
+              minBookingHours={minBookingHours}
             />
 
             <Actions style={{ marginTop: theme.spacing.xl }}>

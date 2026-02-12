@@ -32,7 +32,7 @@ import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import HelpTip from '../../components/ui/HelpTip';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, callRPC } from '../../lib/supabaseClient';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 import { ACTIVE_TREATMENTS, getTreatmentLabel, getTreatmentShortLabel, getTreatmentDuration, getSpecialtyKey } from '../../constants/treatments';
 
@@ -45,6 +45,36 @@ const fadeIn = keyframes`
 const slideIn = keyframes`
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+`;
+
+const toastSlideIn = keyframes`
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+`;
+
+const toastFadeOut = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
+
+const SlotToast = styled.div`
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: ${theme.colors.text};
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: ${theme.borderRadius.lg};
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  animation: ${toastSlideIn} 0.3s ease-out, ${toastFadeOut} 0.3s ease-in 2.7s forwards;
+  white-space: nowrap;
 `;
 
 const locales = {
@@ -100,6 +130,7 @@ const HeaderActions = styled.div`
   display: flex;
   align-items: center;
   gap: ${theme.spacing.lg};
+  padding-right: 60px;
 `;
 
 const TodayInfo = styled.button`
@@ -1582,6 +1613,12 @@ const CalendarPage: React.FC = () => {
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [providerOptions, setProviderOptions] = useState<ProviderOption[]>([]);
 
+  // Slot warning toast
+  const [slotWarning, setSlotWarning] = useState<string | null>(null);
+
+  // Configurable min booking hours
+  const [minBookingHours, setMinBookingHours] = useState(24);
+
   // New appointment modal state
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -1657,10 +1694,10 @@ const CalendarPage: React.FC = () => {
     ].join('\n');
   }, [t, formatStatusShort]);
 
-  // Ler view da URL ou usar 'month' como padrão
+  // Ler view da URL ou usar 'week' como padrão
   const viewFromUrl = searchParams.get('view') as View | null;
   const validViews: View[] = ['month', 'week', 'day', 'agenda'];
-  const initialView: View = viewFromUrl && validViews.includes(viewFromUrl) ? viewFromUrl : 'month';
+  const initialView: View = viewFromUrl && validViews.includes(viewFromUrl) ? viewFromUrl : 'week';
 
   // Ler data da URL ou usar hoje como padrão
   const dateFromUrl = searchParams.get('date');
@@ -1670,10 +1707,17 @@ const CalendarPage: React.FC = () => {
   const [view, setView] = useState<View>(initialView);
   const [date, setDate] = useState(initialDate);
 
-  // Limites de horário para week/day views (6h-20h) e auto-scroll para 7h
-  const calendarMin = useMemo(() => { const d = new Date(); d.setHours(6, 0, 0, 0); return d; }, []);
-  const calendarMax = useMemo(() => { const d = new Date(); d.setHours(20, 0, 0, 0); return d; }, []);
-  const scrollToTime = useMemo(() => { const d = new Date(); d.setHours(7, 0, 0, 0); return d; }, []);
+  // Limites de horário para week/day views (9h-19h) e auto-scroll para 9:30
+  const calendarMin = useMemo(() => { const d = new Date(); d.setHours(9, 0, 0, 0); return d; }, []);
+  const calendarMax = useMemo(() => { const d = new Date(); d.setHours(19, 0, 0, 0); return d; }, []);
+  const scrollToTime = useMemo(() => { const d = new Date(); d.setHours(9, 30, 0, 0); return d; }, []);
+
+  // Fetch configurable min booking hours
+  useEffect(() => {
+    callRPC<string>('get_clinic_setting', { p_key: 'min_booking_hours' })
+      .then(val => { if (val) setMinBookingHours(parseInt(val, 10) || 24); })
+      .catch(() => {});
+  }, []);
 
   // Auto-scroll para 07:00 quando view muda para week/day
   useEffect(() => {
@@ -1681,8 +1725,8 @@ const CalendarPage: React.FC = () => {
       const timer = setTimeout(() => {
         const el = document.querySelector('.rbc-time-content');
         if (el) {
-          // 1 hora = min-height do timeslot (72px). 07:00 é 1h após min (06:00)
-          el.scrollTop = 100;
+          // scrollToTime já posiciona em 9:30, scroll mínimo
+          el.scrollTop = 0;
         }
       }, 100);
       return () => clearTimeout(timer);
@@ -2150,6 +2194,33 @@ const CalendarPage: React.FC = () => {
     setIsNewAppointmentOpen(true);
   };
 
+  const showSlotWarning = (msg: string) => {
+    setSlotWarning(msg);
+    setTimeout(() => setSlotWarning(null), 3000);
+  };
+
+  const handleSelectSlot = (slotInfo: { start: Date; end: Date; action: string }) => {
+    const now = new Date();
+    const minTime = new Date(now.getTime() + minBookingHours * 60 * 60 * 1000);
+    if (slotInfo.start < minTime) {
+      showSlotWarning(t('calendar.slotWarningMinHours', { hours: minBookingHours }));
+      return;
+    }
+
+    setNewAppointmentForm({
+      patient_id: '',
+      provider_id: isProvider && providerId ? providerId : '',
+      type: 'follow_up',
+      scheduled_date: format(slotInfo.start, 'yyyy-MM-dd'),
+      scheduled_time: format(slotInfo.start, 'HH:mm'),
+      notes: '',
+    });
+    setSelectedPatient(null);
+    setAppointmentSuccess(false);
+    setAppointmentError('');
+    setIsNewAppointmentOpen(true);
+  };
+
   const closeNewAppointmentModal = () => {
     setIsNewAppointmentOpen(false);
     setSelectedPatient(null);
@@ -2285,7 +2356,13 @@ const CalendarPage: React.FC = () => {
   }, [events]);
 
   return (
-    <AdminLayout>
+    <AdminLayout fullWidth>
+      {slotWarning && (
+        <SlotToast key={slotWarning + Date.now()}>
+          <AlertCircle size={16} />
+          {slotWarning}
+        </SlotToast>
+      )}
       <Header>
         <h1>
           <span className="calendar-icon">
@@ -2380,6 +2457,7 @@ const CalendarPage: React.FC = () => {
           } as any}
           popup
           selectable
+          onSelectSlot={handleSelectSlot}
         />
 
         <Legend>

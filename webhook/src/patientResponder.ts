@@ -361,11 +361,11 @@ See you then! 😊
 _Send *menu* to go back_`;
 }
 
-export function formatLateCancellationWarning(lang: Language): string {
+export function formatLateCancellationWarning(lang: Language, minHours: number = 24): string {
   if (lang === 'pt') {
     return `⚠️ *Atenção: Cancelamento tardio*
 
-Sua consulta é em menos de 24 horas. Cancelamentos tardios podem estar sujeitos a políticas da clínica.
+Sua consulta é em menos de ${minHours} horas. Cancelamentos tardios podem estar sujeitos a políticas da clínica.
 
 *1.* ✅ Continuar cancelamento
 *2.* ❌ Manter consulta`;
@@ -373,7 +373,7 @@ Sua consulta é em menos de 24 horas. Cancelamentos tardios podem estar sujeitos
 
   return `⚠️ *Warning: Late cancellation*
 
-Your appointment is in less than 24 hours. Late cancellations may be subject to clinic policies.
+Your appointment is in less than ${minHours} hours. Late cancellations may be subject to clinic policies.
 
 *1.* ✅ Continue cancellation
 *2.* ❌ Keep appointment`;
