@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import {
   AlertTriangle,
@@ -10,6 +10,9 @@ import {
   CheckCircle,
   XCircle,
   Send,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -54,6 +57,19 @@ const luxuryTheme = {
 };
 
 // ============================================
+// CONSTANTS
+// ============================================
+const ITEMS_PER_PAGE = 10;
+
+const TEMPLATE_CATEGORIES = [
+  { key: 'all', labelKey: 'failedMessages.filterAll' },
+  { key: 'reminders', labelKey: 'failedMessages.filterReminders', templates: ['reminder_24h', 'reminder_1h', 'provider_reminder_2h', 'provider_reminder_15min'] },
+  { key: 'noshow', labelKey: 'failedMessages.filterNoShow', templates: ['no_show_patient', 'no_show_provider'] },
+  { key: 'status', labelKey: 'failedMessages.filterStatus', templates: ['appointment_confirmed', 'appointment_rejected', 'appointment_cancelled', 'appointment_cancelled_by_provider', 'appointment_auto_confirmed'] },
+  { key: 'notifications', labelKey: 'failedMessages.filterNotifications', templates: ['new_appointment_provider', 'new_appointment_clinic'] },
+] as const;
+
+// ============================================
 // STYLED COMPONENTS
 // ============================================
 const PageContainer = styled.div``;
@@ -95,6 +111,7 @@ const RefreshButton = styled.button<{ $loading?: boolean }>`
   cursor: ${props => props.$loading ? 'wait' : 'pointer'};
   opacity: ${props => props.$loading ? 0.7 : 1};
   transition: all 0.3s ease;
+  white-space: nowrap;
 
   &:hover {
     border-color: ${luxuryTheme.primaryLight};
@@ -112,7 +129,7 @@ const RefreshButton = styled.button<{ $loading?: boolean }>`
 const StatsRow = styled.div`
   display: flex;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
   animation: ${fadeInUp} 0.5s ease-out;
 `;
@@ -144,6 +161,56 @@ const StatLabel = styled.span`
   font-size: 13px;
   color: ${luxuryTheme.textSecondary};
   font-weight: 400;
+`;
+
+const FiltersRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  animation: ${fadeInUp} 0.5s ease-out;
+  animation-delay: 100ms;
+  animation-fill-mode: both;
+`;
+
+const FilterLabel = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: ${luxuryTheme.textSecondary};
+  font-weight: 500;
+  margin-right: 4px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
+const FilterPill = styled.button<{ $active?: boolean }>`
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid ${props => props.$active ? luxuryTheme.primary : 'rgba(146, 86, 62, 0.12)'};
+  background: ${props => props.$active ? `${luxuryTheme.primary}0D` : 'transparent'};
+  color: ${props => props.$active ? luxuryTheme.primary : luxuryTheme.textSecondary};
+  font-size: 13px;
+  font-weight: ${props => props.$active ? 600 : 400};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: ${luxuryTheme.primaryLight};
+    color: ${luxuryTheme.primary};
+  }
+`;
+
+const FilterCount = styled.span`
+  font-size: 11px;
+  opacity: 0.7;
+  margin-left: 4px;
 `;
 
 const Table = styled.div`
@@ -370,6 +437,63 @@ const EmptyState = styled.div`
   }
 `;
 
+const PaginationRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(146, 86, 62, 0.06);
+  background: rgba(146, 86, 62, 0.02);
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 12px;
+  }
+`;
+
+const PaginationInfo = styled.span`
+  font-size: 13px;
+  color: ${luxuryTheme.textSecondary};
+`;
+
+const PaginationControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const PageButton = styled.button<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid ${props => props.$active ? luxuryTheme.primary : 'rgba(146, 86, 62, 0.1)'};
+  background: ${props => props.$active ? `${luxuryTheme.primary}0D` : 'transparent'};
+  color: ${props => props.$active ? luxuryTheme.primary : luxuryTheme.textSecondary};
+  font-size: 13px;
+  font-weight: ${props => props.$active ? 600 : 400};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: ${luxuryTheme.primaryLight};
+    color: ${luxuryTheme.primary};
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
 // ============================================
 // TYPES
 // ============================================
@@ -386,9 +510,6 @@ interface FailedMessage {
 }
 
 // ============================================
-// COMPONENT
-// ============================================
-// ============================================
 // CONTENT COMPONENT (used by AdminSettingsPage tabs)
 // ============================================
 export const FailedMessagesContent: React.FC = () => {
@@ -397,7 +518,8 @@ export const FailedMessagesContent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [retrySuccess, setRetrySuccess] = useState<Set<string>>(new Set());
-  const [stats, setStats] = useState({ failed: 0, retriable: 0, exhausted: 0 });
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadMessages = useCallback(async () => {
     setLoading(true);
@@ -406,21 +528,14 @@ export const FailedMessagesContent: React.FC = () => {
         .from('message_logs')
         .select('id, phone_number, message, template_name, error, retry_count, created_at, last_retry_at, status')
         .eq('status', 'failed')
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error loading failed messages:', error);
         return;
       }
 
-      const msgs = (data || []) as FailedMessage[];
-      setMessages(msgs);
-      setStats({
-        failed: msgs.length,
-        retriable: msgs.filter(m => m.retry_count < 3).length,
-        exhausted: msgs.filter(m => m.retry_count >= 3).length,
-      });
+      setMessages((data || []) as FailedMessage[]);
     } finally {
       setLoading(false);
     }
@@ -429,6 +544,54 @@ export const FailedMessagesContent: React.FC = () => {
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
+
+  // Filtered messages
+  const filteredMessages = useMemo(() => {
+    if (activeFilter === 'all') return messages;
+    const category = TEMPLATE_CATEGORIES.find(c => c.key === activeFilter);
+    if (!category || !('templates' in category)) return messages;
+    return messages.filter(m => (category.templates as readonly string[]).includes(m.template_name || ''));
+  }, [messages, activeFilter]);
+
+  // Stats from all messages (not filtered)
+  const stats = useMemo(() => ({
+    failed: messages.length,
+    retriable: messages.filter(m => m.retry_count < 3).length,
+    exhausted: messages.filter(m => m.retry_count >= 3).length,
+  }), [messages]);
+
+  // Filter counts
+  const filterCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: messages.length };
+    for (const cat of TEMPLATE_CATEGORIES) {
+      if ('templates' in cat) {
+        counts[cat.key] = messages.filter(m => (cat.templates as readonly string[]).includes(m.template_name || '')).length;
+      }
+    }
+    return counts;
+  }, [messages]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredMessages.length / ITEMS_PER_PAGE));
+  const paginatedMessages = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredMessages.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredMessages, currentPage]);
+
+  const pageNumbers = useMemo(() => {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+    start = Math.max(1, end - maxVisible + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }, [currentPage, totalPages]);
 
   const handleRetry = async (msg: FailedMessage) => {
     setRetryingId(msg.id);
@@ -531,106 +694,160 @@ export const FailedMessagesContent: React.FC = () => {
       </Header>
 
       <StatsRow>
-          <StatPill>
-            <XCircle style={{ color: luxuryTheme.error }} />
-            <StatValue>{stats.failed}</StatValue>
-            <StatLabel>{t('failedMessages.statFailed')}</StatLabel>
-          </StatPill>
-          <StatPill>
-            <Send style={{ color: luxuryTheme.warning }} />
-            <StatValue>{stats.retriable}</StatValue>
-            <StatLabel>{t('failedMessages.statRetriable')}</StatLabel>
-          </StatPill>
-          <StatPill>
-            <AlertTriangle style={{ color: luxuryTheme.textSecondary }} />
-            <StatValue>{stats.exhausted}</StatValue>
-            <StatLabel>{t('failedMessages.statExhausted')}</StatLabel>
-          </StatPill>
-        </StatsRow>
+        <StatPill>
+          <XCircle style={{ color: luxuryTheme.error }} />
+          <StatValue>{stats.failed}</StatValue>
+          <StatLabel>{t('failedMessages.statFailed')}</StatLabel>
+        </StatPill>
+        <StatPill>
+          <Send style={{ color: luxuryTheme.warning }} />
+          <StatValue>{stats.retriable}</StatValue>
+          <StatLabel>{t('failedMessages.statRetriable')}</StatLabel>
+        </StatPill>
+        <StatPill>
+          <AlertTriangle style={{ color: luxuryTheme.textSecondary }} />
+          <StatValue>{stats.exhausted}</StatValue>
+          <StatLabel>{t('failedMessages.statExhausted')}</StatLabel>
+        </StatPill>
+      </StatsRow>
 
-        <Table>
-          {messages.length === 0 && !loading ? (
-            <EmptyState>
-              <CheckCircle />
-              <h3>{t('failedMessages.emptyTitle')}</h3>
-              <p>{t('failedMessages.emptyDescription')}</p>
-            </EmptyState>
-          ) : (
-            <>
-              <TableHeader>
-                <span>{t('failedMessages.headerMessage')}</span>
-                <span>{t('failedMessages.headerPhone')}</span>
-                <span>{t('failedMessages.headerError')}</span>
-                <span>{t('failedMessages.headerTemplate')}</span>
-                <span>{t('failedMessages.headerAttempts')}</span>
-                <span>{t('failedMessages.headerAction')}</span>
-              </TableHeader>
-              {messages.map(msg => (
-                <TableRow key={msg.id} $retrying={retryingId === msg.id}>
-                  <div>
-                    <CellLabel>{t('failedMessages.cellMessage')}</CellLabel>
-                    <MessagePreview title={msg.message}>
-                      {msg.message.substring(0, 80)}...
-                    </MessagePreview>
-                    <DateCell>
-                      <Clock size={11} />
-                      {formatDate(msg.created_at)}
-                    </DateCell>
-                  </div>
+      <FiltersRow>
+        <FilterLabel>
+          <Filter size={14} />
+          {t('failedMessages.filterLabel')}
+        </FilterLabel>
+        {TEMPLATE_CATEGORIES.map(cat => (
+          <FilterPill
+            key={cat.key}
+            $active={activeFilter === cat.key}
+            onClick={() => setActiveFilter(cat.key)}
+          >
+            {t(cat.labelKey)}
+            {filterCounts[cat.key] > 0 && (
+              <FilterCount>({filterCounts[cat.key]})</FilterCount>
+            )}
+          </FilterPill>
+        ))}
+      </FiltersRow>
 
-                  <PhoneCell>
-                    <CellLabel>{t('failedMessages.cellPhone')}</CellLabel>
-                    <Phone size={14} />
-                    {msg.phone_number}
-                  </PhoneCell>
+      <Table>
+        {filteredMessages.length === 0 && !loading ? (
+          <EmptyState>
+            <CheckCircle />
+            <h3>{t('failedMessages.emptyTitle')}</h3>
+            <p>{activeFilter !== 'all' ? t('failedMessages.emptyFilter') : t('failedMessages.emptyDescription')}</p>
+          </EmptyState>
+        ) : (
+          <>
+            <TableHeader>
+              <span>{t('failedMessages.headerMessage')}</span>
+              <span>{t('failedMessages.headerPhone')}</span>
+              <span>{t('failedMessages.headerError')}</span>
+              <span>{t('failedMessages.headerTemplate')}</span>
+              <span>{t('failedMessages.headerAttempts')}</span>
+              <span>{t('failedMessages.headerAction')}</span>
+            </TableHeader>
+            {paginatedMessages.map(msg => (
+              <TableRow key={msg.id} $retrying={retryingId === msg.id}>
+                <div>
+                  <CellLabel>{t('failedMessages.cellMessage')}</CellLabel>
+                  <MessagePreview title={msg.message}>
+                    {msg.message.substring(0, 80)}...
+                  </MessagePreview>
+                  <DateCell>
+                    <Clock size={11} />
+                    {formatDate(msg.created_at)}
+                  </DateCell>
+                </div>
 
-                  <div>
-                    <CellLabel>{t('failedMessages.cellError')}</CellLabel>
-                    <ErrorCell title={msg.error || t('failedMessages.noDetails')}>
-                      {msg.error || t('failedMessages.noDetails')}
-                    </ErrorCell>
-                  </div>
+                <PhoneCell>
+                  <CellLabel>{t('failedMessages.cellPhone')}</CellLabel>
+                  <Phone size={14} />
+                  {msg.phone_number}
+                </PhoneCell>
 
-                  <div>
-                    <CellLabel>{t('failedMessages.cellTemplate')}</CellLabel>
-                    <TemplateCell>{formatTemplate(msg.template_name)}</TemplateCell>
-                  </div>
+                <div>
+                  <CellLabel>{t('failedMessages.cellError')}</CellLabel>
+                  <ErrorCell title={msg.error || t('failedMessages.noDetails')}>
+                    {msg.error || t('failedMessages.noDetails')}
+                  </ErrorCell>
+                </div>
 
-                  <div>
-                    <CellLabel>{t('failedMessages.cellAttempts')}</CellLabel>
-                    <RetryBadge $count={msg.retry_count}>
-                      <RotateCcw size={11} />
-                      {msg.retry_count}/3
-                    </RetryBadge>
-                  </div>
+                <div>
+                  <CellLabel>{t('failedMessages.cellTemplate')}</CellLabel>
+                  <TemplateCell>{formatTemplate(msg.template_name)}</TemplateCell>
+                </div>
 
-                  <div>
-                    {retrySuccess.has(msg.id) ? (
-                      <SuccessBadge>
-                        <CheckCircle size={12} />
-                        {t('failedMessages.sent')}
-                      </SuccessBadge>
-                    ) : msg.retry_count >= 3 ? (
-                      <ExhaustedLabel>{t('failedMessages.exhausted')}</ExhaustedLabel>
-                    ) : (
-                      <RetryButton
-                        onClick={() => handleRetry(msg)}
-                        disabled={retryingId === msg.id}
-                      >
-                        {retryingId === msg.id ? (
-                          <SpinIcon><RefreshCw size={12} /></SpinIcon>
-                        ) : (
-                          <RotateCcw size={12} />
-                        )}
-                        {t('failedMessages.resend')}
-                      </RetryButton>
-                    )}
-                  </div>
-                </TableRow>
-              ))}
-            </>
-          )}
-        </Table>
+                <div>
+                  <CellLabel>{t('failedMessages.cellAttempts')}</CellLabel>
+                  <RetryBadge $count={msg.retry_count}>
+                    <RotateCcw size={11} />
+                    {msg.retry_count}/3
+                  </RetryBadge>
+                </div>
+
+                <div>
+                  {retrySuccess.has(msg.id) ? (
+                    <SuccessBadge>
+                      <CheckCircle size={12} />
+                      {t('failedMessages.sent')}
+                    </SuccessBadge>
+                  ) : msg.retry_count >= 3 ? (
+                    <ExhaustedLabel>{t('failedMessages.exhausted')}</ExhaustedLabel>
+                  ) : (
+                    <RetryButton
+                      onClick={() => handleRetry(msg)}
+                      disabled={retryingId === msg.id}
+                    >
+                      {retryingId === msg.id ? (
+                        <SpinIcon><RefreshCw size={12} /></SpinIcon>
+                      ) : (
+                        <RotateCcw size={12} />
+                      )}
+                      {t('failedMessages.resend')}
+                    </RetryButton>
+                  )}
+                </div>
+              </TableRow>
+            ))}
+
+            {filteredMessages.length > ITEMS_PER_PAGE && (
+              <PaginationRow>
+                <PaginationInfo>
+                  {t('failedMessages.paginationInfo', {
+                    from: (currentPage - 1) * ITEMS_PER_PAGE + 1,
+                    to: Math.min(currentPage * ITEMS_PER_PAGE, filteredMessages.length),
+                    total: filteredMessages.length,
+                  })}
+                </PaginationInfo>
+                <PaginationControls>
+                  <PageButton
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft size={16} />
+                  </PageButton>
+                  {pageNumbers.map(page => (
+                    <PageButton
+                      key={page}
+                      $active={page === currentPage}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </PageButton>
+                  ))}
+                  <PageButton
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight size={16} />
+                  </PageButton>
+                </PaginationControls>
+              </PaginationRow>
+            )}
+          </>
+        )}
+      </Table>
     </PageContainer>
   );
 };
