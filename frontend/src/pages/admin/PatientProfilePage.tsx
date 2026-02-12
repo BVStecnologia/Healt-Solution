@@ -922,16 +922,18 @@ interface AppointmentWithProvider extends Omit<Appointment, 'provider'> {
   };
 }
 
-const PATIENT_TYPE_OPTIONS: { value: PatientType; label: string }[] = ACTIVE_PATIENT_TYPES.map(t => ({
+const getPatientTypeOptions = (lang: string) => ACTIVE_PATIENT_TYPES.map(t => ({
   value: t.key as PatientType,
-  label: t.label,
+  label: lang === 'en' ? t.labelEn : t.label,
 }));
 
 // ============================================
 // COMPONENT
 // ============================================
 const PatientProfilePage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
+  const PATIENT_TYPE_OPTIONS = getPatientTypeOptions(lang);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { goBack } = useSmartNavigation();

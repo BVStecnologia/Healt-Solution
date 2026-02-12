@@ -820,7 +820,10 @@ const Alert = styled.div<{ $variant: 'error' | 'success' }>`
 // ============================================
 // CONSTANTS
 // ============================================
-const PATIENT_TYPE_OPTIONS = ACTIVE_PATIENT_TYPES.map(t => ({ value: t.key as PatientType, label: t.label }));
+const getPatientTypeOptions = (lang: string) => ACTIVE_PATIENT_TYPES.map(t => ({
+  value: t.key as PatientType,
+  label: lang === 'en' ? t.labelEn : t.label,
+}));
 
 const ITEMS_PER_PAGE = 8;
 
@@ -828,7 +831,9 @@ const ITEMS_PER_PAGE = 8;
 // COMPONENT
 // ============================================
 const PatientsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
+  const PATIENT_TYPE_OPTIONS = getPatientTypeOptions(lang);
   const [searchParams, setSearchParams] = useSearchParams();
   const { navigateTo } = useSmartNavigation();
   const [patients, setPatients] = useState<Profile[]>([]);
@@ -1110,7 +1115,7 @@ const PatientsPage: React.FC = () => {
   };
 
   const getLabel = (type: PatientType | null) => {
-    return getPatientTypeLabelFromConstants(type || 'general');
+    return getPatientTypeLabelFromConstants(type || 'general', lang);
   };
 
   const getBadgeIcon = (type: PatientType | null) => {

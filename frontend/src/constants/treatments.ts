@@ -32,6 +32,7 @@ export interface CategoryInfo {
 export interface PatientTypeInfo {
   key: string;
   label: string;
+  labelEn: string;
   color: string;
   bgColor: string;
   icon: string;
@@ -481,23 +482,24 @@ export function getSpecialtyKey(specialty: string): string {
 
 export const PATIENT_TYPES: PatientTypeInfo[] = [
   // Active types
-  { key: 'new', label: 'Novo Paciente', color: '#10B981', bgColor: '#D1FAE5', icon: 'Sparkles', active: true },
-  { key: 'wellness', label: 'Bem-estar', color: '#14B8A6', bgColor: '#CCFBF1', icon: 'Heart', active: true },
-  { key: 'bhrt', label: 'BHRT', color: '#8B5CF6', bgColor: '#EDE9FE', icon: 'Activity', active: true },
-  { key: 'rejuvenation', label: 'Rejuvenescimento', color: '#EC4899', bgColor: '#FCE7F3', icon: 'Sparkles', active: true },
-  { key: 'iv_therapy', label: 'Terapia IV', color: '#3B82F6', bgColor: '#DBEAFE', icon: 'Droplets', active: true },
-  { key: 'vip', label: 'VIP', color: '#D4AF37', bgColor: '#FEF9C3', icon: 'Crown', active: true },
+  { key: 'new', label: 'Novo Paciente', labelEn: 'New Patient', color: '#10B981', bgColor: '#D1FAE5', icon: 'Sparkles', active: true },
+  { key: 'wellness', label: 'Bem-estar', labelEn: 'Wellness', color: '#14B8A6', bgColor: '#CCFBF1', icon: 'Heart', active: true },
+  { key: 'bhrt', label: 'BHRT', labelEn: 'BHRT', color: '#8B5CF6', bgColor: '#EDE9FE', icon: 'Activity', active: true },
+  { key: 'rejuvenation', label: 'Rejuvenescimento', labelEn: 'Rejuvenation', color: '#EC4899', bgColor: '#FCE7F3', icon: 'Sparkles', active: true },
+  { key: 'iv_therapy', label: 'Terapia IV', labelEn: 'IV Therapy', color: '#3B82F6', bgColor: '#DBEAFE', icon: 'Droplets', active: true },
+  { key: 'vip', label: 'VIP', labelEn: 'VIP', color: '#D4AF37', bgColor: '#FEF9C3', icon: 'Crown', active: true },
   // Legacy types (hidden from dropdowns, shown for existing records)
-  { key: 'general', label: 'Geral', color: '#8B7355', bgColor: '#F5F0EB', icon: 'User', active: false },
-  { key: 'trt', label: 'TRT', color: '#92563E', bgColor: '#FDF2E9', icon: 'Activity', active: false },
-  { key: 'hormone', label: 'Hormonal', color: '#C77D8E', bgColor: '#FDF2F8', icon: 'Activity', active: false },
+  { key: 'general', label: 'Geral', labelEn: 'General', color: '#8B7355', bgColor: '#F5F0EB', icon: 'User', active: false },
+  { key: 'trt', label: 'TRT', labelEn: 'TRT', color: '#92563E', bgColor: '#FDF2E9', icon: 'Activity', active: false },
+  { key: 'hormone', label: 'Hormonal', labelEn: 'Hormonal', color: '#C77D8E', bgColor: '#FDF2F8', icon: 'Activity', active: false },
 ];
 
 export const ACTIVE_PATIENT_TYPES = PATIENT_TYPES.filter(t => t.active);
 
-export function getPatientTypeLabel(key: string): string {
+export function getPatientTypeLabel(key: string, lang: string = 'pt'): string {
   const found = PATIENT_TYPES.find(t => t.key === key);
-  return found?.label ?? key;
+  if (!found) return key;
+  return lang === 'en' ? found.labelEn : found.label;
 }
 
 export function getPatientTypeColor(key: string): string {
