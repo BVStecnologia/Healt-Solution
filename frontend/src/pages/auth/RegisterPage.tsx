@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, CheckCircle, UserPlus } from 'lucide-react';
+import { z } from 'zod';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -555,17 +556,30 @@ const RegisterPage: React.FC = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
 
+  const registerSchema = z.object({
+    firstName: z.string().min(1, t('register.firstNameRequired')).max(50),
+    lastName: z.string().min(1, t('register.lastNameRequired')).max(50),
+    email: z.string().min(1, t('register.emailRequired')).email(t('register.emailInvalid')),
+    password: z.string().min(6, t('register.passwordTooShort')),
+    confirmPassword: z.string(),
+  }).refine(data => data.password === data.confirmPassword, {
+    message: t('register.passwordMismatch'),
+    path: ['confirmPassword'],
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError(t('register.passwordTooShort'));
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError(t('register.passwordMismatch'));
+    const result = registerSchema.safeParse({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      password,
+      confirmPassword,
+    });
+    if (!result.success) {
+      setError(result.error.errors[0].message);
       return;
     }
 
@@ -573,7 +587,7 @@ const RegisterPage: React.FC = () => {
 
     try {
       const preferredLang = language as 'pt' | 'en';
-      const { error: signUpError } = await signUp(email, password, firstName, lastName, preferredLang);
+      const { error: signUpError } = await signUp(result.data.email, result.data.password, result.data.firstName, result.data.lastName, preferredLang);
 
       if (signUpError) {
         setError(t('register.error'));

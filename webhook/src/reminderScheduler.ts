@@ -308,32 +308,38 @@ async function processNoShows(): Promise<void> {
 
 /**
  * Starts the reminder scheduler cron job (every 5 minutes).
+ * Uses a mutex to prevent overlapping executions.
  */
+let isSchedulerRunning = false;
+
+async function runSchedulerCycle(): Promise<void> {
+  if (isSchedulerRunning) {
+    console.warn('[Reminder] Previous cycle still running, skipping this execution');
+    return;
+  }
+
+  isSchedulerRunning = true;
+  try {
+    await processReminders();
+    await processNoShows();
+    await processRetries();
+    await processStaleHandoffs();
+  } catch (err) {
+    console.error('[Reminder] Scheduler error:', err);
+  } finally {
+    isSchedulerRunning = false;
+  }
+}
+
 export function startReminderScheduler(): void {
-  // Run every 5 minutes
-  cron.schedule(`*/${CRON_INTERVAL} * * * *`, async () => {
-    try {
-      await processReminders();
-      await processNoShows();
-      await processRetries();
-      await processStaleHandoffs();
-    } catch (err) {
-      console.error('[Reminder] Scheduler error:', err);
-    }
-  });
+  // Run every 5 minutes with overlap protection
+  cron.schedule(`*/${CRON_INTERVAL} * * * *`, runSchedulerCycle);
 
   console.log(`[Reminder] Scheduler started (every ${CRON_INTERVAL} minutes)`);
 
   // Run once immediately on startup (after a short delay)
   setTimeout(async () => {
-    try {
-      console.log('[Reminder] Running initial check...');
-      await processReminders();
-      await processNoShows();
-      await processRetries();
-      await processStaleHandoffs();
-    } catch (err) {
-      console.error('[Reminder] Initial check error:', err);
-    }
+    console.log('[Reminder] Running initial check...');
+    await runSchedulerCycle();
   }, 10_000);
 }

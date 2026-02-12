@@ -37,7 +37,8 @@ import i18n from 'i18next';
 import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, fetchWithTimeout } from '../../lib/supabaseClient';
+import { EVOLUTION_API_URL, evolutionHeaders } from '../../lib/whatsappService';
 import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 import SetupChecklist from '../../components/admin/SetupChecklist';
@@ -834,9 +835,6 @@ interface TypeDistribution {
   value: number;
 }
 
-const EVOLUTION_API_URL = process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
-const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_evolution_aqui';
-
 // ============================================
 // COMPONENT
 // ============================================
@@ -869,8 +867,8 @@ const AdminDashboard: React.FC = () => {
 
   const checkWhatsAppStatus = async () => {
     try {
-      const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
-        headers: { 'apikey': EVOLUTION_API_KEY },
+      const response = await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
+        headers: await evolutionHeaders(),
       });
 
       if (response.ok) {
@@ -881,9 +879,9 @@ const AdminDashboard: React.FC = () => {
 
         if (connectedInstance) {
           setWhatsappConnected(true);
-          const detailResponse = await fetch(
+          const detailResponse = await fetchWithTimeout(
             `${EVOLUTION_API_URL}/instance/connectionState/${connectedInstance.name || connectedInstance.instanceName}`,
-            { headers: { 'apikey': EVOLUTION_API_KEY } }
+            { headers: await evolutionHeaders() }
           );
           if (detailResponse.ok) {
             const detail = await detailResponse.json();

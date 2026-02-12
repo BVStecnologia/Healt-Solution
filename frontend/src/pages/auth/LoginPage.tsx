@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Leaf } from 'lucide-react';
+import { z } from 'zod';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -643,13 +644,25 @@ const LoginPage: React.FC = () => {
 
   const from = (location.state as any)?.from?.pathname || '/';
 
+  const loginSchema = z.object({
+    email: z.string().min(1, t('login.emailRequired')).email(t('login.emailInvalid')),
+    password: z.string().min(1, t('login.passwordRequired')),
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const result = loginSchema.safeParse({ email: email.trim(), password });
+    if (!result.success) {
+      setError(result.error.errors[0].message);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error: signInError } = await signIn(email, password);
+      const { error: signInError } = await signIn(result.data.email, result.data.password);
 
       if (signInError) {
         setError(t('login.error'));
