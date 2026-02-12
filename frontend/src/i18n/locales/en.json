@@ -940,6 +940,9 @@
   "attendants.successUpdate": "Attendant updated successfully!",
   "attendants.successSchedules": "Schedules saved successfully!",
   "attendants.errorRequired": "Name is required",
+  "attendants.fetchError": "Error loading attendants. Please try again.",
+  "attendants.scheduleLoadError": "Error loading schedules.",
+  "attendants.updateError": "Error updating attendant. Please try again.",
 
   "handoff.title": "Handoff",
   "handoff.subtitle": "Human support sessions via WhatsApp",
@@ -959,6 +962,7 @@
   "handoff.resolve": "Resolve",
   "handoff.resolving": "Resolving...",
   "handoff.resolveError": "Error resolving session",
+  "handoff.fetchError": "Error loading sessions. Please try again.",
   "handoff.statusWaiting": "Waiting",
   "handoff.statusActive": "Active",
   "handoff.statusResolved": "Resolved",

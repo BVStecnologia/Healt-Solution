@@ -462,6 +462,22 @@ const PageButton = styled.button<{ $active?: boolean }>`
   }
 `;
 
+const ErrorBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 12px;
+  color: #B91C1C;
+  font-size: 14px;
+  font-weight: 500;
+  animation: ${fadeInUp} 0.4s ease-out;
+
+  svg { flex-shrink: 0; }
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: 80px 40px;
@@ -1005,6 +1021,7 @@ const AttendantsPage: React.FC = () => {
     }))
   );
   const [error, setError] = useState('');
+  const [listError, setListError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ attendant: Attendant; action: 'deactivate' | 'reactivate' } | null>(null);
@@ -1022,8 +1039,10 @@ const AttendantsPage: React.FC = () => {
 
       if (fetchError) throw fetchError;
       setAttendants(data || []);
+      setListError('');
     } catch (err) {
       console.error('Erro ao buscar atendentes:', err);
+      setListError(t('attendants.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -1115,6 +1134,7 @@ const AttendantsPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Erro ao carregar horarios:', err);
+      setListError(t('attendants.scheduleLoadError'));
     }
 
     setShowScheduleModal(true);
@@ -1260,6 +1280,7 @@ const AttendantsPage: React.FC = () => {
       await fetchAttendants();
     } catch (err) {
       console.error('Erro ao atualizar atendente:', err);
+      setListError(t('attendants.updateError'));
     }
   };
 
@@ -1341,6 +1362,13 @@ const AttendantsPage: React.FC = () => {
             />
           </SearchContainer>
         </FiltersSection>
+
+        {listError && (
+          <ErrorBanner>
+            <AlertTriangle size={16} />
+            {listError}
+          </ErrorBanner>
+        )}
 
         {loading ? (
           <LoadingSkeleton>

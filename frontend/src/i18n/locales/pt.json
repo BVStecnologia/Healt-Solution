@@ -933,6 +933,9 @@
   "attendants.successUpdate": "Atendente atualizado com sucesso!",
   "attendants.successSchedules": "Horários salvos com sucesso!",
   "attendants.errorRequired": "Nome é obrigatório",
+  "attendants.fetchError": "Erro ao carregar atendentes. Tente novamente.",
+  "attendants.scheduleLoadError": "Erro ao carregar horários.",
+  "attendants.updateError": "Erro ao atualizar atendente. Tente novamente.",
 
   "handoff.title": "Handoff",
   "handoff.subtitle": "Sessões de atendimento humano via WhatsApp",
@@ -952,6 +955,7 @@
   "handoff.resolve": "Encerrar",
   "handoff.resolving": "Encerrando...",
   "handoff.resolveError": "Erro ao encerrar sessão",
+  "handoff.fetchError": "Erro ao carregar sessões. Tente novamente.",
   "handoff.statusWaiting": "Aguardando",
   "handoff.statusActive": "Ativo",
   "handoff.statusResolved": "Encerrado",

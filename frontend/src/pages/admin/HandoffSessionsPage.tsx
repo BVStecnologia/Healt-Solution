@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Filter,
   AlertCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -368,6 +369,22 @@ const ActionButton = styled.button<{ $variant?: 'primary' | 'danger' }>`
   }
 `;
 
+const ErrorBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 12px;
+  color: #B91C1C;
+  font-size: 14px;
+  font-weight: 500;
+  animation: ${fadeInUp} 0.4s ease-out;
+
+  svg { flex-shrink: 0; }
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: 80px 40px;
@@ -476,6 +493,7 @@ const HandoffSessionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('active');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState('');
 
   const fetchSessions = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -496,8 +514,10 @@ const HandoffSessionsPage: React.FC = () => {
 
       if (error) throw error;
       setSessions(data || []);
+      setFetchError('');
     } catch (err) {
       console.error('Error fetching handoff sessions:', err);
+      if (showLoading) setFetchError(t('handoff.fetchError'));
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -600,6 +620,13 @@ const HandoffSessionsPage: React.FC = () => {
             {t('handoff.filterAll')}
           </FilterButton>
         </FiltersSection>
+
+        {fetchError && (
+          <ErrorBanner>
+            <AlertTriangle size={16} />
+            {fetchError}
+          </ErrorBanner>
+        )}
 
         {loading ? (
           <EmptyState>
