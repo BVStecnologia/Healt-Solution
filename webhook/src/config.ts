@@ -10,4 +10,6 @@ export const config = {
   supabasePublicUrl: process.env.SUPABASE_PUBLIC_URL || 'http://localhost:8000',
   // URL shortener base (public URL of this webhook server)
   shortenerBaseUrl: process.env.SHORTENER_BASE_URL || `http://localhost:${process.env.PORT || '3001'}`,
+  // Webhook authentication secret (empty = skip validation)
+  webhookSecret: process.env.WEBHOOK_SECRET || '',
 };

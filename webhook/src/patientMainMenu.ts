@@ -1,6 +1,6 @@
 import { UserInfo } from './userIdentifier';
 import { sendMessage } from './whatsappResponder';
-import { getState, getMenuState, setMenuState, clearMenuState, clearAllState, resolveMenuOption } from './stateManager';
+import { getState, getMenuState, setMenuState, clearMenuState, clearAllState, resolveMenuOption, wasAnyStateExpired } from './stateManager';
 import { buildPatientMainMenu } from './menuBuilder';
 import { loadPatientContext } from './router';
 import { logIncoming, logOutgoing } from './messageLogger';
@@ -8,13 +8,14 @@ import { showServicesMenu, handleServicesInput } from './patientServices';
 import { showClinicInfoMenu, handleClinicInfoInput } from './patientClinicInfo';
 import { extractPhoneFromJid } from './phoneUtils';
 import { getNextConfirmedAppointment, recordPatientConfirmation } from './patientManager';
-import { formatPresenceConfirmation } from './patientResponder';
+import { formatPresenceConfirmation, formatClinicContact, formatSessionExpired } from './patientResponder';
 import { formatDateShort } from './whatsappResponder';
 import { startBookingFlow, startBookingFlowWithType, handleBookingStep } from './patientBooking';
 import { handleViewAppointments, handleConfirmFlow, handleCancelInit, handleCancelStep } from './patientAppointments';
 
 const EXIT_WORDS = ['sair', 'exit', 'voltar', 'back', 'menu'];
 const CONFIRMATION_WORDS = ['ok', 'sim', 'yes', 'confirmo', 'confirmed', 'confirmar'];
+const HUMAN_WORDS = ['atendente', 'recepção', 'recepcao', 'human', 'humano', 'ajuda', 'help', 'pessoa'];
 
 /**
  * Main handler for patient WhatsApp messages.
@@ -38,6 +39,15 @@ export async function handlePatientMessage(
   if (EXIT_WORDS.includes(lower)) {
     clearAllState(remoteJid);
     await showMainMenu(instance, remoteJid, patient);
+    return;
+  }
+
+  // Check for human/help words — clear state and show clinic contact
+  if (HUMAN_WORDS.includes(lower)) {
+    clearAllState(remoteJid);
+    const msg = formatClinicContact(lang);
+    await sendMessage(instance, remoteJid, msg);
+    logOutgoing(phone, msg, patient.userId, 'patient', 'human_escape');
     return;
   }
 
@@ -114,6 +124,13 @@ export async function handlePatientMessage(
       return;
     }
     // No upcoming confirmed appointment — fall through to show menu
+  }
+
+  // Check if a state recently expired (timeout notification)
+  if (wasAnyStateExpired(remoteJid)) {
+    const expiredMsg = formatSessionExpired(lang);
+    await sendMessage(instance, remoteJid, expiredMsg);
+    logOutgoing(phone, expiredMsg, patient.userId, 'patient', 'session_expired');
   }
 
   // No active state — show dynamic main menu

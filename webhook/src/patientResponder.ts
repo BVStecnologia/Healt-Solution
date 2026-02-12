@@ -142,15 +142,15 @@ export function formatNoPendingAppointments(action: 'confirm' | 'cancel', lang: 
 // Booking Flow
 // ==================
 
-export function formatSelectTypeStep(types: TypeOption[], lang: Language): string {
+export function formatSelectTypeStep(types: TypeOption[], lang: Language, step?: { current: number; total: number }): string {
+  const stepStr = step ? `\n${stepIndicator(step.current, step.total, lang)}\n` : '';
   const header = lang === 'pt'
-    ? '📋 *Qual tipo de consulta?*\n'
-    : '📋 *What type of appointment?*\n';
+    ? `📋 *Qual tipo de consulta?*${stepStr}\n`
+    : `📋 *What type of appointment?*${stepStr}\n`;
 
   let msg = header;
   types.forEach((t, i) => {
-    const durLabel = lang === 'pt' ? `${t.duration} min` : `${t.duration} min`;
-    msg += `\n*${i + 1}.* ${t.label} (${durLabel})`;
+    msg += `\n*${i + 1}.* ${t.label} (${t.duration} min)`;
   });
 
   const footer = lang === 'pt'
@@ -160,10 +160,11 @@ export function formatSelectTypeStep(types: TypeOption[], lang: Language): strin
   return msg + footer;
 }
 
-export function formatSelectProviderStep(providers: ProviderOption[], lang: Language): string {
+export function formatSelectProviderStep(providers: ProviderOption[], lang: Language, step?: { current: number; total: number }): string {
+  const stepStr = step ? `\n${stepIndicator(step.current, step.total, lang)}\n` : '';
   const header = lang === 'pt'
-    ? '👨‍⚕️ *Escolha o médico:*\n'
-    : '👨‍⚕️ *Choose a provider:*\n';
+    ? `👨‍⚕️ *Escolha o médico:*${stepStr}\n`
+    : `👨‍⚕️ *Choose a provider:*${stepStr}\n`;
 
   let msg = header;
   providers.forEach((p, i) => {
@@ -178,10 +179,11 @@ export function formatSelectProviderStep(providers: ProviderOption[], lang: Lang
   return msg + footer;
 }
 
-export function formatSelectDateStep(dates: DateOption[], lang: Language): string {
+export function formatSelectDateStep(dates: DateOption[], lang: Language, step?: { current: number; total: number }): string {
+  const stepStr = step ? `\n${stepIndicator(step.current, step.total, lang)}\n` : '';
   const header = lang === 'pt'
-    ? '📅 *Escolha a data:*\n'
-    : '📅 *Choose a date:*\n';
+    ? `📅 *Escolha a data:*${stepStr}\n`
+    : `📅 *Choose a date:*${stepStr}\n`;
 
   let msg = header;
   dates.forEach((d, i) => {
@@ -199,10 +201,11 @@ export function formatSelectDateStep(dates: DateOption[], lang: Language): strin
   return msg + footer;
 }
 
-export function formatSelectTimeStep(slots: TimeSlotOption[], lang: Language): string {
+export function formatSelectTimeStep(slots: TimeSlotOption[], lang: Language, step?: { current: number; total: number }): string {
+  const stepStr = step ? `\n${stepIndicator(step.current, step.total, lang)}\n` : '';
   const header = lang === 'pt'
-    ? '🕐 *Escolha o horário:*\n'
-    : '🕐 *Choose a time:*\n';
+    ? `🕐 *Escolha o horário:*${stepStr}\n`
+    : `🕐 *Choose a time:*${stepStr}\n`;
 
   let msg = header;
   slots.forEach((s, i) => {
@@ -221,28 +224,34 @@ export function formatBookingConfirmation(
   providerName: string,
   date: Date,
   time: string,
-  lang: Language
+  lang: Language,
+  duration?: number,
+  step?: { current: number; total: number }
 ): string {
   const dateStr = formatDateShort(date, lang);
+  const stepStr = step ? `\n${stepIndicator(step.current, step.total, lang)}` : '';
+  const durationStr = duration ? `\n⏱️ ${duration} min` : '';
 
   if (lang === 'pt') {
-    return `📋 *Confirmar agendamento:*
+    return `📋 *Confirmar agendamento:*${stepStr}
 
 📌 ${typeName}
 👨‍⚕️ Dr(a). ${providerName}
 📅 ${dateStr}
-🕐 ${time}
+🕐 ${time}${durationStr}
+📍 2000 NE 44th ST, Suite 101B, Fort Lauderdale
 
 *1.* ✅ Confirmar
 *2.* ❌ Cancelar`;
   }
 
-  return `📋 *Confirm booking:*
+  return `📋 *Confirm booking:*${stepStr}
 
 📌 ${typeName}
 👨‍⚕️ Dr. ${providerName}
 📅 ${dateStr}
-🕐 ${time}
+🕐 ${time}${durationStr}
+📍 2000 NE 44th ST, Suite 101B, Fort Lauderdale
 
 *1.* ✅ Confirm
 *2.* ❌ Cancel`;
@@ -253,9 +262,11 @@ export function formatBookingSuccess(
   providerName: string,
   date: Date,
   time: string,
-  lang: Language
+  lang: Language,
+  duration?: number
 ): string {
   const dateStr = formatDateShort(date, lang);
+  const durationStr = duration ? `\n⏱️ ${duration} min` : '';
 
   if (lang === 'pt') {
     return `🎉 *Consulta agendada!*
@@ -263,7 +274,10 @@ export function formatBookingSuccess(
 📌 ${typeName}
 👨‍⚕️ Dr(a). ${providerName}
 📅 ${dateStr}
-🕐 ${time}
+🕐 ${time}${durationStr}
+📍 2000 NE 44th ST, Suite 101B, Fort Lauderdale
+
+💡 Chegue 10 minutos antes da consulta.
 
 _Aguarde a confirmação da clínica._
 _Envie *menu* para voltar_`;
@@ -274,7 +288,10 @@ _Envie *menu* para voltar_`;
 📌 ${typeName}
 👨‍⚕️ Dr. ${providerName}
 📅 ${dateStr}
-🕐 ${time}
+🕐 ${time}${durationStr}
+📍 2000 NE 44th ST, Suite 101B, Fort Lauderdale
+
+💡 Please arrive 10 minutes early.
 
 _Awaiting clinic confirmation._
 _Send *menu* to go back_`;
@@ -303,13 +320,17 @@ export function formatClinicContact(lang: Language): string {
     ? `📞 *Falar com a clínica*
 
 Para atendimento personalizado, entre em contato:
-📧 contact@essencemedicalclinic.com
+📞 +1 (954) 756-2565
+📧 team@essencemedicalclinic.com
+📍 2000 NE 44th ST, Suite 101B, Fort Lauderdale
 
 _Envie *menu* para voltar_`
     : `📞 *Contact clinic*
 
 For personalized assistance, get in touch:
-📧 contact@essencemedicalclinic.com
+📞 +1 (954) 756-2565
+📧 team@essencemedicalclinic.com
+📍 2000 NE 44th ST, Suite 101B, Fort Lauderdale
 
 _Send *menu* to go back_`;
 }
@@ -358,8 +379,25 @@ Your appointment is in less than 24 hours. Late cancellations may be subject to 
 *2.* ❌ Keep appointment`;
 }
 
-export function formatInvalidOption(lang: Language): string {
+export function formatInvalidOption(lang: Language, validRange?: number): string {
+  if (validRange) {
+    return lang === 'pt'
+      ? `⚠️ Opção inválida. Responda com um número de 1 a ${validRange}, ou *0* para voltar.`
+      : `⚠️ Invalid option. Reply with a number from 1 to ${validRange}, or *0* to go back.`;
+  }
   return lang === 'pt'
-    ? '⚠️ Opção inválida. Tente novamente.'
-    : '⚠️ Invalid option. Please try again.';
+    ? '⚠️ Opção inválida. Tente novamente ou envie *0* para voltar.'
+    : '⚠️ Invalid option. Try again or send *0* to go back.';
+}
+
+export function formatSessionExpired(lang: Language): string {
+  return lang === 'pt'
+    ? '⏳ Sua sessão expirou por inatividade. Vamos recomeçar!'
+    : '⏳ Your session expired due to inactivity. Let\'s start over!';
+}
+
+export function stepIndicator(current: number, total: number, lang: Language): string {
+  return lang === 'pt'
+    ? `_(Passo ${current} de ${total})_`
+    : `_(Step ${current} of ${total})_`;
 }

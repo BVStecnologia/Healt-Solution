@@ -7,6 +7,7 @@ export interface BookingState {
   providerName?: string;
   date?: Date;
   selectedSlot?: string;  // ISO datetime
+  duration?: number;       // Duration in minutes from treatment type
   typeOptions?: TypeOption[];
   providerOptions?: ProviderOption[];
   dateOptions?: DateOption[];
@@ -31,6 +32,7 @@ const STATE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 const states = new Map<string, ConversationState>();
 const timers = new Map<string, NodeJS.Timeout>();
+const recentlyExpired = new Set<string>();
 
 export function getState(jid: string): ConversationState | undefined {
   const state = states.get(jid);
@@ -39,11 +41,24 @@ export function getState(jid: string): ConversationState | undefined {
   // Check TTL
   const data = state.type === 'booking' ? state.data : state.data;
   if (Date.now() - data.createdAt > STATE_TTL_MS) {
+    recentlyExpired.add(jid);
     clearState(jid);
     return undefined;
   }
 
   return state;
+}
+
+/**
+ * Returns true if this JID had a conversation state that recently expired.
+ * Clears the flag after checking.
+ */
+export function wasConversationExpired(jid: string): boolean {
+  if (recentlyExpired.has(jid)) {
+    recentlyExpired.delete(jid);
+    return true;
+  }
+  return false;
 }
 
 export function setBookingState(jid: string, data: Omit<BookingState, 'createdAt'>): void {

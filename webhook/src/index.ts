@@ -16,6 +16,8 @@ import {
 } from './router';
 import { clearAllState } from './stateManager';
 import { extractPhoneFromJid } from './phoneUtils';
+import { checkRateLimit, formatRateLimitWarning } from './rateLimiter';
+import { sendMessage } from './whatsappResponder';
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 
@@ -45,6 +47,15 @@ app.get('/go/:code', (req, res) => {
 // Evolution API v2.3+ appends event name to URL when WEBHOOK_BY_EVENTS=true
 app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
   try {
+    // Webhook authentication (skip if no secret configured)
+    if (config.webhookSecret) {
+      const apikey = req.headers['apikey'] as string;
+      if (apikey !== config.webhookSecret) {
+        console.warn(`[Webhook] Unauthorized request — invalid or missing apikey header`);
+        return res.sendStatus(401);
+      }
+    }
+
     const payload = req.body as EvolutionWebhookPayload;
 
     // Only handle message upsert events
@@ -77,6 +88,19 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
     const phone = extractPhoneFromJid(remoteJid);
     const input = text.trim();
     const lower = input.toLowerCase();
+
+    // ========================================
+    // RATE LIMITING
+    // ========================================
+    const rateResult = checkRateLimit(phone);
+    if (rateResult === 'blocked') {
+      return res.sendStatus(200);
+    }
+    if (rateResult === 'warn') {
+      // Send bilingual warning — we don't know lang yet, send both
+      await sendMessage(instance, remoteJid, formatRateLimitWarning('pt'));
+      return res.sendStatus(200);
+    }
 
     // ========================================
     // DUAL-ROLE ROUTING

@@ -3,6 +3,7 @@ import {
   setBookingState,
   setCancelState,
   clearState,
+  wasConversationExpired,
   BookingState,
   CancelState,
   ConversationState,
@@ -24,6 +25,7 @@ export interface MenuState {
 
 const menuStates = new Map<string, MenuState>();
 const MENU_TTL = 15 * 60 * 1000; // 15 minutes
+const recentlyExpiredMenus = new Set<string>();
 
 /**
  * Stores the current menu state for a JID.
@@ -53,6 +55,7 @@ export function getMenuState(jid: string): MenuState | undefined {
   const state = menuStates.get(jid);
   if (!state) return undefined;
   if (Date.now() - state.createdAt > MENU_TTL) {
+    recentlyExpiredMenus.add(jid);
     menuStates.delete(jid);
     return undefined;
   }
@@ -86,6 +89,17 @@ export function resolveMenuOption(jid: string, input: string): MenuOption | null
   if (!menuState) return null;
 
   return menuState.optionMap.get(idx) || null;
+}
+
+/**
+ * Returns true if any state (conversation or menu) recently expired for this JID.
+ * Clears the flags after checking.
+ */
+export function wasAnyStateExpired(jid: string): boolean {
+  const convExpired = wasConversationExpired(jid);
+  const menuExpired = recentlyExpiredMenus.has(jid);
+  if (menuExpired) recentlyExpiredMenus.delete(jid);
+  return convExpired || menuExpired;
 }
 
 // Re-export existing state functions for convenience
