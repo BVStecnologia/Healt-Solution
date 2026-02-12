@@ -6,19 +6,17 @@ import {
   Settings,
   Bell,
   MessageCircle,
-  AlertTriangle,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ClinicSettingsContent } from './ClinicSettingsPage';
 import { NotificationRulesContent } from './NotificationRulesPage';
 import { WhatsAppContent } from './WhatsAppPage';
-import { FailedMessagesContent } from './FailedMessagesPage';
 
 // ============================================
 // TYPES
 // ============================================
-type TabKey = 'general' | 'notifications' | 'whatsapp' | 'failed-messages';
+type TabKey = 'general' | 'notifications' | 'whatsapp';
 
 interface TabConfig {
   key: TabKey;
@@ -30,7 +28,6 @@ const TABS: TabConfig[] = [
   { key: 'general', labelKey: 'settings.tabGeneral', icon: Settings },
   { key: 'notifications', labelKey: 'settings.tabNotifications', icon: Bell },
   { key: 'whatsapp', labelKey: 'settings.tabWhatsapp', icon: MessageCircle },
-  { key: 'failed-messages', labelKey: 'settings.tabFailedMessages', icon: AlertTriangle },
 ];
 
 // ============================================
@@ -131,8 +128,6 @@ const AdminSettingsPage: React.FC = () => {
         return <NotificationRulesContent />;
       case 'whatsapp':
         return <WhatsAppContent />;
-      case 'failed-messages':
-        return <FailedMessagesContent />;
       default:
         return <ClinicSettingsContent />;
     }

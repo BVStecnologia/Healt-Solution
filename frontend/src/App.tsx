@@ -35,6 +35,7 @@ const ServicesPage = lazy(() => import('./pages/admin/ServicesPage'));
 const AttendantsPage = lazy(() => import('./pages/admin/AttendantsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 const HandoffSessionsPage = lazy(() => import('./pages/admin/HandoffSessionsPage'));
+const FailedMessagesPage = lazy(() => import('./pages/admin/FailedMessagesPage'));
 const SupportPage = lazy(() => import('./pages/admin/SupportPage'));
 
 // Smart redirect: admins/providers vão para sua área, pacientes ficam no dashboard
@@ -185,6 +186,12 @@ const App: React.FC = () => {
         <Route path="/admin/settings" element={
           <AdminProtectedRoute>
             <AdminSettingsPage />
+          </AdminProtectedRoute>
+        } />
+
+        <Route path="/admin/failed-messages" element={
+          <AdminProtectedRoute>
+            <FailedMessagesPage />
           </AdminProtectedRoute>
         } />
 
