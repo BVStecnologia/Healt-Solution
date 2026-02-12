@@ -820,11 +820,8 @@
   "patientType.hormone": "Hormonal",
   "patientType.allTypes": "All types",
 
-  "common.loading": "Loading...",
   "common.verifyingAuth": "Verifying authentication...",
   "common.verifyingAccess": "Verifying access...",
-  "common.edit": "Edit",
-  "common.remove": "Remove",
   "common.tryAdjustSearch": "Try adjusting your search terms",
   "common.tryAdjustFilters": "Try adjusting your search filters",
 
@@ -978,5 +975,42 @@
   "handoff.resolvedByTimeout": "Auto (timeout)",
   "handoff.resolvedByPatient": "Patient (bot)",
   "handoff.unknownPatient": "Unknown patient",
-  "handoff.now": "now"
+  "handoff.now": "now",
+
+  "common.emailPlaceholder": "email@example.com",
+  "common.phonePlaceholder": "+1 (954) 000-0000",
+  "common.statePlaceholder": "FL",
+  "common.zipPlaceholder": "33308",
+  "common.addressPlaceholder": "2000 NE 44th ST, Suite 101B",
+  "common.pricePlaceholder": "0.00",
+  "common.minutes": "minutes",
+
+  "patient.relationshipPlaceholder": "Spouse, Parent, Sibling...",
+  "patient.notesPlaceholder": "Internal notes (admin only)...",
+  "patient.insuranceProviderPlaceholder": "e.g. OSCAR SILVER SIMPLE",
+  "patient.pronounHeHim": "he/him",
+  "patient.pronounSheHer": "she/her",
+  "patient.pronounTheyThem": "they/them",
+
+  "services.labelPt": "Label (PT)",
+  "services.labelEn": "Label (EN)",
+  "services.descriptionPt": "Description (PT)",
+  "services.descriptionEn": "Description (EN)",
+  "services.labelEnPlaceholder": "e.g. Laser Treatment",
+  "services.labelPtPlaceholder": "e.g. Tratamento a Laser",
+  "services.descriptionEnPlaceholder": "Brief description...",
+  "services.descriptionPtPlaceholder": "Brief description...",
+  "services.sectionStatus": "Status",
+  "services.unitMinutes": "minutes",
+
+  "adminLogin.emailPlaceholder": "Email",
+
+  "error.title": "Something went wrong",
+  "error.description": "An unexpected error occurred. Please reload the page to continue.",
+  "error.reload": "Reload page",
+  "error.details": "Technical details",
+
+  "aria.selectLanguage": "Select language",
+  "language.pt": "Português",
+  "language.en": "English"
 }

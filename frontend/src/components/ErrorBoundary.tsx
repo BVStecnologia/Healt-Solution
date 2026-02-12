@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { theme } from '../styles/GlobalStyle';
+import i18n from '../i18n';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -118,23 +119,24 @@ class ErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
+      const t = i18n.t.bind(i18n) as (key: string) => string;
       return (
         <Container>
           <Card>
             <IconWrapper>
               <AlertTriangle size={28} />
             </IconWrapper>
-            <Title>Something went wrong</Title>
+            <Title>{t('error.title')}</Title>
             <Message>
-              An unexpected error occurred. Please reload the page to continue.
+              {t('error.description')}
             </Message>
             <ReloadButton onClick={this.handleReload}>
               <RefreshCw size={16} />
-              Reload page
+              {t('error.reload')}
             </ReloadButton>
             {this.state.error && (
               <Details>
-                <summary>Technical details</summary>
+                <summary>{t('error.details')}</summary>
                 <pre>{this.state.error.message}</pre>
               </Details>
             )}

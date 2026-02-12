@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { useLanguage, Language } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../styles/GlobalStyle';
 import { ChevronDown } from 'lucide-react';
 
@@ -120,6 +121,7 @@ const USAFlag = () => (
 const LanguageSwitcher: React.FC = () => {
   const { language, setLanguage } = useLanguage();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -149,7 +151,7 @@ const LanguageSwitcher: React.FC = () => {
       <MainButton
         onClick={() => setOpen(!open)}
         data-open={open}
-        aria-label={language === 'pt' ? 'Selecionar idioma' : 'Select language'}
+        aria-label={t('aria.selectLanguage')}
       >
         <FlagIcon>
           <CurrentFlag />
@@ -163,14 +165,14 @@ const LanguageSwitcher: React.FC = () => {
           onClick={() => handleLanguageChange('pt')}
         >
           <FlagIcon><BrazilFlag /></FlagIcon>
-          <span>Português</span>
+          <span>{t('language.pt')}</span>
         </DropdownItem>
         <DropdownItem
           $active={language === 'en'}
           onClick={() => handleLanguageChange('en')}
         >
           <FlagIcon><USAFlag /></FlagIcon>
-          <span>English</span>
+          <span>{t('language.en')}</span>
         </DropdownItem>
       </Dropdown>
     </Container>

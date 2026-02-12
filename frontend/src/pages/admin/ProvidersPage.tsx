@@ -1620,7 +1620,7 @@ const ProvidersPage: React.FC = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     disabled={!!editingProvider}
-                    placeholder="email@exemplo.com"
+                    placeholder={t('common.emailPlaceholder')}
                   />
                   {!editingProvider && (
                     <small>{t('providers.emailHint')}</small>
@@ -1653,7 +1653,7 @@ const ProvidersPage: React.FC = () => {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="(11) 99999-9999"
+                    placeholder={t('common.phonePlaceholder')}
                   />
                 </FormGroup>
 

@@ -1443,9 +1443,9 @@ const ProfilePage: React.FC = () => {
                     onChange={e => setEditForm(prev => ({ ...prev, pronoun: e.target.value }))}
                   >
                     <option value="">—</option>
-                    <option value="he/him">he/him</option>
-                    <option value="she/her">she/her</option>
-                    <option value="they/them">they/them</option>
+                    <option value="he/him">{t('patient.pronounHeHim')}</option>
+                    <option value="she/her">{t('patient.pronounSheHer')}</option>
+                    <option value="they/them">{t('patient.pronounTheyThem')}</option>
                   </FormSelect>
                 </FormGroup>
                 <FormGroup $fullWidth>
@@ -1465,7 +1465,7 @@ const ProfilePage: React.FC = () => {
                     type="text"
                     value={editForm.address_line1}
                     onChange={e => setEditForm(prev => ({ ...prev, address_line1: e.target.value }))}
-                    placeholder="2000 NE 44th ST, Suite 101B"
+                    placeholder={t('common.addressPlaceholder')}
                   />
                 </FormGroup>
                 <FormGroup $fullWidth>
@@ -1490,7 +1490,7 @@ const ProfilePage: React.FC = () => {
                     type="text"
                     value={editForm.state}
                     onChange={e => setEditForm(prev => ({ ...prev, state: e.target.value }))}
-                    placeholder="FL"
+                    placeholder={t('common.statePlaceholder')}
                   />
                 </FormGroup>
 
@@ -1518,7 +1518,7 @@ const ProfilePage: React.FC = () => {
                     type="text"
                     value={editForm.emergency_contact_relation}
                     onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_relation: e.target.value }))}
-                    placeholder="Spouse, Parent, Sibling..."
+                    placeholder={t('patient.relationshipPlaceholder')}
                   />
                 </FormGroup>
               </FormGrid>

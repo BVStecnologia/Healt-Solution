@@ -813,11 +813,8 @@
   "patientType.trt": "TRT",
   "patientType.hormone": "Hormonal",
 
-  "common.loading": "Carregando...",
   "common.verifyingAuth": "Verificando autenticação...",
   "common.verifyingAccess": "Verificando acesso...",
-  "common.edit": "Editar",
-  "common.remove": "Remover",
   "common.tryAdjustSearch": "Tente ajustar os termos da busca",
   "common.tryAdjustFilters": "Tente ajustar os filtros de busca",
 
@@ -971,5 +968,42 @@
   "handoff.resolvedByTimeout": "Auto (timeout)",
   "handoff.resolvedByPatient": "Paciente (bot)",
   "handoff.unknownPatient": "Paciente desconhecido",
-  "handoff.now": "agora"
+  "handoff.now": "agora",
+
+  "common.emailPlaceholder": "email@example.com",
+  "common.phonePlaceholder": "+1 (954) 000-0000",
+  "common.statePlaceholder": "FL",
+  "common.zipPlaceholder": "33308",
+  "common.addressPlaceholder": "2000 NE 44th ST, Suite 101B",
+  "common.pricePlaceholder": "0.00",
+  "common.minutes": "minutos",
+
+  "patient.relationshipPlaceholder": "Cônjuge, Pai/Mãe, Irmão...",
+  "patient.notesPlaceholder": "Notas internas (só admin)...",
+  "patient.insuranceProviderPlaceholder": "ex. OSCAR SILVER SIMPLE",
+  "patient.pronounHeHim": "ele/dele",
+  "patient.pronounSheHer": "ela/dela",
+  "patient.pronounTheyThem": "eles/deles",
+
+  "services.labelPt": "Nome (PT)",
+  "services.labelEn": "Nome (EN)",
+  "services.descriptionPt": "Descrição (PT)",
+  "services.descriptionEn": "Descrição (EN)",
+  "services.labelEnPlaceholder": "ex. Laser Treatment",
+  "services.labelPtPlaceholder": "ex. Tratamento a Laser",
+  "services.descriptionEnPlaceholder": "Descrição breve...",
+  "services.descriptionPtPlaceholder": "Descrição breve...",
+  "services.sectionStatus": "Status",
+  "services.unitMinutes": "minutos",
+
+  "adminLogin.emailPlaceholder": "Email",
+
+  "error.title": "Algo deu errado",
+  "error.description": "Ocorreu um erro inesperado. Recarregue a página para continuar.",
+  "error.reload": "Recarregar página",
+  "error.details": "Detalhes técnicos",
+
+  "aria.selectLanguage": "Selecionar idioma",
+  "language.pt": "Português",
+  "language.en": "English"
 }

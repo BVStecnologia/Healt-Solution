@@ -1325,7 +1325,7 @@ const ServicesPage: React.FC = () => {
                         <Th>{t('services.duration')}</Th>
                         <Th>{t('services.price')}</Th>
                         <Th>{t('services.margin')}</Th>
-                        <Th style={{ textAlign: 'center' }}>Status</Th>
+                        <Th style={{ textAlign: 'center' }}>{t('services.sectionStatus')}</Th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1493,7 +1493,7 @@ const ServicesPage: React.FC = () => {
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="0.00"
+                        placeholder={t('common.pricePlaceholder')}
                         value={formPrice}
                         onChange={e => setFormPrice(e.target.value)}
                       />
@@ -1508,7 +1508,7 @@ const ServicesPage: React.FC = () => {
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="0.00"
+                        placeholder={t('common.pricePlaceholder')}
                         value={formCost}
                         onChange={e => setFormCost(e.target.value)}
                       />
@@ -1526,7 +1526,7 @@ const ServicesPage: React.FC = () => {
                     onChange={e => setFormDuration(e.target.value)}
                     style={{ maxWidth: 120 }}
                   />
-                  <FormHint>minutes</FormHint>
+                  <FormHint>{t('common.minutes')}</FormHint>
                 </FormGroup>
               </ModalSection>
 
@@ -1534,14 +1534,14 @@ const ServicesPage: React.FC = () => {
                 <ModalSectionTitle>{t('services.labels')}</ModalSectionTitle>
                 <FormRow>
                   <FormGroup>
-                    <FormLabel>Label (PT)</FormLabel>
+                    <FormLabel>{t('services.labelPt')}</FormLabel>
                     <FormInput
                       value={formLabelPt}
                       onChange={e => setFormLabelPt(e.target.value)}
                     />
                   </FormGroup>
                   <FormGroup>
-                    <FormLabel>Label (EN)</FormLabel>
+                    <FormLabel>{t('services.labelEn')}</FormLabel>
                     <FormInput
                       value={formLabelEn}
                       onChange={e => setFormLabelEn(e.target.value)}
@@ -1550,14 +1550,14 @@ const ServicesPage: React.FC = () => {
                 </FormRow>
                 <FormRow>
                   <FormGroup>
-                    <FormLabel>Description (PT)</FormLabel>
+                    <FormLabel>{t('services.descriptionPt')}</FormLabel>
                     <FormInput
                       value={formDescPt}
                       onChange={e => setFormDescPt(e.target.value)}
                     />
                   </FormGroup>
                   <FormGroup>
-                    <FormLabel>Description (EN)</FormLabel>
+                    <FormLabel>{t('services.descriptionEn')}</FormLabel>
                     <FormInput
                       value={formDescEn}
                       onChange={e => setFormDescEn(e.target.value)}
@@ -1567,7 +1567,7 @@ const ServicesPage: React.FC = () => {
               </ModalSection>
 
               <ModalSection>
-                <ModalSectionTitle>Status</ModalSectionTitle>
+                <ModalSectionTitle>{t('services.sectionStatus')}</ModalSectionTitle>
                 <ToggleContainer onClick={() => setFormActive(!formActive)}>
                   <Toggle $active={formActive} />
                   <ToggleInfo>
@@ -1632,19 +1632,19 @@ const ServicesPage: React.FC = () => {
                 </FormGroup>
                 <FormRow>
                   <FormGroup>
-                    <FormLabel>Label (EN) *</FormLabel>
+                    <FormLabel>{t('services.labelEn')} *</FormLabel>
                     <FormInput
                       value={formLabelEn}
                       onChange={e => handleLabelEnChange(e.target.value)}
-                      placeholder="e.g. Laser Treatment"
+                      placeholder={t('services.labelEnPlaceholder')}
                     />
                   </FormGroup>
                   <FormGroup>
-                    <FormLabel>Label (PT) *</FormLabel>
+                    <FormLabel>{t('services.labelPt')} *</FormLabel>
                     <FormInput
                       value={formLabelPt}
                       onChange={e => setFormLabelPt(e.target.value)}
-                      placeholder="ex. Tratamento a Laser"
+                      placeholder={t('services.labelPtPlaceholder')}
                     />
                   </FormGroup>
                 </FormRow>
@@ -1666,7 +1666,7 @@ const ServicesPage: React.FC = () => {
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="0.00"
+                        placeholder={t('common.pricePlaceholder')}
                         value={formPrice}
                         onChange={e => setFormPrice(e.target.value)}
                       />
@@ -1681,7 +1681,7 @@ const ServicesPage: React.FC = () => {
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="0.00"
+                        placeholder={t('common.pricePlaceholder')}
                         value={formCost}
                         onChange={e => setFormCost(e.target.value)}
                       />
@@ -1698,7 +1698,7 @@ const ServicesPage: React.FC = () => {
                     onChange={e => setFormDuration(e.target.value)}
                     style={{ maxWidth: 120 }}
                   />
-                  <FormHint>minutes</FormHint>
+                  <FormHint>{t('common.minutes')}</FormHint>
                 </FormGroup>
               </ModalSection>
 
@@ -1706,19 +1706,19 @@ const ServicesPage: React.FC = () => {
                 <ModalSectionTitle>{t('services.descriptions')}</ModalSectionTitle>
                 <FormRow>
                   <FormGroup>
-                    <FormLabel>Description (EN)</FormLabel>
+                    <FormLabel>{t('services.descriptionEn')}</FormLabel>
                     <FormInput
                       value={formDescEn}
                       onChange={e => setFormDescEn(e.target.value)}
-                      placeholder="Brief description..."
+                      placeholder={t('services.descriptionEnPlaceholder')}
                     />
                   </FormGroup>
                   <FormGroup>
-                    <FormLabel>Description (PT)</FormLabel>
+                    <FormLabel>{t('services.descriptionPt')}</FormLabel>
                     <FormInput
                       value={formDescPt}
                       onChange={e => setFormDescPt(e.target.value)}
-                      placeholder="Descricao breve..."
+                      placeholder={t('services.descriptionPtPlaceholder')}
                     />
                   </FormGroup>
                 </FormRow>

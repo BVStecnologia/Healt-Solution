@@ -752,7 +752,7 @@ const AdminLoginPage: React.FC = () => {
               <InputGroup $index={0}>
                 <Input
                   type="email"
-                  placeholder="Email"
+                  placeholder={t('adminLogin.emailPlaceholder')}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required

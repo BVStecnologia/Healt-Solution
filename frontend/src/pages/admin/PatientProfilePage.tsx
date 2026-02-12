@@ -1725,7 +1725,7 @@ const PatientProfilePage: React.FC = () => {
                     type="tel"
                     value={editForm.phone}
                     onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="+1 (954) 000-0000"
+                    placeholder={t('common.phonePlaceholder')}
                   />
                 </FormGroup>
                 <FormGroup>
@@ -1764,9 +1764,9 @@ const PatientProfilePage: React.FC = () => {
                     onChange={e => setEditForm(prev => ({ ...prev, pronoun: e.target.value }))}
                   >
                     <option value="">—</option>
-                    <option value="he/him">he/him</option>
-                    <option value="she/her">she/her</option>
-                    <option value="they/them">they/them</option>
+                    <option value="he/him">{t('patient.pronounHeHim')}</option>
+                    <option value="she/her">{t('patient.pronounSheHer')}</option>
+                    <option value="they/them">{t('patient.pronounTheyThem')}</option>
                   </FormSelect>
                 </FormGroup>
                 <FormGroup>
@@ -1829,7 +1829,7 @@ const PatientProfilePage: React.FC = () => {
                     type="text"
                     value={editForm.address_line1}
                     onChange={e => setEditForm(prev => ({ ...prev, address_line1: e.target.value }))}
-                    placeholder="2000 NE 44th ST, Suite 101B"
+                    placeholder={t('common.addressPlaceholder')}
                   />
                 </FormGroup>
                 <FormGroup $full>
@@ -1854,7 +1854,7 @@ const PatientProfilePage: React.FC = () => {
                     type="text"
                     value={editForm.state}
                     onChange={e => setEditForm(prev => ({ ...prev, state: e.target.value }))}
-                    placeholder="FL"
+                    placeholder={t('common.statePlaceholder')}
                   />
                 </FormGroup>
                 <FormGroup>
@@ -1863,7 +1863,7 @@ const PatientProfilePage: React.FC = () => {
                     type="text"
                     value={editForm.zip_code}
                     onChange={e => setEditForm(prev => ({ ...prev, zip_code: e.target.value }))}
-                    placeholder="33308"
+                    placeholder={t('common.zipPlaceholder')}
                   />
                 </FormGroup>
 
@@ -1891,7 +1891,7 @@ const PatientProfilePage: React.FC = () => {
                     type="text"
                     value={editForm.emergency_contact_relation}
                     onChange={e => setEditForm(prev => ({ ...prev, emergency_contact_relation: e.target.value }))}
-                    placeholder="Spouse, Parent, Sibling..."
+                    placeholder={t('patient.relationshipPlaceholder')}
                   />
                 </FormGroup>
 
@@ -1939,7 +1939,7 @@ const PatientProfilePage: React.FC = () => {
                   <FormTextarea
                     value={editForm.patient_notes}
                     onChange={e => setEditForm(prev => ({ ...prev, patient_notes: e.target.value }))}
-                    placeholder="Internal notes (admin only)..."
+                    placeholder={t('patient.notesPlaceholder')}
                   />
                 </FormGroup>
 
@@ -1947,7 +1947,7 @@ const PatientProfilePage: React.FC = () => {
                 <SectionDivider><span>{t('patient.insurancePrimary', 'Primary Insurance')}</span></SectionDivider>
                 <FormGroup>
                   <FormLabel>{t('patient.insuranceProvider', 'Insurance Provider')}</FormLabel>
-                  <FormInput type="text" value={editForm.insurance_provider} onChange={e => setEditForm(prev => ({ ...prev, insurance_provider: e.target.value }))} placeholder="e.g. OSCAR SILVER SIMPLE" />
+                  <FormInput type="text" value={editForm.insurance_provider} onChange={e => setEditForm(prev => ({ ...prev, insurance_provider: e.target.value }))} placeholder={t('patient.insuranceProviderPlaceholder')} />
                 </FormGroup>
                 <FormGroup>
                   <FormLabel>{t('patient.insuranceMemberId', 'Member ID')}</FormLabel>
