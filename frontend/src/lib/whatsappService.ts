@@ -44,7 +44,7 @@ const WEBHOOK_PROXY_URL = process.env.REACT_APP_WEBHOOK_URL
   ? `${process.env.REACT_APP_WEBHOOK_URL}/api/evolution`
   : '';
 const EVOLUTION_DIRECT_URL = process.env.REACT_APP_EVOLUTION_API_URL || '';
-const EVOLUTION_API_URL = WEBHOOK_PROXY_URL || EVOLUTION_DIRECT_URL || 'http://localhost:8082';
+export const EVOLUTION_API_URL = WEBHOOK_PROXY_URL || EVOLUTION_DIRECT_URL || 'http://localhost:8082';
 const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || '';
 
 // Debug mode - ativa logs detalhados
@@ -74,7 +74,7 @@ function isAllowedPhoneNumber(phone: string): boolean {
 }
 
 // Build headers: apikey for direct mode, Bearer token for proxy mode
-async function evolutionHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
+export async function evolutionHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
   const headers: Record<string, string> = { ...extra };
   if (EVOLUTION_API_KEY) {
     headers['apikey'] = EVOLUTION_API_KEY;

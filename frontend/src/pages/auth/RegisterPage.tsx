@@ -557,9 +557,9 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
   const registerSchema = z.object({
-    firstName: z.string().min(1, t('register.firstName')).max(50),
-    lastName: z.string().min(1, t('register.lastName')).max(50),
-    email: z.string().min(1, t('register.email')).email(t('register.invalidEmail') || 'Invalid email'),
+    firstName: z.string().min(1, t('register.firstNameRequired')).max(50),
+    lastName: z.string().min(1, t('register.lastNameRequired')).max(50),
+    email: z.string().min(1, t('register.emailRequired')).email(t('register.emailInvalid')),
     password: z.string().min(6, t('register.passwordTooShort')),
     confirmPassword: z.string(),
   }).refine(data => data.password === data.confirmPassword, {

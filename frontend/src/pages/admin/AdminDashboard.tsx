@@ -37,7 +37,8 @@ import i18n from 'i18next';
 import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { supabase, fetchWithTimeout, getAccessToken } from '../../lib/supabaseClient';
+import { supabase, fetchWithTimeout } from '../../lib/supabaseClient';
+import { EVOLUTION_API_URL, evolutionHeaders } from '../../lib/whatsappService';
 import { useWhatsAppNotifications } from '../../hooks/admin/useWhatsAppNotifications';
 import { useCurrentProvider } from '../../hooks/useCurrentProvider';
 import SetupChecklist from '../../components/admin/SetupChecklist';
@@ -832,23 +833,6 @@ interface WeeklyData {
 interface TypeDistribution {
   name: string;
   value: number;
-}
-
-// Evolution API: routed through webhook proxy when REACT_APP_WEBHOOK_URL is set
-const WEBHOOK_PROXY_URL = process.env.REACT_APP_WEBHOOK_URL
-  ? `${process.env.REACT_APP_WEBHOOK_URL}/api/evolution`
-  : '';
-const EVOLUTION_API_URL = WEBHOOK_PROXY_URL || process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
-const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || '';
-
-async function evolutionHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
-  const headers: Record<string, string> = { ...extra };
-  if (EVOLUTION_API_KEY) headers['apikey'] = EVOLUTION_API_KEY;
-  if (WEBHOOK_PROXY_URL) {
-    const token = await getAccessToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
 }
 
 // ============================================

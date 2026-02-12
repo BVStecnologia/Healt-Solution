@@ -645,8 +645,8 @@ const LoginPage: React.FC = () => {
   const from = (location.state as any)?.from?.pathname || '/';
 
   const loginSchema = z.object({
-    email: z.string().min(1, t('login.email')).email(t('login.invalidEmail') || 'Invalid email'),
-    password: z.string().min(1, t('login.password')),
+    email: z.string().min(1, t('login.emailRequired')).email(t('login.emailInvalid')),
+    password: z.string().min(1, t('login.passwordRequired')),
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

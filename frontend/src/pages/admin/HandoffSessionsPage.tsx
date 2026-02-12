@@ -17,6 +17,10 @@ import {
 import { theme } from '../../styles/GlobalStyle';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { supabaseAdmin } from '../../lib/adminService';
+import { fetchWithTimeout, getAccessToken } from '../../lib/supabaseClient';
+
+// Webhook API URL for handoff operations (updates in-memory Set immediately)
+const WEBHOOK_API_URL = process.env.REACT_APP_WEBHOOK_URL || '';
 
 // ============================================
 // TYPES
@@ -538,17 +542,30 @@ const HandoffSessionsPage: React.FC = () => {
   const handleResolve = async (session: HandoffSession) => {
     setResolvingId(session.id);
     try {
-      const { error } = await supabaseAdmin
-        .from('handoff_sessions')
-        .update({
-          status: 'resolved',
-          resolved_at: new Date().toISOString(),
-          resolved_by: 'admin_panel',
-        })
-        .eq('id', session.id)
-        .in('status', ['waiting', 'active']);
-
-      if (error) throw error;
+      // Prefer webhook API (clears in-memory handoff Set immediately)
+      if (WEBHOOK_API_URL) {
+        const token = await getAccessToken();
+        const res = await fetchWithTimeout(`${WEBHOOK_API_URL}/api/handoff/${session.id}/resolve`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (!res.ok) throw new Error(`Webhook API: ${res.status}`);
+      } else {
+        // Fallback: direct Supabase update (in-memory Set syncs within 5min via cron)
+        const { error } = await supabaseAdmin
+          .from('handoff_sessions')
+          .update({
+            status: 'resolved',
+            resolved_at: new Date().toISOString(),
+            resolved_by: 'admin_panel',
+          })
+          .eq('id', session.id)
+          .in('status', ['waiting', 'active']);
+        if (error) throw error;
+      }
       await fetchSessions();
     } catch (err) {
       console.error('Error resolving session:', err);
