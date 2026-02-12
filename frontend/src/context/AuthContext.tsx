@@ -110,15 +110,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
-      // Atualizar avatar_url do Google OAuth somente se o perfil ainda não tiver avatar
-      if (user?.user_metadata?.avatar_url && !data.avatar_url) {
+      // Sincronizar avatar do Google OAuth (sempre atualiza para manter foto atual)
+      const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+      if (googleAvatar && data.avatar_url !== googleAvatar) {
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ avatar_url: user.user_metadata.avatar_url })
+          .update({ avatar_url: googleAvatar })
           .eq('id', userId);
 
         if (!updateError) {
-          data.avatar_url = user.user_metadata.avatar_url;
+          data.avatar_url = googleAvatar;
         }
       }
 
