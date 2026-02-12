@@ -402,6 +402,17 @@ const ElapsedTime = styled.span`
   color: ${luxuryTheme.primary};
 `;
 
+const SpinnerIcon = styled.div`
+  display: inline-flex;
+  animation: ${spin} 1s linear infinite;
+
+  svg {
+    width: 64px;
+    height: 64px;
+    color: ${luxuryTheme.primary};
+  }
+`;
+
 // ============================================
 // HELPERS
 // ============================================
@@ -590,7 +601,7 @@ const HandoffSessionsPage: React.FC = () => {
 
         {loading ? (
           <EmptyState>
-            <RefreshCw style={{ animation: `${spin} 1s linear infinite` }} />
+            <SpinnerIcon><RefreshCw /></SpinnerIcon>
             <h3>Carregando...</h3>
           </EmptyState>
         ) : sessions.length === 0 ? (
