@@ -51,12 +51,29 @@ fi
 echo -e "${YELLOW}⬇️ Baixando alterações...${NC}"
 git pull origin main
 
-# 5. Rebuild frontend se necessário
+# 5. Rebuild frontend se necessário (SAFE BUILD — nunca quebra o site)
 if git diff --name-only $LOCAL $REMOTE | grep -q "^frontend/"; then
-    echo -e "${YELLOW}🔨 Rebuild do frontend...${NC}"
+    echo -e "${YELLOW}🔨 Rebuild do frontend (safe build)...${NC}"
     cd /root/Clinica/frontend
-    npm install
-    npm run build
+    npm install --legacy-peer-deps
+
+    # Build para pasta temporária (não toca no build/ atual)
+    BUILD_PATH=build_tmp npm run build
+
+    if [ -f build_tmp/index.html ]; then
+        # Build OK — trocar atomicamente
+        rm -rf build_old
+        mv build build_old
+        mv build_tmp build
+        rm -rf build_old
+        echo -e "${GREEN}   Build OK — frontend atualizado${NC}"
+    else
+        # Build falhou — manter o build anterior intacto
+        rm -rf build_tmp
+        echo -e "${RED}   Build falhou! Frontend anterior mantido (site continua no ar)${NC}"
+        echo -e "${RED}   Corrija o erro e rode o deploy novamente${NC}"
+        exit 1
+    fi
     cd /root/Clinica
 fi
 
