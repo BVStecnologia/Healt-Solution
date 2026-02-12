@@ -82,6 +82,7 @@
   "nav.myReminders": "My Reminders",
   "nav.whatsapp": "WhatsApp",
   "nav.failedMessages": "Failed Messages",
+  "nav.settings": "Settings",
   "nav.services": "Services & Pricing",
 
   "role.admin": "Administrator",
@@ -779,6 +780,13 @@
   "settings.about": "About",
   "settings.aboutText": "Patient Portal - Manage your appointments, track your treatment, and access all your health information in one place.",
   "settings.version": "Version 1.0",
+  "settings.tabPageTitle": "Settings",
+  "settings.tabPageSubtitle": "Manage clinic configuration, notifications, and integrations.",
+  "settings.tabGeneral": "General",
+  "settings.tabNotifications": "Notifications",
+  "settings.tabWhatsapp": "WhatsApp",
+  "settings.tabFailedMessages": "Failed Messages",
+  "settings.tabHandoff": "Handoff",
 
   "setup.title": "Set up your clinic",
   "setup.subtitle": "Complete the steps below to get started",

@@ -768,9 +768,9 @@ const MINUTES_PRESETS = [
 ];
 
 // ============================================
-// COMPONENT
+// CONTENT COMPONENT (used by AdminSettingsPage tabs)
 // ============================================
-const NotificationRulesPage: React.FC = () => {
+export const NotificationRulesContent: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { providerId, isAdmin, isProvider } = useCurrentProvider();
@@ -1078,20 +1078,19 @@ const NotificationRulesPage: React.FC = () => {
     : t('notifications.subtitle');
 
   return (
-    <AdminLayout>
-      <PageContainer>
-        <Header>
-          <div>
-            <h1>{pageTitle}</h1>
-            <p>{pageSubtitle}</p>
-          </div>
-          <AddButton onClick={() => handleOpenModal()}>
-            <Plus size={18} />
-            {t('notifications.newTitle')}
-          </AddButton>
-        </Header>
+    <PageContainer>
+      <Header>
+        <div>
+          <h1>{pageTitle}</h1>
+          <p>{pageSubtitle}</p>
+        </div>
+        <AddButton onClick={() => handleOpenModal()}>
+          <Plus size={18} />
+          {t('notifications.newTitle')}
+        </AddButton>
+      </Header>
 
-        <InfoBox>
+      <InfoBox>
           <strong>{t('notifications.howItWorks')}</strong> {isDoctorView ? t('notifications.howItWorksDoctor') : t('notifications.howItWorksAdmin')}
         </InfoBox>
 
@@ -1412,9 +1411,17 @@ const NotificationRulesPage: React.FC = () => {
             </ModalContent>
           </ModalOverlay>
         )}
-      </PageContainer>
-    </AdminLayout>
+    </PageContainer>
   );
 };
+
+// ============================================
+// STANDALONE PAGE (used by /doctor/notifications)
+// ============================================
+const NotificationRulesPage: React.FC = () => (
+  <AdminLayout>
+    <NotificationRulesContent />
+  </AdminLayout>
+);
 
 export default NotificationRulesPage;

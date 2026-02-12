@@ -7,6 +7,7 @@ import EssenceLogo from '../ui/EssenceLogo';
 
 interface AdminLayoutProps {
   children: ReactNode;
+  fullWidth?: boolean;
 }
 
 const Container = styled.div`
@@ -25,15 +26,15 @@ const Main = styled.main`
   }
 `;
 
-const Content = styled.div`
+const Content = styled.div<{ $fullWidth?: boolean }>`
   padding: ${theme.spacing.xl};
-  padding-right: 80px;
+  padding-right: ${props => props.$fullWidth ? theme.spacing.xl : '80px'};
   overflow-x: hidden;
-  max-width: 1200px;
+  max-width: ${props => props.$fullWidth ? 'none' : '1200px'};
 
   @media (max-width: 768px) {
     padding: ${theme.spacing.md};
-    padding-right: 60px;
+    padding-right: ${props => props.$fullWidth ? theme.spacing.md : '60px'};
   }
 `;
 
@@ -122,7 +123,7 @@ const MobileThemeToggle = styled.button`
   }
 `;
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children, fullWidth }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -136,7 +137,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </MobileMenuButton>
           <EssenceLogo variant="horizontal" size="xs" color="dark" />
         </MobileHeader>
-        <Content>{children}</Content>
+        <Content $fullWidth={fullWidth}>{children}</Content>
       </Main>
     </Container>
   );

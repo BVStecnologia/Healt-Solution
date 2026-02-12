@@ -82,6 +82,7 @@
   "nav.myReminders": "Meus Lembretes",
   "nav.whatsapp": "WhatsApp",
   "nav.failedMessages": "Msgs Falhas",
+  "nav.settings": "Configurações",
   "nav.services": "Servicos e Precos",
 
   "role.admin": "Administrador",
@@ -779,6 +780,13 @@
   "settings.about": "Sobre",
   "settings.aboutText": "Portal do Paciente - Gerencie suas consultas, acompanhe seu tratamento e tenha acesso a todas as informações de saúde em um único lugar.",
   "settings.version": "Versão 1.0",
+  "settings.tabPageTitle": "Configurações",
+  "settings.tabPageSubtitle": "Gerencie configurações da clínica, notificações e integrações.",
+  "settings.tabGeneral": "Geral",
+  "settings.tabNotifications": "Notificações",
+  "settings.tabWhatsapp": "WhatsApp",
+  "settings.tabFailedMessages": "Msgs Falhas",
+  "settings.tabHandoff": "Handoff",
 
   "setup.title": "Configure sua clínica",
   "setup.subtitle": "Complete os passos abaixo para começar",

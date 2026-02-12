@@ -388,7 +388,10 @@ interface FailedMessage {
 // ============================================
 // COMPONENT
 // ============================================
-const FailedMessagesPage: React.FC = () => {
+// ============================================
+// CONTENT COMPONENT (used by AdminSettingsPage tabs)
+// ============================================
+export const FailedMessagesContent: React.FC = () => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<FailedMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -515,20 +518,19 @@ const FailedMessagesPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
-      <PageContainer>
-        <Header>
-          <div>
-            <h1>{t('failedMessages.title')}</h1>
-            <p>{t('failedMessages.subtitle')}</p>
-          </div>
-          <RefreshButton onClick={loadMessages} $loading={loading}>
-            <RefreshCw size={16} />
-            {t('failedMessages.refresh')}
-          </RefreshButton>
-        </Header>
+    <PageContainer>
+      <Header>
+        <div>
+          <h1>{t('failedMessages.title')}</h1>
+          <p>{t('failedMessages.subtitle')}</p>
+        </div>
+        <RefreshButton onClick={loadMessages} $loading={loading}>
+          <RefreshCw size={16} />
+          {t('failedMessages.refresh')}
+        </RefreshButton>
+      </Header>
 
-        <StatsRow>
+      <StatsRow>
           <StatPill>
             <XCircle style={{ color: luxuryTheme.error }} />
             <StatValue>{stats.failed}</StatValue>
@@ -629,9 +631,17 @@ const FailedMessagesPage: React.FC = () => {
             </>
           )}
         </Table>
-      </PageContainer>
-    </AdminLayout>
+    </PageContainer>
   );
 };
+
+// ============================================
+// STANDALONE PAGE
+// ============================================
+const FailedMessagesPage: React.FC = () => (
+  <AdminLayout>
+    <FailedMessagesContent />
+  </AdminLayout>
+);
 
 export default FailedMessagesPage;

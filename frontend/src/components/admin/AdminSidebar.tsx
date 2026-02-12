@@ -8,16 +8,13 @@ import {
   Users,
   UserCog,
   Stethoscope,
-  MessageCircle,
   Bell,
   LogOut,
   Shield,
   Clock,
   ChevronDown,
   User,
-  AlertTriangle,
   DollarSign,
-  Headphones,
   UserCheck,
   Settings,
 } from 'lucide-react';
@@ -410,12 +407,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
     { subpath: '/admins', label: t('nav.admins'), icon: Shield, section: 'gestao', envs: ['admin'] as Environment[] },
     { subpath: '/services', label: t('nav.services'), icon: DollarSign, section: 'gestao', envs: ['admin'] as Environment[] },
     { subpath: '/attendants', label: t('nav.attendants'), icon: UserCheck, section: 'gestao', envs: ['admin'] as Environment[] },
-    { subpath: '/notifications', label: t('nav.notifications'), icon: Bell, section: 'config', envs: ['admin'] as Environment[] },
+    { subpath: '/settings', label: t('nav.settings'), icon: Settings, section: 'config', envs: ['admin'] as Environment[] },
     { subpath: '/notifications', label: t('nav.myReminders'), icon: Bell, section: 'config', envs: ['doctor'] as Environment[] },
-    { subpath: '/whatsapp', label: t('nav.whatsapp'), icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
-    { subpath: '/failed-messages', label: t('nav.failedMessages'), icon: AlertTriangle, section: 'config', envs: ['admin'] as Environment[] },
-    { subpath: '/handoff', label: t('nav.handoff'), icon: Headphones, section: 'config', envs: ['admin'] as Environment[] },
-    { subpath: '/clinic-settings', label: t('nav.clinicSettings'), icon: Settings, section: 'config', envs: ['admin'] as Environment[] },
   ];
 
   // Detectar ambiente atual pela URL

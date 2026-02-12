@@ -422,7 +422,10 @@ interface Instance {
   qrCode: string | null;
 }
 
-const WhatsAppPage: React.FC = () => {
+// ============================================
+// CONTENT COMPONENT (used by AdminSettingsPage tabs)
+// ============================================
+export const WhatsAppContent: React.FC = () => {
   const { t } = useTranslation();
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -585,7 +588,7 @@ const WhatsAppPage: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <Header>
         <div>
           <h1>{t('whatsapp.title')}</h1>
@@ -711,8 +714,17 @@ const WhatsAppPage: React.FC = () => {
           </ModalActions>
         </ModalContent>
       </Modal>
-    </AdminLayout>
+    </>
   );
 };
+
+// ============================================
+// STANDALONE PAGE
+// ============================================
+const WhatsAppPage: React.FC = () => (
+  <AdminLayout>
+    <WhatsAppContent />
+  </AdminLayout>
+);
 
 export default WhatsAppPage;

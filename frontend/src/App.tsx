@@ -24,7 +24,6 @@ const PatientDocumentsPage = lazy(() => import('./pages/patient/PatientDocuments
 const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const CalendarPage = lazy(() => import('./pages/admin/CalendarPage'));
-const WhatsAppPage = lazy(() => import('./pages/admin/WhatsAppPage'));
 const AdminAppointmentsPage = lazy(() => import('./pages/admin/AdminAppointmentsPage'));
 const PatientsPage = lazy(() => import('./pages/admin/PatientsPage'));
 const PatientProfilePage = lazy(() => import('./pages/admin/PatientProfilePage'));
@@ -32,11 +31,9 @@ const ProvidersPage = lazy(() => import('./pages/admin/ProvidersPage'));
 const AdminsPage = lazy(() => import('./pages/admin/AdminsPage'));
 const MySchedulePage = lazy(() => import('./pages/admin/MySchedulePage'));
 const NotificationRulesPage = lazy(() => import('./pages/admin/NotificationRulesPage'));
-const FailedMessagesPage = lazy(() => import('./pages/admin/FailedMessagesPage'));
 const ServicesPage = lazy(() => import('./pages/admin/ServicesPage'));
 const AttendantsPage = lazy(() => import('./pages/admin/AttendantsPage'));
-const HandoffSessionsPage = lazy(() => import('./pages/admin/HandoffSessionsPage'));
-const ClinicSettingsPage = lazy(() => import('./pages/admin/ClinicSettingsPage'));
+const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 
 // Smart redirect: admins/providers vão para sua área, pacientes ficam no dashboard
 // ?as=patient permite admin/provider visualizar o portal do paciente
@@ -129,12 +126,6 @@ const App: React.FC = () => {
           </AdminProtectedRoute>
         } />
 
-        <Route path="/admin/whatsapp" element={
-          <AdminProtectedRoute>
-            <WhatsAppPage />
-          </AdminProtectedRoute>
-        } />
-
         <Route path="/admin/appointments" element={
           <AdminProtectedRoute>
             <AdminAppointmentsPage />
@@ -171,18 +162,6 @@ const App: React.FC = () => {
           </AdminProtectedRoute>
         } />
 
-        <Route path="/admin/notifications" element={
-          <AdminProtectedRoute>
-            <NotificationRulesPage />
-          </AdminProtectedRoute>
-        } />
-
-        <Route path="/admin/failed-messages" element={
-          <AdminProtectedRoute>
-            <FailedMessagesPage />
-          </AdminProtectedRoute>
-        } />
-
         <Route path="/admin/services" element={
           <AdminProtectedRoute>
             <ServicesPage />
@@ -195,15 +174,9 @@ const App: React.FC = () => {
           </AdminProtectedRoute>
         } />
 
-        <Route path="/admin/handoff" element={
+        <Route path="/admin/settings" element={
           <AdminProtectedRoute>
-            <HandoffSessionsPage />
-          </AdminProtectedRoute>
-        } />
-
-        <Route path="/admin/clinic-settings" element={
-          <AdminProtectedRoute>
-            <ClinicSettingsPage />
+            <AdminSettingsPage />
           </AdminProtectedRoute>
         } />
 

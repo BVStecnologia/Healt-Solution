@@ -491,7 +491,10 @@ function getStatusLabel(status: string, t: (key: string) => string): string {
 // ============================================
 type FilterType = 'active' | 'resolved' | 'all';
 
-const HandoffSessionsPage: React.FC = () => {
+// ============================================
+// CONTENT COMPONENT (used by AdminSettingsPage tabs)
+// ============================================
+export const HandoffSessionsContent: React.FC = () => {
   const { t } = useTranslation();
   const [sessions, setSessions] = useState<HandoffSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -581,20 +584,19 @@ const HandoffSessionsPage: React.FC = () => {
   const resolvedSessions = sessions.filter(s => s.status === 'resolved');
 
   return (
-    <AdminLayout>
-      <PageContainer>
-        <Header>
-          <div>
-            <h1>{t('handoff.title')}</h1>
-            <p>{t('handoff.subtitle')}</p>
-          </div>
-          <RefreshButton onClick={() => fetchSessions(true)} $loading={loading}>
-            <RefreshCw size={16} />
-            {t('handoff.refresh')}
-          </RefreshButton>
-        </Header>
+    <PageContainer>
+      <Header>
+        <div>
+          <h1>{t('handoff.title')}</h1>
+          <p>{t('handoff.subtitle')}</p>
+        </div>
+        <RefreshButton onClick={() => fetchSessions(true)} $loading={loading}>
+          <RefreshCw size={16} />
+          {t('handoff.refresh')}
+        </RefreshButton>
+      </Header>
 
-        <StatsRow>
+      <StatsRow>
           <StatPill>
             <Headphones />
             <StatValue>{activeSessions.length}</StatValue>
@@ -731,9 +733,17 @@ const HandoffSessionsPage: React.FC = () => {
             ))}
           </SessionsList>
         )}
-      </PageContainer>
-    </AdminLayout>
+    </PageContainer>
   );
 };
+
+// ============================================
+// STANDALONE PAGE
+// ============================================
+const HandoffSessionsPage: React.FC = () => (
+  <AdminLayout>
+    <HandoffSessionsContent />
+  </AdminLayout>
+);
 
 export default HandoffSessionsPage;

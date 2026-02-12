@@ -181,9 +181,9 @@ const HintText = styled.span`
 const HOUR_OPTIONS = [1, 2, 4, 6, 8, 12, 24, 48, 72];
 
 // ============================================
-// COMPONENT
+// CONTENT COMPONENT (used by AdminSettingsPage tabs)
 // ============================================
-const ClinicSettingsPage: React.FC = () => {
+export const ClinicSettingsContent: React.FC = () => {
   const { t } = useTranslation();
   const [minBookingHours, setMinBookingHours] = useState<string>('24');
   const [originalValue, setOriginalValue] = useState<string>('24');
@@ -230,14 +230,7 @@ const ClinicSettingsPage: React.FC = () => {
   const hasChanges = minBookingHours !== originalValue;
 
   return (
-    <AdminLayout>
-      <Header>
-        <div>
-          <h1>{t('clinicSettings.title')}</h1>
-          <p>{t('clinicSettings.subtitle')}</p>
-        </div>
-      </Header>
-
+    <>
       {loading ? (
         <LoadingWrapper>
           <RefreshCw size={18} />
@@ -290,6 +283,25 @@ const ClinicSettingsPage: React.FC = () => {
           </SettingRow>
         </Section>
       )}
+    </>
+  );
+};
+
+// ============================================
+// STANDALONE PAGE (kept for backwards compat)
+// ============================================
+const ClinicSettingsPage: React.FC = () => {
+  const { t } = useTranslation();
+
+  return (
+    <AdminLayout>
+      <Header>
+        <div>
+          <h1>{t('clinicSettings.title')}</h1>
+          <p>{t('clinicSettings.subtitle')}</p>
+        </div>
+      </Header>
+      <ClinicSettingsContent />
     </AdminLayout>
   );
 };
