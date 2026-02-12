@@ -477,8 +477,8 @@ const HandoffSessionsPage: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('active');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true);
+  const fetchSessions = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       let query = supabaseAdmin
         .from('handoff_sessions')
@@ -499,18 +499,18 @@ const HandoffSessionsPage: React.FC = () => {
     } catch (err) {
       console.error('Error fetching handoff sessions:', err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [filter]);
 
   useEffect(() => {
-    fetchSessions();
+    fetchSessions(true);
   }, [fetchSessions]);
 
-  // Auto-refresh every 30 seconds for active sessions
+  // Auto-refresh every 30 seconds (background, no loading spinner)
   useEffect(() => {
     if (filter !== 'resolved') {
-      const interval = setInterval(fetchSessions, 30000);
+      const interval = setInterval(() => fetchSessions(false), 30000);
       return () => clearInterval(interval);
     }
   }, [filter, fetchSessions]);
