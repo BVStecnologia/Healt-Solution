@@ -114,20 +114,20 @@ export async function notifyAttendants(
     .replace('@s.whatsapp.net', '')
     .replace(/^(\d{1,3})(\d+)$/, '+$1 $2');
 
-  const displayName = patientName || 'Desconhecido';
+  const displayName = patientName || 'Unknown';
 
   for (const attendant of attendants) {
     // WhatsApp notification
     if (attendant.notify_whatsapp && attendant.phone) {
       const jid = attendant.phone.replace(/\D/g, '') + '@s.whatsapp.net';
-      const msg = `🔔 *Novo atendimento*
+      const msg = `🔔 *New support request*
 
-Paciente: ${displayName}
-Telefone: ${displayPhone}
-Motivo: ${reason}
+Patient: ${displayName}
+Phone: ${displayPhone}
+Reason: ${reason}
 
-Responda diretamente ao paciente pelo WhatsApp Web.
-Ao finalizar, envie *#fechar* na conversa do paciente.`;
+Reply directly to the patient via WhatsApp Web.
+When finished, send *#close* in the patient's conversation.`;
 
       try {
         await sendMessage(instanceName, jid, msg);
