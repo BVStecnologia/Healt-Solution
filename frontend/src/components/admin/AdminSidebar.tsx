@@ -18,6 +18,7 @@ import {
   UserCheck,
   Settings,
   Headphones,
+  LifeBuoy,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
@@ -411,6 +412,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
     { subpath: '/handoff', label: t('nav.handoff'), icon: Headphones, section: 'principal', envs: ['admin'] as Environment[] },
     { subpath: '/settings', label: t('nav.settings'), icon: Settings, section: 'config', envs: ['admin'] as Environment[] },
     { subpath: '/notifications', label: t('nav.myReminders'), icon: Bell, section: 'config', envs: ['doctor'] as Environment[] },
+    { subpath: '/support', label: t('nav.support'), icon: LifeBuoy, section: 'config', envs: ['admin', 'doctor'] as Environment[] },
   ];
 
   // Detectar ambiente atual pela URL
