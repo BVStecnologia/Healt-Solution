@@ -199,19 +199,34 @@ supabase/
 └── docker-compose.yml      # 13 serviços Supabase
 
 webhook/src/
-├── index.ts                # Express server + webhook routes
+├── index.ts                # Express server + webhook routes + handoff API + Evolution proxy
 ├── config.ts               # URLs Supabase, Evolution API, panel
 ├── types.ts                # Tipos compartilhados
 ├── scheduleManager.ts      # Supabase client (service_role_key)
 ├── whatsappResponder.ts    # sendMessage(), getTypeLabel(), formatDateShort()
+├── router.ts               # Dual-role routing (paciente + provider)
+├── stateManager.ts         # State + menu management (extends conversationState)
+├── menuBuilder.ts          # Dynamic numbered menu builder
+├── patientMainMenu.ts      # Patient main menu + handoff trigger
+├── patientServices.ts      # Services browsing sub-menu
+├── patientClinicInfo.ts    # Clinic info sub-menu
+├── patientAppointments.ts  # View/confirm/cancel appointments
+├── patientBooking.ts       # Booking flow
+├── patientResponder.ts     # Patient message formatters (bilíngue)
+├── patientManager.ts       # Manager de pacientes
+├── providerMainMenu.ts     # Provider menu handler
+├── providerResponder.ts    # Provider message formatters
+├── handoffManager.ts       # Handoff sessions (Set<string> + DB)
+├── attendantNotifier.ts    # Notifica atendentes (timezone-aware, bilíngue)
 ├── commandParser.ts        # Parser de comandos WhatsApp
 ├── reminderScheduler.ts    # Cron job a cada 5 min (node-cron)
 ├── reminderSender.ts       # getTemplate(), sendReminder(), dedup
-├── conversationState.ts    # Estado de conversação
-├── patientHandler.ts       # Handler de pacientes
-├── patientManager.ts       # Manager de pacientes
-├── patientResponder.ts     # Responder para pacientes
 ├── retrySender.ts          # Retry de mensagens falhas (até 3 tentativas)
+├── conversationState.ts    # Estado de conversação (booking, cancel)
+├── rateLimiter.ts          # Rate limiting (3 msgs/10s)
+├── messageLogger.ts        # Conversation logging
+├── treatmentCache.ts       # Treatment types cache
+├── phoneUtils.ts           # Phone number utilities
 ├── urlShortener.ts         # Encurtador de URLs
 └── userIdentifier.ts       # Identificação de usuário
 
@@ -248,6 +263,8 @@ scripts/
 | `/admin/notifications` | NotificationRulesPage | Regras de lembrete para pacientes |
 | `/admin/failed-messages` | FailedMessagesPage | Mensagens WhatsApp falhas com retry |
 | `/admin/my-schedule` | MySchedulePage | Agenda dos médicos |
+| `/admin/attendants` | AttendantsPage | CRUD de atendentes + horários |
+| `/admin/handoff` | HandoffSessionsPage | Monitor de sessões handoff |
 
 ### Painel Médico
 | Rota | Componente | Descrição |
@@ -443,6 +460,16 @@ CREATE TABLE schema_migrations (
 | 018 | new_treatments_data | Dados dos novos tratamentos na tabela treatment_types |
 | 019 | provider_view_patients | RLS para providers verem pacientes |
 | 020 | patient_documents | Tabela patient_documents + Storage bucket + RLS |
+| 021 | patient_profile_fields | Campos extras no perfil do paciente |
+| 022 | admin_update_profiles | RPC para admin atualizar profiles |
+| 023 | treatment_prices | Preços nos treatment_types |
+| 024 | create_treatment_type | RPC para criar treatment_type |
+| 025 | add_services_enum | Novos ENUMs de serviços |
+| 026 | add_services_data | Dados dos novos serviços |
+| 027 | telehealth | Suporte a telemedicina |
+| 028 | insurance_fields | Campos de seguro/insurance |
+| 029 | conversation_logs | Tabela conversation_logs |
+| 030 | handoff_system | Tabelas attendants, attendant_schedules, handoff_sessions + RLS |
 
 ### Aplicar Migrações
 
@@ -697,6 +724,32 @@ EVOLUTION_API_KEY=sua-chave-evolution
 - [x] Admin alertado via `window.alert` quando notificação WhatsApp falha
 - [x] Página "Mensagens Falhas" (`/admin/failed-messages`) com retry manual
 - [x] Sidebar admin: link "Msgs Falhas" na seção configurações
+
+### Human Handoff (Atendimento Humano)
+- [x] 3 tabelas: `attendants`, `attendant_schedules`, `handoff_sessions` (migration 030)
+- [x] `handoffManager.ts`: Set<string> in-memory + DB para O(1) lookup + auto-close 30min
+- [x] `attendantNotifier.ts`: notifica atendentes disponíveis via WhatsApp pessoal (bilíngue PT/EN)
+- [x] Timezone-aware: schedules comparados em horário local (EST/EDT via `Intl.DateTimeFormat`)
+- [x] Trigger: paciente envia "ajuda"/"help"/"atendente"/"human" → cria handoff session
+- [x] Bot silencia durante handoff (`isInHandoff()` guard no index.ts)
+- [x] 4 formas de encerrar: `#fechar`/`#close` (atendente), admin panel, auto-timeout 30min, "bot"/"menu" (paciente)
+- [x] "trocar"/"switch" bloqueado durante handoff ativo
+- [x] Rollback automático se sendMessage falhar ao notificar paciente
+- [x] Dual-role routing: `router.ts` gerencia paciente + provider no mesmo número
+- [x] Frontend admin: `AttendantsPage` (CRUD + horários) + `HandoffSessionsPage` (monitor + encerrar)
+- [x] HandoffSessionsPage resolve via webhook API (`REACT_APP_WEBHOOK_URL`) → limpa Set in-memory imediatamente
+- [x] i18n completo (PT/EN) em ambas as páginas
+
+### Chatbot WhatsApp (Bot Inteligente)
+- [x] Menu dinâmico numerado baseado no contexto do paciente
+- [x] Sub-menus: serviços (por categoria), informações da clínica, agendamento, cancelamento
+- [x] Rate limiting (3 msgs/10s com aviso bilíngue)
+- [x] Session timeout (15min inatividade → aviso de expiração)
+- [x] Confirmação rápida ("ok"/"sim" → confirma próxima consulta)
+- [x] Conversation logging (`message_logs` + `conversation_logs`)
+- [x] URL shortener para links de agendamento
+- [x] Dual-role: seleção de perfil para quem é paciente + provider
+- [x] Role persistence (1h TTL, "trocar" reseta)
 
 ### Internacionalização
 - [x] Português (padrão)

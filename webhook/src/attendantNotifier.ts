@@ -2,6 +2,40 @@ import { getClient } from './scheduleManager';
 import { sendMessage } from './whatsappResponder';
 import { config } from './config';
 
+// Fort Lauderdale timezone (EST/EDT) — attendant schedules are stored in local time
+const CLINIC_TIMEZONE = 'America/New_York';
+
+/**
+ * Gets the current day-of-week and time in the clinic's timezone (EST/EDT).
+ * Attendant schedules are stored in local clinic time, NOT UTC.
+ */
+function getClinicLocalTime(): { dayOfWeek: number; currentTime: string } {
+  const now = new Date();
+  // Use Intl to get locale-aware components in clinic timezone
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: CLINIC_TIMEZONE,
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(now);
+
+  const hourStr = parts.find(p => p.type === 'hour')?.value || '00';
+  const minuteStr = parts.find(p => p.type === 'minute')?.value || '00';
+  const secondStr = parts.find(p => p.type === 'second')?.value || '00';
+
+  // Get day of week (0=Sun, 6=Sat) using locale
+  const dayStr = parts.find(p => p.type === 'weekday')?.value || 'Mon';
+  const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const dayOfWeek = dayMap[dayStr] ?? now.getDay();
+
+  return {
+    dayOfWeek,
+    currentTime: `${hourStr}:${minuteStr}:${secondStr}`,
+  };
+}
+
 interface Attendant {
   id: string;
   name: string;
@@ -17,12 +51,11 @@ interface Attendant {
  * 1. is_active = true
  * 2. Has a schedule for the current day of week
  * 3. Current time is within their schedule window
+ * Note: Schedules are stored in clinic local time (EST/EDT).
  */
 export async function hasAvailableAttendants(): Promise<boolean> {
   const client = getClient();
-  const now = new Date();
-  const dayOfWeek = now.getUTCDay(); // 0=Sun, 6=Sat
-  const currentTime = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}:00`;
+  const { dayOfWeek, currentTime } = getClinicLocalTime();
 
   const { data, error } = await client
     .from('attendant_schedules')
@@ -65,9 +98,7 @@ export async function notifyAttendants(
   instanceName: string
 ): Promise<void> {
   const client = getClient();
-  const now = new Date();
-  const dayOfWeek = now.getUTCDay();
-  const currentTime = `${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}:00`;
+  const { dayOfWeek, currentTime } = getClinicLocalTime();
 
   // Fetch active attendants with schedules for right now
   const { data: schedules, error } = await client
@@ -117,17 +148,20 @@ export async function notifyAttendants(
   const displayName = patientName || 'Unknown';
 
   for (const attendant of attendants) {
-    // WhatsApp notification
+    // WhatsApp notification (bilingual — clinic is in the US, internal comms in English)
     if (attendant.notify_whatsapp && attendant.phone) {
       const jid = attendant.phone.replace(/\D/g, '') + '@s.whatsapp.net';
-      const msg = `🔔 *New support request*
+      const msg = `🔔 *New support request / Nova solicitação de suporte*
 
-Patient: ${displayName}
-Phone: ${displayPhone}
-Reason: ${reason}
+Patient / Paciente: ${displayName}
+Phone / Telefone: ${displayPhone}
+Reason / Motivo: ${reason}
 
 Reply directly to the patient via WhatsApp Web.
-When finished, send *#close* in the patient's conversation.`;
+When finished, send *#close* in the patient's conversation.
+
+Responda diretamente ao paciente pelo WhatsApp Web.
+Ao finalizar, envie *#fechar* na conversa do paciente.`;
 
       try {
         await sendMessage(instanceName, jid, msg);

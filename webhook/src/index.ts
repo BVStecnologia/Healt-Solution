@@ -144,6 +144,7 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
         // Patient wants to return to bot — resolve handoff and show menu
         await resolveHandoff(remoteJid, 'patient_return');
         clearAllState(remoteJid);
+        clearSelectedRole(remoteJid);
         // Fall through to normal processing (will show main menu)
       } else {
         // Bot stays silent — attendant handles via WhatsApp Web
@@ -159,6 +160,16 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
     // Check if user wants to switch roles (typed "trocar", "switch", "mudar")
     const SWITCH_WORDS = ['trocar', 'switch', 'mudar', 'change'];
     if (SWITCH_WORDS.includes(lower)) {
+      // Block role switching during active handoff
+      if (isInHandoff(remoteJid)) {
+        const allRolesForSwitch = await identifyAllRoles(remoteJid);
+        const lang = allRolesForSwitch[0]?.language || 'en';
+        const msg = lang === 'pt'
+          ? 'ℹ️ Você está em atendimento humano. Aguarde o término ou envie *bot* para voltar ao menu.'
+          : 'ℹ️ You are being assisted by a team member. Please wait or send *bot* to return to the menu.';
+        await sendMessage(instance, remoteJid, msg);
+        return res.sendStatus(200);
+      }
       clearSelectedRole(remoteJid);
       clearAllState(remoteJid);
       // Fall through to re-identify and show role menu if dual-role

@@ -18,6 +18,7 @@ import {
 } from './patientResponder';
 import { isInHandoff, createHandoff, resolveHandoff } from './handoffManager';
 import { hasAvailableAttendants, notifyAttendants } from './attendantNotifier';
+import { clearSelectedRole } from './router';
 import { formatDateShort } from './whatsappResponder';
 import { startBookingFlow, startBookingFlowWithType, handleBookingStep } from './patientBooking';
 import { handleViewAppointments, handleConfirmFlow, handleCancelInit, handleCancelStep } from './patientAppointments';
@@ -48,6 +49,7 @@ export async function handlePatientMessage(
   if (EXIT_WORDS.includes(lower)) {
     if (isInHandoff(remoteJid)) {
       await resolveHandoff(remoteJid, 'patient_return');
+      clearSelectedRole(remoteJid);
     }
     clearAllState(remoteJid);
     await showMainMenu(instance, remoteJid, patient);
@@ -75,8 +77,18 @@ export async function handlePatientMessage(
       await notifyAttendants(patientName, remoteJid, lower, instance);
 
       const msg = formatHandoffInitiated(lang);
-      await sendMessage(instance, remoteJid, msg);
-      logOutgoing(phone, msg, patient.userId, 'patient', 'handoff_initiated');
+      const sent = await sendMessage(instance, remoteJid, msg);
+      if (sent) {
+        logOutgoing(phone, msg, patient.userId, 'patient', 'handoff_initiated');
+      } else {
+        // Rollback handoff if notification to patient failed
+        await resolveHandoff(remoteJid, 'send_failed');
+        console.error(`[Handoff] Failed to notify patient ${patient.userId} — session rolled back`);
+        // Send fallback contact info instead
+        const fallbackMsg = formatHandoffQueued(lang);
+        await sendMessage(instance, remoteJid, fallbackMsg);
+        logOutgoing(phone, fallbackMsg, patient.userId, 'patient', 'handoff_send_failed');
+      }
     } else {
       // Fallback: show contact info (no attendants available)
       const msg = formatHandoffQueued(lang);

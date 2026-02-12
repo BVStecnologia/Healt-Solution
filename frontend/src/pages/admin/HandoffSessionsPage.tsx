@@ -525,7 +525,7 @@ const HandoffSessionsPage: React.FC = () => {
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [filter]);
+  }, [filter, t]);
 
   useEffect(() => {
     fetchSessions(true);

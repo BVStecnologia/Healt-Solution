@@ -1041,7 +1041,7 @@ const AttendantsPage: React.FC = () => {
       setAttendants(data || []);
       setListError('');
     } catch (err) {
-      console.error('Erro ao buscar atendentes:', err);
+      console.error('Error fetching attendants:', err);
       setListError(t('attendants.fetchError'));
     } finally {
       setLoading(false);
@@ -1133,7 +1133,7 @@ const AttendantsPage: React.FC = () => {
         );
       }
     } catch (err) {
-      console.error('Erro ao carregar horarios:', err);
+      console.error('Error loading schedules:', err);
       setListError(t('attendants.scheduleLoadError'));
     }
 
@@ -1279,7 +1279,7 @@ const AttendantsPage: React.FC = () => {
       setConfirmAction(null);
       await fetchAttendants();
     } catch (err) {
-      console.error('Erro ao atualizar atendente:', err);
+      console.error('Error updating attendant:', err);
       setListError(t('attendants.updateError'));
     }
   };

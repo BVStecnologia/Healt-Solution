@@ -71,6 +71,8 @@ export function clearMenuState(jid: string): void {
 
 /**
  * Clears ALL state for a JID (conversation + menu).
+ * Note: Does NOT clear selectedRole (router.ts) to avoid circular dependency.
+ * Callers should use clearSelectedRole() separately when a full reset is needed.
  */
 export function clearAllState(jid: string): void {
   clearState(jid);
