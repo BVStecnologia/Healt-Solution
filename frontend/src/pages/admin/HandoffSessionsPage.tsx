@@ -551,7 +551,7 @@ const HandoffSessionsPage: React.FC = () => {
             <h1>{t('handoff.title')}</h1>
             <p>{t('handoff.subtitle')}</p>
           </div>
-          <RefreshButton onClick={fetchSessions} $loading={loading}>
+          <RefreshButton onClick={() => fetchSessions(true)} $loading={loading}>
             <RefreshCw size={16} />
             {t('handoff.refresh')}
           </RefreshButton>
