@@ -57,6 +57,7 @@ export interface Profile {
   last_visit_at: string | null;
   labs_completed_at: string | null;
   no_show_count: number;
+  is_test: boolean;
   created_at: string;
   updated_at: string;
   // Extended profile fields (migration 021)
@@ -161,6 +162,7 @@ export type Database = {
           preferred_theme?: PreferredTheme;
           last_visit_at?: string | null;
           labs_completed_at?: string | null;
+          is_test?: boolean;
           created_at?: string;
           updated_at?: string;
           preferred_name?: string | null;

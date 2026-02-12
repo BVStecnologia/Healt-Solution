@@ -1794,7 +1794,7 @@ const CalendarPage: React.FC = () => {
           duration,
           type,
           status,
-          patient:profiles!appointments_patient_id_fkey(first_name, last_name),
+          patient:profiles!appointments_patient_id_fkey(first_name, last_name, is_test),
           provider:providers!appointments_provider_id_fkey(
             profile:profiles(first_name, last_name)
           )
@@ -1817,7 +1817,7 @@ const CalendarPage: React.FC = () => {
       const calendarEvents: CalendarEvent[] = (data || []).map((apt: any) => {
         const startDate = toFakeLocal(new Date(apt.scheduled_at));
         const endDate = new Date(startDate.getTime() + (apt.duration || 30) * 60000);
-        const patientName = apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A';
+        const patientName = apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}${apt.patient.is_test ? ' [TEST]' : ''}` : 'N/A';
         const providerName = apt.provider?.profile ? `${t('common.drPrefix')} ${apt.provider.profile.first_name}` : 'N/A';
 
         return {

@@ -811,6 +811,7 @@ interface PendingAppointment {
   patient_id: string;
   patient_name: string;
   patient_phone: string | null;
+  patient_is_test: boolean;
   provider_name: string;
   scheduled_at: string;
   type: string;
@@ -820,6 +821,7 @@ interface TodayAppointment {
   id: string;
   patient_id: string;
   patient_name: string;
+  patient_is_test: boolean;
   time: string;
   type: string;
   status: string;
@@ -963,7 +965,8 @@ const AdminDashboard: React.FC = () => {
         const { count: patientsCount } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
-          .eq('role', 'patient');
+          .eq('role', 'patient')
+          .or('is_test.is.null,is_test.eq.false');
 
         const { count: providersCount } = await supabase
           .from('providers')
@@ -1006,7 +1009,7 @@ const AdminDashboard: React.FC = () => {
           patient_id,
           scheduled_at,
           type,
-          patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone),
+          patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone, is_test),
           provider:providers!appointments_provider_id_fkey(
             profile:profiles(first_name, last_name)
           )
@@ -1028,6 +1031,7 @@ const AdminDashboard: React.FC = () => {
         patient_id: apt.patient_id,
         patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
         patient_phone: apt.patient?.phone || null,
+        patient_is_test: apt.patient?.is_test || false,
         provider_name: apt.provider?.profile ? `${t('common.drPrefix')} ${apt.provider.profile.first_name}` : 'N/A',
         scheduled_at: apt.scheduled_at,
         type: apt.type,
@@ -1052,7 +1056,7 @@ const AdminDashboard: React.FC = () => {
           scheduled_at,
           type,
           status,
-          patient:profiles!appointments_patient_id_fkey(first_name, last_name)
+          patient:profiles!appointments_patient_id_fkey(first_name, last_name, is_test)
         `)
         .gte('scheduled_at', `${today}T00:00:00`)
         .lt('scheduled_at', `${today}T23:59:59`)
@@ -1071,6 +1075,7 @@ const AdminDashboard: React.FC = () => {
         id: apt.id,
         patient_id: apt.patient_id,
         patient_name: apt.patient ? `${apt.patient.first_name} ${apt.patient.last_name}` : 'N/A',
+        patient_is_test: apt.patient?.is_test || false,
         time: new Date(apt.scheduled_at).toLocaleTimeString(i18n.language === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
         type: apt.type,
         status: apt.status,
@@ -1483,7 +1488,10 @@ const AdminDashboard: React.FC = () => {
                       {getInitials(apt.patient_name)}
                     </PendingAvatar>
                     <PendingInfo>
-                      <div className="name">{apt.patient_name}</div>
+                      <div className="name">
+                        {apt.patient_name}
+                        {apt.patient_is_test && <span style={{ fontSize: '9px', fontWeight: 700, color: '#6366F1', background: '#6366F115', border: '1px dashed #6366F140', padding: '1px 5px', borderRadius: '6px', marginLeft: '6px', letterSpacing: '0.5px' }}>TEST</span>}
+                      </div>
                       <div className="details">
                         <span className="tag">{formatType(apt.type)}</span>
                         <span>{apt.provider_name}</span>
@@ -1537,7 +1545,10 @@ const AdminDashboard: React.FC = () => {
                   <TodayItem key={apt.id} onClick={() => navigateTo(`/admin/patients/${apt.patient_id}`)}>
                     <TodayTime>{apt.time}</TodayTime>
                     <TodayInfo>
-                      <div className="name">{apt.patient_name}</div>
+                      <div className="name">
+                        {apt.patient_name}
+                        {apt.patient_is_test && <span style={{ fontSize: '9px', fontWeight: 700, color: '#6366F1', background: '#6366F115', border: '1px dashed #6366F140', padding: '1px 5px', borderRadius: '6px', marginLeft: '6px', letterSpacing: '0.5px' }}>TEST</span>}
+                      </div>
                       <div className="type">{formatType(apt.type)}</div>
                     </TodayInfo>
                     <TodayStatus $status={apt.status}>

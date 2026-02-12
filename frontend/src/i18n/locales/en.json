@@ -851,6 +851,11 @@
   "patients.subtitle": "Manage patients registered at the clinic",
   "patients.emptyRegistered": "Patients will appear here after registering through the portal or being added manually.",
   "patients.errorSavePatient": "Error saving patient",
+  "patients.testPatient": "Test patient",
+  "patients.testPatientHint": "Mark as test data — hidden by default, excluded from stats",
+  "patients.toggleTest": "Show/hide test patients",
+  "patients.testCount": "{{count}} test",
+  "patients.testBadge": "TEST",
 
   "providers.tempPasswordGenerated": "Temporary password generated:",
   "providers.tempPasswordNote": "Write down this password! The provider must change it on first login.",

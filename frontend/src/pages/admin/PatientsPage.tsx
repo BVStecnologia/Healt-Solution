@@ -6,7 +6,7 @@ import { useSmartNavigation } from '../../hooks/useSmartNavigation';
 import {
   Users, UserPlus, Search, Edit2, Check, AlertCircle,
   Crown, Activity, Phone, Mail, ChevronLeft, ChevronRight, X,
-  Sparkles, AlertTriangle, Heart, Droplets, ChevronDown
+  Sparkles, AlertTriangle, Heart, Droplets, ChevronDown, FlaskConical, Eye, EyeOff
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { theme } from '../../styles/GlobalStyle';
@@ -437,6 +437,88 @@ const PatientBadge = styled.span<{ $type: PatientType | null }>`
   }
 `;
 
+const TestBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  background: #6366F115;
+  color: #6366F1;
+  white-space: nowrap;
+  border: 1px dashed #6366F140;
+
+  svg {
+    width: 10px;
+    height: 10px;
+  }
+`;
+
+const TestToggle = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: ${props => props.$active ? '#6366F110' : luxuryTheme.surface};
+  border: 1px solid ${props => props.$active ? '#6366F140' : luxuryTheme.border};
+  border-radius: 12px;
+  font-size: 13px;
+  color: ${props => props.$active ? '#6366F1' : luxuryTheme.textSecondary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: #6366F180;
+    color: #6366F1;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const CheckboxRow = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #6366F108;
+  border: 1px dashed #6366F130;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #6366F112;
+    border-color: #6366F150;
+  }
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #6366F1;
+    cursor: pointer;
+  }
+
+  span {
+    font-size: 14px;
+    color: ${luxuryTheme.text};
+    font-weight: 500;
+  }
+
+  small {
+    font-size: 12px;
+    color: ${luxuryTheme.textSecondary};
+    font-weight: 400;
+  }
+`;
+
 const NoShowBadge = styled.span`
   display: inline-flex;
   align-items: center;
@@ -843,6 +925,7 @@ const PatientsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Profile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showTestPatients, setShowTestPatients] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
@@ -852,6 +935,7 @@ const PatientsPage: React.FC = () => {
     patient_type: 'new' as PatientType,
     preferred_language: 'pt' as PreferredLanguage,
     date_of_birth: '',
+    is_test: false,
   });
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -914,6 +998,7 @@ const PatientsPage: React.FC = () => {
         patient_type: patient.patient_type || 'general',
         preferred_language: patient.preferred_language || 'pt',
         date_of_birth: patient.date_of_birth || '',
+        is_test: patient.is_test || false,
       });
     } else {
       setEditingPatient(null);
@@ -926,6 +1011,7 @@ const PatientsPage: React.FC = () => {
         patient_type: 'new',
         preferred_language: 'pt',
         date_of_birth: '',
+        is_test: false,
       });
     }
     setError('');
@@ -945,6 +1031,7 @@ const PatientsPage: React.FC = () => {
       patient_type: 'new',
       preferred_language: 'pt',
       date_of_birth: '',
+      is_test: false,
     });
     setError('');
     setSuccess('');
@@ -974,6 +1061,7 @@ const PatientsPage: React.FC = () => {
             patient_type: formData.patient_type,
             preferred_language: formData.preferred_language,
             date_of_birth: formData.date_of_birth || null,
+            is_test: formData.is_test,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingPatient.id);
@@ -1054,6 +1142,7 @@ const PatientsPage: React.FC = () => {
               patient_type: formData.patient_type,
               preferred_language: formData.preferred_language,
               date_of_birth: formData.date_of_birth || null,
+              is_test: formData.is_test,
             });
 
           // Restaurar sessão do admin após criar o paciente
@@ -1088,7 +1177,13 @@ const PatientsPage: React.FC = () => {
     }
   };
 
+  const realPatients = patients.filter(p => !p.is_test);
+  const testPatients = patients.filter(p => p.is_test);
+
   const filteredPatients = patients.filter(patient => {
+    // Hide test patients unless toggle is on
+    if (patient.is_test && !showTestPatients) return false;
+
     const matchesSearch =
       patient.first_name.toLowerCase().includes(search.toLowerCase()) ||
       patient.last_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -1108,7 +1203,7 @@ const PatientsPage: React.FC = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, typeFilter]);
+  }, [search, typeFilter, showTestPatients]);
 
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -1131,10 +1226,11 @@ const PatientsPage: React.FC = () => {
   };
 
   const stats = {
-    total: patients.length,
-    new: patients.filter(p => p.patient_type === 'new').length,
-    wellness: patients.filter(p => p.patient_type === 'wellness').length,
-    vip: patients.filter(p => p.patient_type === 'vip').length
+    total: realPatients.length,
+    test: testPatients.length,
+    new: realPatients.filter(p => p.patient_type === 'new').length,
+    wellness: realPatients.filter(p => p.patient_type === 'wellness').length,
+    vip: realPatients.filter(p => p.patient_type === 'vip').length
   };
 
   return (
@@ -1186,6 +1282,16 @@ const PatientsPage: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </SearchContainer>
+          {stats.test > 0 && (
+            <TestToggle
+              $active={showTestPatients}
+              onClick={() => setShowTestPatients(!showTestPatients)}
+              title={t('patients.toggleTest')}
+            >
+              {showTestPatients ? <Eye size={16} /> : <EyeOff size={16} />}
+              {t('patients.testCount', { count: stats.test })}
+            </TestToggle>
+          )}
           <DropdownWrapper ref={dropdownRef}>
             <DropdownTrigger
               $open={dropdownOpen}
@@ -1265,6 +1371,12 @@ const PatientsPage: React.FC = () => {
                   <PatientInfo>
                     <PatientName>
                       {patient.first_name} {patient.last_name}
+                      {patient.is_test && (
+                        <TestBadge>
+                          <FlaskConical />
+                          TEST
+                        </TestBadge>
+                      )}
                       {(patient.no_show_count || 0) > 0 && (
                         <NoShowBadge title={`${patient.no_show_count} falta(s)`}>
                           <AlertTriangle />
@@ -1434,6 +1546,18 @@ const PatientsPage: React.FC = () => {
                     <option value="en">{t('language.en')}</option>
                   </FormSelect>
                 </FormGroup>
+
+                <CheckboxRow>
+                  <input
+                    type="checkbox"
+                    checked={formData.is_test}
+                    onChange={(e) => setFormData({ ...formData, is_test: e.target.checked })}
+                  />
+                  <div>
+                    <span>{t('patients.testPatient')}</span><br />
+                    <small>{t('patients.testPatientHint')}</small>
+                  </div>
+                </CheckboxRow>
               </ModalBody>
 
               <ModalFooter>

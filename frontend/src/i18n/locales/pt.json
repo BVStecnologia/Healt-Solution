@@ -844,6 +844,11 @@
   "patients.subtitle": "Gerencie os pacientes cadastrados na clínica",
   "patients.emptyRegistered": "Pacientes aparecem aqui após se registrarem pelo portal ou serem cadastrados manualmente.",
   "patients.errorSavePatient": "Erro ao salvar paciente",
+  "patients.testPatient": "Paciente de teste",
+  "patients.testPatientHint": "Marcar como dado de teste — oculto por padrão, excluído das estatísticas",
+  "patients.toggleTest": "Mostrar/ocultar pacientes de teste",
+  "patients.testCount": "{{count}} teste",
+  "patients.testBadge": "TESTE",
 
   "providers.tempPasswordGenerated": "Senha temporária gerada:",
   "providers.tempPasswordNote": "Anote esta senha! O médico deve alterá-la no primeiro acesso.",

@@ -1106,6 +1106,7 @@ interface Appointment {
     first_name: string;
     last_name: string;
     phone: string | null;
+    is_test?: boolean;
   };
   provider: {
     profile: {
@@ -1192,6 +1193,7 @@ const SortableCard: React.FC<SortableCardProps> = ({
         <KanbanPatientInfo>
           <div className="name">
             {appointment.patient?.first_name} {appointment.patient?.last_name}
+            {appointment.patient?.is_test && <span style={{ fontSize: '8px', fontWeight: 700, color: '#6366F1', background: '#6366F115', border: '1px dashed #6366F140', padding: '1px 4px', borderRadius: '5px', marginLeft: '4px', letterSpacing: '0.5px' }}>TEST</span>}
           </div>
           <div className="type">
             {appointment.modality === 'telehealth' && <Video size={11} style={{ marginRight: 3, verticalAlign: 'middle', color: luxuryColors.primary }} />}
@@ -1582,7 +1584,7 @@ const AdminAppointmentsPage: React.FC = () => {
           type,
           status,
           notes,
-          patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone),
+          patient:profiles!appointments_patient_id_fkey(id, first_name, last_name, phone, is_test),
           provider:providers!appointments_provider_id_fkey(
             profile:profiles(id, first_name, last_name, phone)
           )

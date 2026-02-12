@@ -1235,7 +1235,10 @@ const PatientProfilePage: React.FC = () => {
             </Avatar>
 
             <HeaderInfo>
-              <PatientName>{patient.first_name} {patient.last_name}</PatientName>
+              <PatientName>
+                {patient.first_name} {patient.last_name}
+                {patient.is_test && <span style={{ fontSize: '11px', fontWeight: 700, color: '#6366F1', background: '#6366F115', border: '1px dashed #6366F140', padding: '2px 8px', borderRadius: '8px', marginLeft: '8px', letterSpacing: '0.8px' }}>TEST</span>}
+              </PatientName>
               <MetaRow>
                 <TypeBadge $bg={typeBgColor} $color={typeColor}>
                   {renderTypeIcon(patient.patient_type)}
