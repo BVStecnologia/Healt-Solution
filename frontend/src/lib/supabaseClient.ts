@@ -47,4 +47,39 @@ export async function retryRequest<T>(
   }
 }
 
+/**
+ * Fetch with timeout — prevents hanging requests on slow networks
+ */
+export async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs = 15000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error(`Request timed out after ${timeoutMs}ms: ${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Get current Supabase session access token (for authenticated API calls)
+ */
+export async function getAccessToken(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || null;
+}
+
 export { supabaseUrl, supabaseAnonKey };

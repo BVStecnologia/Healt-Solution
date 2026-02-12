@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { theme } from '../../styles/GlobalStyle';
+import { fetchWithTimeout, getAccessToken } from '../../lib/supabaseClient';
 import AdminLayout from '../../components/admin/AdminLayout';
 import HelpTip from '../../components/ui/HelpTip';
 
@@ -420,8 +421,22 @@ interface Instance {
   qrCode: string | null;
 }
 
-const EVOLUTION_API_URL = process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
-const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_evolution_aqui';
+// Evolution API: routed through webhook proxy when REACT_APP_WEBHOOK_URL is set
+const WEBHOOK_PROXY_URL = process.env.REACT_APP_WEBHOOK_URL
+  ? `${process.env.REACT_APP_WEBHOOK_URL}/api/evolution`
+  : '';
+const EVOLUTION_API_URL = WEBHOOK_PROXY_URL || process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
+const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || '';
+
+async function evolutionHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { ...extra };
+  if (EVOLUTION_API_KEY) headers['apikey'] = EVOLUTION_API_KEY;
+  if (WEBHOOK_PROXY_URL) {
+    const token = await getAccessToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 const WhatsAppPage: React.FC = () => {
   const { t } = useTranslation();
@@ -454,10 +469,8 @@ const WhatsAppPage: React.FC = () => {
   const loadInstances = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
+      const response = await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
+        headers: await evolutionHeaders(),
       });
 
       if (response.ok) {
@@ -484,12 +497,9 @@ const WhatsAppPage: React.FC = () => {
 
     setCreating(true);
     try {
-      const response = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+      const response = await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/create`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': EVOLUTION_API_KEY,
-        },
+        headers: await evolutionHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           instanceName: newInstanceName.toLowerCase().replace(/\s+/g, '_'),
           qrcode: true,
@@ -513,10 +523,8 @@ const WhatsAppPage: React.FC = () => {
 
   const getQRCode = async (instanceName: string) => {
     try {
-      const response = await fetch(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
+      const response = await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/connect/${instanceName}`, {
+        headers: await evolutionHeaders(),
       });
 
       if (response.ok) {
@@ -536,10 +544,8 @@ const WhatsAppPage: React.FC = () => {
 
   const refreshInstance = async (instanceName: string) => {
     try {
-      const response = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
+      const response = await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/connectionState/${instanceName}`, {
+        headers: await evolutionHeaders(),
       });
 
       if (response.ok) {
@@ -570,11 +576,9 @@ const WhatsAppPage: React.FC = () => {
     if (!window.confirm(t('whatsapp.deleteConfirm'))) return;
 
     try {
-      await fetch(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
+      await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/delete/${instanceName}`, {
         method: 'DELETE',
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
+        headers: await evolutionHeaders(),
       });
 
       setInstances(prev => prev.filter(inst => inst.instanceName !== instanceName));
@@ -585,11 +589,9 @@ const WhatsAppPage: React.FC = () => {
 
   const disconnectInstance = async (instanceName: string) => {
     try {
-      await fetch(`${EVOLUTION_API_URL}/instance/logout/${instanceName}`, {
+      await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/logout/${instanceName}`, {
         method: 'DELETE',
-        headers: {
-          'apikey': EVOLUTION_API_KEY,
-        },
+        headers: await evolutionHeaders(),
       });
 
       refreshInstance(instanceName);

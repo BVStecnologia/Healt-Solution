@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
 import DoctorProtectedRoute from './components/doctor/DoctorProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
 import LanguageSwitcher from './components/LanguageSwitcher';
 
@@ -60,7 +61,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <LanguageSwitcher />
       <Suspense fallback={<LoadingSpinner fullScreen />}>
         <Routes>
@@ -237,7 +238,7 @@ const App: React.FC = () => {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
-    </>
+    </ErrorBoundary>
   );
 };
 

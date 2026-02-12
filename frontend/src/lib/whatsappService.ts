@@ -36,11 +36,16 @@
  * });
  */
 
-import { supabase } from './supabaseClient';
+import { supabase, fetchWithTimeout, getAccessToken } from './supabaseClient';
 
-// Configuração da Evolution API
-const EVOLUTION_API_URL = process.env.REACT_APP_EVOLUTION_API_URL || 'http://localhost:8082';
-const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || 'sua_chave_evolution_aqui';
+// Evolution API: routed through webhook proxy (API key stays server-side)
+// Falls back to direct access only if REACT_APP_EVOLUTION_API_URL is explicitly set
+const WEBHOOK_PROXY_URL = process.env.REACT_APP_WEBHOOK_URL
+  ? `${process.env.REACT_APP_WEBHOOK_URL}/api/evolution`
+  : '';
+const EVOLUTION_DIRECT_URL = process.env.REACT_APP_EVOLUTION_API_URL || '';
+const EVOLUTION_API_URL = WEBHOOK_PROXY_URL || EVOLUTION_DIRECT_URL || 'http://localhost:8082';
+const EVOLUTION_API_KEY = process.env.REACT_APP_EVOLUTION_API_KEY || '';
 
 // Debug mode - ativa logs detalhados
 const DEBUG = true;
@@ -66,6 +71,21 @@ function isAllowedPhoneNumber(phone: string): boolean {
   return TEST_PHONE_NUMBERS.some(testPhone =>
     cleanPhone.includes(testPhone) || testPhone.includes(cleanPhone)
   );
+}
+
+// Build headers: apikey for direct mode, Bearer token for proxy mode
+async function evolutionHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { ...extra };
+  if (EVOLUTION_API_KEY) {
+    headers['apikey'] = EVOLUTION_API_KEY;
+  }
+  if (WEBHOOK_PROXY_URL) {
+    const token = await getAccessToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
 }
 
 function log(message: string, data?: any) {
@@ -114,10 +134,8 @@ async function getConnectedInstance(): Promise<WhatsAppInstance | null> {
   log('Buscando instância conectada...');
 
   try {
-    const response = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-      },
+    const response = await fetchWithTimeout(`${EVOLUTION_API_URL}/instance/fetchInstances`, {
+      headers: await evolutionHeaders(),
     });
 
     if (!response.ok) {
@@ -142,9 +160,9 @@ async function getConnectedInstance(): Promise<WhatsAppInstance | null> {
 
       // Buscar número conectado
       try {
-        const detailResponse = await fetch(
+        const detailResponse = await fetchWithTimeout(
           `${EVOLUTION_API_URL}/instance/connectionState/${instance.name}`,
-          { headers: { 'apikey': EVOLUTION_API_KEY } }
+          { headers: await evolutionHeaders() }
         );
         if (detailResponse.ok) {
           const detail = await detailResponse.json();
@@ -222,12 +240,9 @@ async function sendText(
   });
 
   try {
-    const response = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
+    const response = await fetchWithTimeout(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
       method: 'POST',
-      headers: {
-        'apikey': EVOLUTION_API_KEY,
-        'Content-Type': 'application/json',
-      },
+      headers: await evolutionHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         number: formattedPhone,
         text: message,

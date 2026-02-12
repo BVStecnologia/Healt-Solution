@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { config } from './config';
 import { EvolutionWebhookPayload } from './types';
 import { resolveCode } from './urlShortener';
@@ -27,6 +27,21 @@ import {
   resolveHandoffById,
 } from './handoffManager';
 import { formatHandoffResolved } from './patientResponder';
+import { getClient } from './scheduleManager';
+
+// ========================================
+// GLOBAL ERROR HANDLERS
+// ========================================
+process.on('uncaughtException', (error: Error) => {
+  console.error('[FATAL] Uncaught Exception:', error);
+  process.exit(1); // Let Docker restart cleanly
+});
+
+process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+  console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 
@@ -92,6 +107,7 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
     const phone = extractPhoneFromJid(remoteJid);
     const input = text.trim();
     const lower = input.toLowerCase();
+
 
     // ========================================
     // HANDOFF: fromMe keyword detection (#fechar/#close)
@@ -226,6 +242,43 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
 });
 
 // ========================================
+// API AUTH MIDDLEWARE (protects /api/* routes)
+// Validates Supabase JWT from Authorization header
+// ========================================
+app.use('/api', async (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  }
+
+  try {
+    const token = authHeader.substring(7);
+    const client = getClient();
+    const { data: { user }, error } = await client.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Verify user is admin or provider
+    const { data: profile } = await client
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile || !['admin', 'provider'].includes(profile.role)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    next();
+  } catch (err) {
+    console.error('[API Auth] Error validating token:', err);
+    return res.status(401).json({ error: 'Authentication failed' });
+  }
+});
+
+// ========================================
 // HANDOFF API ROUTES
 // ========================================
 
@@ -254,6 +307,52 @@ app.post('/api/handoff/:id/resolve', async (req, res) => {
     console.error('[API] Error resolving handoff session:', error);
     res.status(500).json({ error: 'Failed to resolve session' });
   }
+});
+
+// ========================================
+// EVOLUTION API PROXY (keeps API key server-side)
+// ========================================
+app.all('/api/evolution/*', async (req, res) => {
+  try {
+    // Strip the /api/evolution prefix to get the Evolution API path
+    const evolutionPath = req.path.replace('/api/evolution', '');
+    const targetUrl = `${config.evolutionApiUrl}${evolutionPath}`;
+
+    const headers: Record<string, string> = {
+      'apikey': config.evolutionApiKey,
+    };
+    if (req.headers['content-type']) {
+      headers['Content-Type'] = req.headers['content-type'] as string;
+    }
+
+    const fetchOptions: RequestInit = {
+      method: req.method,
+      headers,
+    };
+
+    if (['POST', 'PUT', 'PATCH'].includes(req.method) && req.body) {
+      fetchOptions.body = JSON.stringify(req.body);
+    }
+
+    const response = await fetch(targetUrl, fetchOptions);
+    const data = await response.text();
+
+    res.status(response.status);
+    const contentType = response.headers.get('content-type');
+    if (contentType) res.setHeader('Content-Type', contentType);
+    res.send(data);
+  } catch (error) {
+    console.error('[Evolution Proxy] Error:', error);
+    res.status(502).json({ error: 'Evolution API unavailable' });
+  }
+});
+
+// ========================================
+// EXPRESS ERROR MIDDLEWARE (must be last)
+// ========================================
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('[Express] Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start server
