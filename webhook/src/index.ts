@@ -18,6 +18,15 @@ import { clearAllState } from './stateManager';
 import { extractPhoneFromJid } from './phoneUtils';
 import { checkRateLimit, formatRateLimitWarning } from './rateLimiter';
 import { sendMessage } from './whatsappResponder';
+import {
+  isInHandoff,
+  updateLastMessage,
+  resolveHandoff,
+  loadActiveHandoffs,
+  getActiveHandoffSessions,
+  resolveHandoffById,
+} from './handoffManager';
+import { formatHandoffResolved } from './patientResponder';
 const app = express();
 app.use(express.json({ limit: '5mb' }));
 
@@ -65,11 +74,6 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
 
     const { data, instance } = payload;
 
-    // Ignore messages from ourselves
-    if (data.key.fromMe) {
-      return res.sendStatus(200);
-    }
-
     // Extract message text
     const text = data.message?.conversation
       || data.message?.extendedTextMessage?.text
@@ -90,6 +94,18 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
     const lower = input.toLowerCase();
 
     // ========================================
+    // HANDOFF: fromMe keyword detection (#fechar/#close)
+    // ========================================
+    if (data.key.fromMe) {
+      if ((lower === '#fechar' || lower === '#close') && isInHandoff(remoteJid)) {
+        await resolveHandoff(remoteJid, 'attendant_keyword');
+        await sendMessage(instance, remoteJid, formatHandoffResolved('pt'));
+        console.log(`[Webhook] Handoff resolved by attendant keyword for ${remoteJid}`);
+      }
+      return res.sendStatus(200);
+    }
+
+    // ========================================
     // RATE LIMITING
     // ========================================
     const rateResult = checkRateLimit(phone);
@@ -100,6 +116,24 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
       // Send bilingual warning — we don't know lang yet, send both
       await sendMessage(instance, remoteJid, formatRateLimitWarning('pt'));
       return res.sendStatus(200);
+    }
+
+    // ========================================
+    // HANDOFF GUARD: if patient is in handoff, bot stays silent
+    // Exception: "bot"/"menu" words let patient exit handoff
+    // ========================================
+    if (isInHandoff(remoteJid)) {
+      const BOT_WORDS = ['bot', 'menu'];
+      if (BOT_WORDS.includes(lower)) {
+        // Patient wants to return to bot — resolve handoff and show menu
+        await resolveHandoff(remoteJid, 'patient_return');
+        clearAllState(remoteJid);
+        // Fall through to normal processing (will show main menu)
+      } else {
+        // Bot stays silent — attendant handles via WhatsApp Web
+        await updateLastMessage(remoteJid);
+        return res.sendStatus(200);
+      }
     }
 
     // ========================================
@@ -191,6 +225,37 @@ app.post(`${config.webhookPath}/:eventType?`, async (req, res) => {
   }
 });
 
+// ========================================
+// HANDOFF API ROUTES
+// ========================================
+
+// List active handoff sessions
+app.get('/api/handoff/active', async (_req, res) => {
+  try {
+    const sessions = await getActiveHandoffSessions();
+    res.json(sessions);
+  } catch (error) {
+    console.error('[API] Error fetching handoff sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+// Resolve a handoff session by ID (admin action)
+app.post('/api/handoff/:id/resolve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const resolved = await resolveHandoffById(id, 'admin_panel');
+    if (resolved) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'Session not found or already resolved' });
+    }
+  } catch (error) {
+    console.error('[API] Error resolving handoff session:', error);
+    res.status(500).json({ error: 'Failed to resolve session' });
+  }
+});
+
 // Start server
 app.listen(config.port, async () => {
   console.log(`[Webhook Server] Running on port ${config.port}`);
@@ -200,6 +265,10 @@ app.listen(config.port, async () => {
   // Initialize treatment cache
   console.log('[Webhook Server] Loading treatment cache...');
   await refreshCache();
+
+  // Load active handoff sessions into memory
+  console.log('[Webhook Server] Loading active handoff sessions...');
+  await loadActiveHandoffs();
 
   // Start reminder scheduler (cron every 5 minutes)
   startReminderScheduler();

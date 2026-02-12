@@ -390,6 +390,78 @@ export function formatInvalidOption(lang: Language, validRange?: number): string
     : '⚠️ Invalid option. Try again or send *0* to go back.';
 }
 
+// ==================
+// Handoff (Human Support)
+// ==================
+
+export function formatHandoffInitiated(lang: Language): string {
+  return lang === 'pt'
+    ? `🤝 *Conectando com atendente...*
+
+Um membro da nossa equipe vai assumir a conversa em instantes.
+
+Enquanto isso, pode enviar sua mensagem normalmente — o atendente verá tudo.
+
+_Envie *bot* para voltar ao menu automático._`
+    : `🤝 *Connecting to a team member...*
+
+A member of our team will take over the conversation shortly.
+
+In the meantime, feel free to send your message — the attendant will see everything.
+
+_Send *bot* to return to the automatic menu._`;
+}
+
+export function formatHandoffQueued(lang: Language): string {
+  return lang === 'pt'
+    ? `📞 *Atendimento humano indisponível*
+
+Nossos atendentes estão fora do horário neste momento.
+
+🕐 Horário de atendimento: Seg-Sex 10h-18h
+
+Para contato direto:
+📞 +1 (954) 756-2565
+📧 team@essencemedicalclinic.com
+
+_Envie *menu* para voltar_`
+    : `📞 *Human support unavailable*
+
+Our team members are currently offline.
+
+🕐 Office hours: Mon-Fri 10am-6pm
+
+For direct contact:
+📞 +1 (954) 756-2565
+📧 team@essencemedicalclinic.com
+
+_Send *menu* to go back_`;
+}
+
+export function formatAlreadyInHandoff(lang: Language): string {
+  return lang === 'pt'
+    ? `ℹ️ Você já está sendo atendido por um membro da equipe.
+
+Aguarde a resposta ou envie *bot* para voltar ao menu automático.`
+    : `ℹ️ You are already being assisted by a team member.
+
+Please wait for a response or send *bot* to return to the automatic menu.`;
+}
+
+export function formatHandoffResolved(lang: Language): string {
+  return lang === 'pt'
+    ? `✅ *Atendimento finalizado!*
+
+Obrigado pelo contato. Se precisar de mais alguma coisa, estamos aqui.
+
+_Envie *menu* para voltar ao menu principal._`
+    : `✅ *Support session ended!*
+
+Thank you for reaching out. If you need anything else, we're here to help.
+
+_Send *menu* to return to the main menu._`;
+}
+
 export function formatSessionExpired(lang: Language): string {
   return lang === 'pt'
     ? '⏳ Sua sessão expirou por inatividade. Vamos recomeçar!'

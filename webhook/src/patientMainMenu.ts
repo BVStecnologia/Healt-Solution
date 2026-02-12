@@ -8,7 +8,16 @@ import { showServicesMenu, handleServicesInput } from './patientServices';
 import { showClinicInfoMenu, handleClinicInfoInput } from './patientClinicInfo';
 import { extractPhoneFromJid } from './phoneUtils';
 import { getNextConfirmedAppointment, recordPatientConfirmation } from './patientManager';
-import { formatPresenceConfirmation, formatClinicContact, formatSessionExpired } from './patientResponder';
+import {
+  formatPresenceConfirmation,
+  formatClinicContact,
+  formatSessionExpired,
+  formatHandoffInitiated,
+  formatHandoffQueued,
+  formatAlreadyInHandoff,
+} from './patientResponder';
+import { isInHandoff, createHandoff, resolveHandoff } from './handoffManager';
+import { hasAvailableAttendants, notifyAttendants } from './attendantNotifier';
 import { formatDateShort } from './whatsappResponder';
 import { startBookingFlow, startBookingFlowWithType, handleBookingStep } from './patientBooking';
 import { handleViewAppointments, handleConfirmFlow, handleCancelInit, handleCancelStep } from './patientAppointments';
@@ -35,19 +44,45 @@ export async function handlePatientMessage(
   // Log incoming message (non-blocking)
   logIncoming(phone, input, patient.userId, 'patient');
 
-  // Check for exit words — clear all state and show main menu
+  // Check for exit words — clear all state, resolve handoff if active, show main menu
   if (EXIT_WORDS.includes(lower)) {
+    if (isInHandoff(remoteJid)) {
+      await resolveHandoff(remoteJid, 'patient_return');
+    }
     clearAllState(remoteJid);
     await showMainMenu(instance, remoteJid, patient);
     return;
   }
 
-  // Check for human/help words — clear state and show clinic contact
+  // Check for human/help words — initiate handoff or show contact
   if (HUMAN_WORDS.includes(lower)) {
     clearAllState(remoteJid);
-    const msg = formatClinicContact(lang);
-    await sendMessage(instance, remoteJid, msg);
-    logOutgoing(phone, msg, patient.userId, 'patient', 'human_escape');
+
+    // Already in handoff?
+    if (isInHandoff(remoteJid)) {
+      const msg = formatAlreadyInHandoff(lang);
+      await sendMessage(instance, remoteJid, msg);
+      logOutgoing(phone, msg, patient.userId, 'patient', 'already_in_handoff');
+      return;
+    }
+
+    // Check if attendants are available
+    const available = await hasAvailableAttendants();
+    if (available) {
+      // Create handoff session
+      const patientName = `${patient.firstName} ${patient.lastName}`;
+      await createHandoff(remoteJid, patient.userId, patientName, instance, lower);
+      await notifyAttendants(patientName, remoteJid, lower, instance);
+
+      const msg = formatHandoffInitiated(lang);
+      await sendMessage(instance, remoteJid, msg);
+      logOutgoing(phone, msg, patient.userId, 'patient', 'handoff_initiated');
+    } else {
+      // Fallback: show contact info (no attendants available)
+      const msg = formatHandoffQueued(lang);
+      await sendMessage(instance, remoteJid, msg);
+      logOutgoing(phone, msg, patient.userId, 'patient', 'handoff_queued');
+    }
     return;
   }
 

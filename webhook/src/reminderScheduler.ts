@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { getClient } from './scheduleManager';
 import { sendReminder, sendNoShowNotification } from './reminderSender';
 import { processRetries } from './retrySender';
+import { processStaleHandoffs } from './handoffManager';
 import { config } from './config';
 import { Language } from './types';
 
@@ -315,6 +316,7 @@ export function startReminderScheduler(): void {
       await processReminders();
       await processNoShows();
       await processRetries();
+      await processStaleHandoffs();
     } catch (err) {
       console.error('[Reminder] Scheduler error:', err);
     }
@@ -329,6 +331,7 @@ export function startReminderScheduler(): void {
       await processReminders();
       await processNoShows();
       await processRetries();
+      await processStaleHandoffs();
     } catch (err) {
       console.error('[Reminder] Initial check error:', err);
     }

@@ -17,6 +17,8 @@ import {
   User,
   AlertTriangle,
   DollarSign,
+  Headphones,
+  UserCheck,
 } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { useAuth } from '../../context/AuthContext';
@@ -406,10 +408,12 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = false, onClose }) =>
     { subpath: '/providers', label: t('nav.providers'), icon: UserCog, section: 'gestao', envs: ['admin'] as Environment[] },
     { subpath: '/admins', label: t('nav.admins'), icon: Shield, section: 'gestao', envs: ['admin'] as Environment[] },
     { subpath: '/services', label: t('nav.services'), icon: DollarSign, section: 'gestao', envs: ['admin'] as Environment[] },
+    { subpath: '/attendants', label: 'Atendentes', icon: UserCheck, section: 'gestao', envs: ['admin'] as Environment[] },
     { subpath: '/notifications', label: t('nav.notifications'), icon: Bell, section: 'config', envs: ['admin'] as Environment[] },
     { subpath: '/notifications', label: t('nav.myReminders'), icon: Bell, section: 'config', envs: ['doctor'] as Environment[] },
     { subpath: '/whatsapp', label: t('nav.whatsapp'), icon: MessageCircle, section: 'config', envs: ['admin'] as Environment[] },
     { subpath: '/failed-messages', label: t('nav.failedMessages'), icon: AlertTriangle, section: 'config', envs: ['admin'] as Environment[] },
+    { subpath: '/handoff', label: 'Handoff', icon: Headphones, section: 'config', envs: ['admin'] as Environment[] },
   ];
 
   // Detectar ambiente atual pela URL
