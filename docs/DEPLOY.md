@@ -1,78 +1,141 @@
-# Deploy - Guia Prático
+# Deploy - Essence Medical Clinic
 
-## Requisitos
-- VPS com Docker instalado
-- SSH configurado
-- Repositório clonado
+## Producao
+
+| Item | Valor |
+|------|-------|
+| **Dominio** | `https://portal.essencemedicalclinic.com` |
+| **VPS** | 217.216.81.92 (Contabo, Ubuntu 24.04, 8 CPU, 24GB RAM, 400GB SSD) |
+| **SSH** | `ssh clinica-vps` |
+| **SSL** | Let's Encrypt (certbot auto-renew) |
+| **DNS** | GoDaddy — `portal` A record → 217.216.81.92 |
+| **Nginx** | `/etc/nginx/sites-available/portal.essencemedicalclinic.com` |
 
 ---
 
-## Passo a Passo
+## Deploy Assistido (Recomendado)
 
-### 1. Clonar no VPS
-```bash
-ssh clinica-vps
-cd /root
-git clone <repo> Clinica
+Usar o skill `/deploy` no Claude Code. Ele faz tudo automaticamente:
+- Verificacao pre-deploy (git, containers, migracoes, backups)
+- Backup do banco antes de qualquer alteracao
+- Git push + pull
+- Migracoes SQL com transacoes
+- Webhook rebuild
+- Frontend safe build (sem downtime)
+- Verificacao pos-deploy
+
+```
+/deploy full       # Deploy completo
+/deploy frontend   # So rebuild do frontend
+/deploy webhook    # So rebuild do webhook
+/deploy migrations # Backup + migracoes pendentes
+/deploy check      # Apenas verifica estado
+/deploy backup     # Apenas faz backup
 ```
 
-### 2. Copiar .env de produção
+---
+
+## Deploy Manual
+
+### 1. Git push + pull
 ```bash
-# Do local para o VPS
-scp frontend/.env.production clinica-vps:/root/Clinica/frontend/.env
-scp supabase/.env.production clinica-vps:/root/Clinica/supabase/.env
-scp evolution/.env.production clinica-vps:/root/Clinica/evolution/.env
+cd C:/Users/User/Desktop/Clinica && git push origin main
+ssh clinica-vps "cd /root/Clinica && git pull origin main"
 ```
 
-### 3. Subir Supabase
+### 2. Migracoes
 ```bash
-ssh clinica-vps "cd /root/Clinica/supabase && docker compose up -d"
+ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh pre-deploy"
+ssh clinica-vps "cd /root/Clinica && bash scripts/migrate.sh vps"
 ```
 
-### 4. Subir Evolution
+### 3. Webhook
 ```bash
-ssh clinica-vps "cd /root/Clinica/evolution && docker compose up -d"
-```
-
-### 5. Subir Webhook (WhatsApp Bot)
-```bash
-scp webhook/.env.production clinica-vps:/root/Clinica/webhook/.env
 ssh clinica-vps "cd /root/Clinica/webhook && docker compose up -d --build"
 ```
 
-### 6. Build Frontend
+### 4. Frontend (Safe Build — sem downtime)
 ```bash
-ssh clinica-vps "cd /root/Clinica/frontend && npm install && npm run build"
-ssh clinica-vps "npm install -g serve"
-ssh clinica-vps "nohup serve -s /root/Clinica/frontend/build -l 3000 > /var/log/frontend.log 2>&1 &"
+ssh clinica-vps "cd /root/Clinica/frontend && npm install --legacy-peer-deps"
+ssh clinica-vps "cd /root/Clinica/frontend && BUILD_PATH=build_tmp npm run build"
+# So troca se build OK:
+ssh clinica-vps "cd /root/Clinica/frontend && rm -rf build_old && mv build build_old && mv build_tmp build && rm -rf build_old"
+ssh clinica-vps "systemctl reload nginx"
+```
+
+> **IMPORTANTE:** `npm run build` apaga a pasta `build/` antes de compilar. Se compilar direto e falhar, o site cai. SEMPRE usar `BUILD_PATH=build_tmp` e trocar atomicamente.
+
+---
+
+## Arquitetura Nginx
+
+```
+portal.essencemedicalclinic.com (443 HTTPS)
+  /                  → /root/Clinica/frontend/build/ (SPA, try_files → index.html)
+  /rest/v1/          → 127.0.0.1:8000 (Supabase PostgREST)
+  /auth/v1/          → 127.0.0.1:8000 (Supabase GoTrue)
+  /realtime/v1/      → 127.0.0.1:8000 (Supabase Realtime, WebSocket)
+  /storage/v1/       → 127.0.0.1:8000 (Supabase Storage)
+  /functions/v1/     → 127.0.0.1:8000 (Supabase Edge Functions)
+  /evolution/        → 127.0.0.1:8082 (Evolution API)
+```
+
+Permissoes: `chmod o+x /root /root/Clinica /root/Clinica/frontend /root/Clinica/frontend/build` (nginx roda como www-data)
+
+---
+
+## 3 Stacks Docker
+
+| Stack | Porta | Compose |
+|-------|-------|---------|
+| Supabase (13 containers) | 8000 | `supabase/docker-compose.yml` |
+| Evolution API (3 containers) | 8082 | `evolution/docker-compose.yml` |
+| Webhook Server (1 container) | 3002 | `webhook/docker-compose.yml` |
+
+Frontend servido por Nginx (nao e container).
+
+---
+
+## Variaveis de Ambiente (Producao)
+
+**frontend/.env**
+```env
+REACT_APP_SUPABASE_URL=https://portal.essencemedicalclinic.com
+REACT_APP_SUPABASE_ANON_KEY=eyJ...
+REACT_APP_EVOLUTION_API_URL=https://portal.essencemedicalclinic.com/evolution
+```
+
+**supabase/.env**
+```env
+SITE_URL=https://portal.essencemedicalclinic.com
+API_EXTERNAL_URL=https://portal.essencemedicalclinic.com
+SUPABASE_PUBLIC_URL=https://portal.essencemedicalclinic.com
+GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI=https://portal.essencemedicalclinic.com/auth/v1/callback
+```
+
+**webhook/.env**
+```env
+PANEL_BASE_URL=https://portal.essencemedicalclinic.com
+SUPABASE_PUBLIC_URL=https://portal.essencemedicalclinic.com
+SHORTENER_BASE_URL=https://portal.essencemedicalclinic.com
 ```
 
 ---
 
-## Problemas Comuns
+## Backup e Restauracao
 
-### vector.yml é diretório
 ```bash
-# Erro: "Is a directory (os error 21)"
-# Solução:
-docker compose down
-rm -rf volumes/logs/vector.yml
-# Copiar arquivo correto do repo local
-scp supabase/volumes/logs/vector.yml clinica-vps:/root/Clinica/supabase/volumes/logs/
-docker compose up -d
-```
+# Backup manual
+ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh manual"
 
-### Functions não encontradas
-```bash
-# Erro: "could not find an appropriate entrypoint"
-# Solução:
-scp -r supabase/volumes/functions/* clinica-vps:/root/Clinica/supabase/volumes/functions/
-docker restart supabase-edge-functions
-```
+# Backup pre-deploy (automatico no migrate.sh vps)
+ssh clinica-vps "cd /root/Clinica && bash scripts/backup.sh pre-deploy"
 
-### Node.js não instalado
-```bash
-ssh clinica-vps "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs"
+# Listar backups
+ssh clinica-vps "ls -1th /root/backups/db-*.sql.gz"
+
+# Restaurar (CUIDADO: sobrescreve dados atuais!)
+ssh clinica-vps "gunzip < /root/backups/db-XXXXX.sql.gz | docker exec -i supabase-db psql -U postgres -d postgres"
 ```
 
 ---
@@ -80,83 +143,59 @@ ssh clinica-vps "curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && ap
 ## Verificar Status
 
 ```bash
-# Todos os containers
-ssh clinica-vps "docker ps --format 'table {{.Names}}\t{{.Status}}'"
+# Containers
+ssh clinica-vps "docker ps --format 'table {{.Names}}\t{{.Status}}' | head -25"
 
-# Testar APIs
-curl http://217.216.81.92:8000/rest/v1/
-curl http://217.216.81.92:8082/
+# Frontend
+ssh clinica-vps "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/"
 
-# Logs de erro
+# Supabase API
+ssh clinica-vps "curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/rest/v1/"
+
+# Evolution API
+ssh clinica-vps "curl -s -o /dev/null -w '%{http_code}' http://localhost:8082/"
+
+# Webhook
+ssh clinica-vps "curl -s -o /dev/null -w '%{http_code}' http://localhost:3002/health"
+
+# Migracoes aplicadas
+ssh clinica-vps "docker exec supabase-db psql -U postgres -c \"SELECT version, name FROM schema_migrations ORDER BY version;\""
+
+# Logs
+ssh clinica-vps "docker logs webhook-server --tail 20"
 ssh clinica-vps "docker logs supabase-kong --tail 20"
-ssh clinica-vps "docker logs evolution_api --tail 20"
 ```
 
 ---
 
-## Rede Docker
+## Troubleshooting
 
-```
-Container → Container = Nome do container (nunca muda)
-Exemplo: supabase-db:5432, evolution_api:8080
-
-Externo → Sistema = IP ou domínio (muda conforme ambiente)
-Exemplo: localhost:8000 → 217.216.81.92:8000
-```
-
----
-
-## Futuro: SSL + Domínio (Subdomínio)
-
-O domínio `essencemedicalclinic.com` já está em uso pelo site institucional.
-Será criado um **subdomínio** para o sistema (aguardando resposta do cliente).
-
-### Opção recomendada: subdomínio único
-```
-app.essencemedicalclinic.com → Nginx reverse proxy
-  /              → Frontend React (porta 3000)
-  /api/          → Supabase Kong (porta 8000)
-  /go/           → Webhook shortener (porta 3002)
-```
-
-### Opção alternativa: múltiplos subdomínios
-```
-app.essencemedicalclinic.com   → Frontend React
-api.essencemedicalclinic.com   → Supabase Kong
-wa.essencemedicalclinic.com    → Webhook server (shortener + bot)
-```
-
-### Configuração SSL
+### Frontend nao carrega (403/404)
 ```bash
-apt install certbot python3-certbot-nginx -y
-certbot --nginx -d app.essencemedicalclinic.com
+# Verificar permissoes
+ssh clinica-vps "ls -la /root/Clinica/frontend/build/index.html"
+ssh clinica-vps "chmod o+x /root /root/Clinica /root/Clinica/frontend /root/Clinica/frontend/build"
+ssh clinica-vps "systemctl reload nginx"
 ```
 
-### Variáveis de ambiente para produção (com subdomínio)
-
-**supabase/.env**
-```env
-SITE_URL=https://app.essencemedicalclinic.com
-API_EXTERNAL_URL=https://app.essencemedicalclinic.com
-SUPABASE_PUBLIC_URL=https://app.essencemedicalclinic.com
+### Build falha por TypeScript
+```bash
+# react-scripts usa TS 4.9, i18next exige TS 5
+ssh clinica-vps "cd /root/Clinica/frontend && npm install --legacy-peer-deps"
 ```
 
-**frontend/.env**
-```env
-REACT_APP_SUPABASE_URL=https://app.essencemedicalclinic.com
+### Webhook nao inicia
+```bash
+ssh clinica-vps "cd /root/Clinica/webhook && docker compose logs --tail 30"
+# Verificar .env existe
+ssh clinica-vps "ls /root/Clinica/webhook/.env"
 ```
 
-**webhook/.env**
-```env
-PANEL_BASE_URL=https://app.essencemedicalclinic.com
-SUPABASE_PUBLIC_URL=https://app.essencemedicalclinic.com
-SHORTENER_BASE_URL=https://app.essencemedicalclinic.com
+### Limpeza Docker (apos deploy)
+```bash
+ssh clinica-vps "docker image prune -f"
 ```
-
-> Os links do WhatsApp ficarão como:
-> `https://app.essencemedicalclinic.com/go/LE_HcQ`
-> (clicáveis + preview automático no WhatsApp)
 
 ---
 
-*Atualizado: 06/02/2026*
+*Atualizado: 13/02/2026*

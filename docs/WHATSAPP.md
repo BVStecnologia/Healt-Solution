@@ -1,306 +1,228 @@
-# WhatsApp Automation - Arquitetura Completa
+# WhatsApp Automation - Arquitetura
 
-Documento único de referência para toda a automação via WhatsApp.
-Cobre ambos os lados: **Médico** (implementado) e **Paciente** (planejado).
+## Visao Geral
+
+Sistema completo de automacao WhatsApp com chatbot interativo, lembretes automaticos, human handoff, e dual-role routing (paciente + medico).
+
+```
+WhatsApp (Usuario) → Evolution API (v2.3.6) → Webhook Server (Node/Express) → Supabase (PostgreSQL)
+```
+
+**29 modulos TypeScript** no `webhook/src/`. Custo do WhatsApp: $0 (Evolution API open-source no nosso servidor).
 
 ---
 
-## Arquitetura
+## Identificacao de Usuarios
 
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  WhatsApp   │────▶│  Evolution API   │────▶│  Webhook Server │
-│  (Usuário)  │◀────│  (v2.3.6)        │     │  (Node/Express) │
-└─────────────┘     └──────────────────┘     └────────┬────────┘
-                                                      │
-                                              ┌───────▼───────┐
-                                              │   Supabase    │
-                                              │  (PostgreSQL) │
-                                              └───────────────┘
-```
-
-**Fluxo:**
-1. Usuário manda mensagem no WhatsApp
-2. Evolution API recebe e envia webhook para `POST /webhook/messages`
-3. Webhook Server identifica o usuário pelo telefone
-4. Executa o comando baseado no **role** do usuário
-5. Envia resposta via Evolution API `POST /message/sendText`
-6. Cada resposta inclui link encurtado para o painel (URL Shortener interno)
-
----
-
-## Identificação de Usuários
-
-O sistema identifica quem mandou a mensagem buscando o telefone no banco.
+O sistema identifica quem mandou a mensagem buscando o telefone em `profiles`:
 
 ```
 Mensagem recebida
-      │
-      ▼
- Busca phone em profiles
-      │
-      ├─ role = provider → FLUXO MÉDICO
-      ├─ role = patient  → FLUXO PACIENTE
-      ├─ role = admin    → FLUXO ADMIN (mesmo do médico + extras)
-      └─ não encontrado  → IGNORAR (ou msg "número não cadastrado")
+      |
+  Busca phone em profiles
+      |
+      +-- role = provider → FLUXO MEDICO
+      +-- role = patient  → FLUXO PACIENTE
+      +-- role = admin    → FLUXO ADMIN (mesmo do medico + extras)
+      +-- dual-role       → Ambos os menus (paciente + medico)
+      +-- nao encontrado  → Ignorar
 ```
-
-### Estado Atual
-- `identifyProvider()` busca APENAS na tabela `providers`
-- Se não é médico → ignora silenciosamente
-
-### Estado Futuro
-- `identifyUser()` busca na tabela `profiles` (todos os roles)
-- Retorna `{ role, userId, name, email, phone, language, providerId? }`
-- Router direciona para handler correto por role
 
 ---
 
-## Fluxo Médico (IMPLEMENTADO)
-
-### Menu Principal
-Médico envia qualquer mensagem ou "ajuda" → recebe menu numerado:
-
-```
-🏥 Essence Medical
-
-1️⃣  Agenda de hoje
-2️⃣  Agenda de amanhã
-3️⃣  Pacientes
-4️⃣  Todos os comandos
-5️⃣  Bloquear hoje
-6️⃣  Liberar hoje
-7️⃣  Bloquear amanhã
-
-Responda com o número ou envie um comando (ex: agenda 15/02)
-```
-
-### Comandos por Número
-| # | Ação | Detalhes |
-|---|------|----------|
-| 1 | Agenda hoje | Lista consultas do dia + bloqueios + link painel |
-| 2 | Agenda amanhã | Idem para dia seguinte |
-| 3 | Pacientes | Link direto para lista de pacientes |
-| 4 | Todos os comandos | Atalhos + comandos com data |
-| 5 | Bloquear hoje | Bloqueia dia inteiro + mostra conflitos |
-| 6 | Liberar hoje | Remove todos bloqueios do dia |
-| 7 | Bloquear amanhã | Bloqueia dia inteiro de amanhã |
-
-### Comandos por Texto (datas específicas)
-| Comando | Exemplo | Ação |
-|---------|---------|------|
-| `agenda DD/MM` | `agenda 15/02` | Agenda da data |
-| `bloquear DD/MM` | `bloquear 15/02` | Bloquear dia inteiro |
-| `bloquear DD/MM manhã` | `bloquear 15/02 manhã` | Bloquear 08:00-12:00 |
-| `bloquear DD/MM tarde` | `bloquear 15/02 tarde` | Bloquear 12:00-18:00 |
-| `bloquear DD/MM HH:MM-HH:MM` | `bloquear 15/02 08:00-12:00` | Horário personalizado |
-| `liberar DD/MM` | `liberar 15/02` | Remover bloqueios da data |
-| `pacientes` | — | Link para painel de pacientes |
-
-### Bilíngue
-- Comandos funcionam em PT e EN (`schedule`, `block`, `unblock`, etc.)
-- Idioma da resposta baseado em `profiles.preferred_language`
-- Menu numerado usa idioma do médico automaticamente
-
-### Respostas Incluem
-- Dados formatados (agenda, bloqueios, conflitos)
-- Link encurtado para o painel (`/go/:code` → magic link auto-login)
-- Indicador de "digitando..." antes de responder
-- Delay natural (1-3s baseado no tamanho da mensagem)
-
----
-
-## Fluxo Paciente (PLANEJADO)
+## Fluxo Paciente
 
 ### Menu Principal
 Paciente envia qualquer mensagem → recebe menu numerado:
 
-```
-🏥 Essence Medical
-
-Olá, [Nome]! 👋
-
-1️⃣  Minhas consultas
-2️⃣  Confirmar consulta
-3️⃣  Cancelar consulta
-4️⃣  Agendar consulta
-5️⃣  Falar com a clínica
-
-Responda com o número.
-```
-
-### Comandos Planejados
-| # | Ação | Detalhes |
+| # | Acao | Detalhes |
 |---|------|----------|
-| 1 | Minhas consultas | Lista próximas consultas (data, hora, médico, status) |
-| 2 | Confirmar consulta | Se tem consulta pendente, confirma. Se não, avisa. |
-| 3 | Cancelar consulta | Se tem consulta futura, pede confirmação e cancela |
-| 4 | Agendar consulta | Fluxo simplificado (tipo → data → horário → confirma) |
-| 5 | Falar com clínica | Mensagem informando telefone/email da clínica |
+| 1 | Proximas consultas | Lista consultas futuras com status |
+| 2 | Agendar consulta | Fluxo multi-step: servico → medico → data → horario → confirmacao |
+| 3 | Cancelar consulta | Seleciona consulta, pede motivo, aviso se <24h |
+| 4 | Historico | Ultimas consultas realizadas |
+| 5 | Servicos da clinica | Sub-menu com categorias e precos |
+| 6 | Info da clinica | Endereco, horarios, telefone |
+| 7 | Falar com a clinica | Dispara human handoff |
 
-### Fluxo "Minhas Consultas" (opção 1)
-```
-📋 Suas próximas consultas:
+### Confirmacao Rapida
+Paciente responde "ok", "sim", "yes", "confirmo" → sistema busca consulta confirmada <48h e registra presenca (`confirmed_by_patient_at`).
 
-10/02 (Seg) 09:00 — Dr. Pedro Santos
-  Retorno · Confirmada ✅
+### Agendamento pelo WhatsApp
+Fluxo conversacional com estado (`conversationState`):
+1. Escolhe categoria de servico (5 categorias)
+2. Escolhe servico especifico
+3. Escolhe medico (com disponibilidade)
+4. Escolhe data (proximos dias disponiveis)
+5. Escolhe horario (slots reais da agenda)
+6. Confirma → cria appointment no banco
 
-15/02 (Sáb) 14:00 — Dra. Ana Costa
-  Av. Hormonal · Pendente ⏳
-  → Responda "confirmar" para confirmar
-
-Nenhuma outra consulta agendada.
-🔗 Ver no portal: https://app.essencemedicalclinic.com/go/xY9kLm
-```
-
-### Fluxo "Agendar Consulta" (opção 4)
-Fluxo conversacional multi-step:
-```
-Passo 1: "Qual tipo de consulta?"
-  1️⃣ Retorno
-  2️⃣ Avaliação Hormonal
-  3️⃣ Revisão de Exames
-  4️⃣ Nutrição
-  (tipos disponíveis baseados no patient_type e elegibilidade)
-
-Passo 2: "Com qual médico?"
-  1️⃣ Dr. Pedro Santos
-  2️⃣ Dra. Ana Costa
-  (apenas médicos que atendem esse tipo)
-
-Passo 3: "Qual data?"
-  1️⃣ 10/02 (Seg) — 3 horários
-  2️⃣ 11/02 (Ter) — 5 horários
-  3️⃣ 12/02 (Qua) — 2 horários
-  (próximos dias com disponibilidade)
-
-Passo 4: "Qual horário?"
-  1️⃣ 09:00
-  2️⃣ 09:30
-  3️⃣ 10:00
-
-Passo 5: Confirmação
-  "✅ Consulta agendada!
-   12/02 (Qua) 09:30 — Dra. Ana Costa
-   Avaliação Hormonal
-   🔗 Ver no portal: ..."
-```
-
-### Respostas a Lembretes (Automáticos)
-Quando o paciente recebe um lembrete (24h ou 1h antes):
-```
-⏰ Lembrete: Sua consulta é amanhã!
-12/02 (Qua) 09:30 — Dra. Ana Costa
-
-Responda:
-  "ok" ou "confirmar" → Confirma presença
-  "cancelar" → Cancela consulta
-```
-
-### Elegibilidade
-Mesmas regras do portal web:
-- Paciente `new` → só `initial_consultation`
-- Paciente `trt`/`hormone` → precisa exames + visita recente
-- Paciente `general`/`vip` → sem restrições
-- Se inelegível → mensagem explicativa + link para portal
+### Cancelamento Inteligente
+- Se <24h antes da consulta: aviso de cancelamento tardio (step `confirm_late`)
+- Pede motivo obrigatorio
+- Link de reagendamento na mensagem
 
 ---
 
-## Fluxo Admin (FUTURO)
+## Fluxo Medico
 
-Admin recebe os mesmos comandos do médico MAIS:
-- `stats` → Estatísticas rápidas (consultas hoje, pendentes, etc.)
-- `aprovar` → Lista consultas pendentes para aprovar
-- Notificações de novas consultas agendadas
+### Menu Principal
+| # | Acao | Detalhes |
+|---|------|----------|
+| 1 | Agenda de hoje | Lista consultas do dia + bloqueios |
+| 2 | Agenda de amanha | Idem para dia seguinte |
+| 3 | Pacientes | Link direto para lista de pacientes |
+| 4 | Todos os comandos | Atalhos + comandos com data |
+| 5 | Bloquear hoje | Bloqueia dia inteiro |
+| 6 | Liberar hoje | Remove bloqueios |
+| 7 | Bloquear amanha | Bloqueia dia seguinte |
 
----
+### Comandos por Texto
+| Comando | Exemplo | Acao |
+|---------|---------|------|
+| `agenda DD/MM` | `agenda 15/02` | Agenda da data |
+| `bloquear DD/MM` | `bloquear 15/02` | Bloquear dia inteiro |
+| `bloquear DD/MM manha` | `bloquear 15/02 manha` | Bloquear 08:00-12:00 |
+| `bloquear DD/MM HH:MM-HH:MM` | `bloquear 15/02 08:00-12:00` | Horario personalizado |
+| `liberar DD/MM` | `liberar 15/02` | Remover bloqueios |
 
-## Notificações Automáticas (Templates Existentes)
-
-### Templates Implementados (migração 002 + 005)
-| Slug | Tipo | Descrição |
-|------|------|-----------|
-| `appointment_confirmed` | Para paciente | Consulta confirmada pela clínica |
-| `appointment_rejected` | Para paciente | Consulta rejeitada/cancelada |
-| `appointment_cancelled` | Para paciente | Consulta cancelada |
-| `reminder_24h` | Para paciente | Lembrete 24h antes |
-| `reminder_1h` | Para paciente | Lembrete 1h antes |
-| `new_appointment_clinic` | Para médico | Nova consulta agendada |
-
-Cada template existe em **PT** e **EN** (12 total).
-Idioma selecionado por `profiles.preferred_language`.
-
-### Lembretes Automáticos (PENDENTE)
-- Cron job (Edge Function ou node-cron) que roda a cada hora
-- Busca consultas confirmadas nas próximas 24h / 1h
-- Envia template correspondente
-- Registra em `message_logs`
+Comandos funcionam em PT e EN.
 
 ---
 
-## URL Shortener
+## Notificacoes Automaticas
 
-### Como Funciona
-1. Gera magic link (Supabase Auth admin API)
-2. Encurta para `/go/:code` (6 caracteres, base64url)
-3. Armazenamento in-memory com TTL de 1 hora
-4. Redirect 302 ao acessar
+### Lembretes (cron 5min via node-cron)
+| Template | Para quem | Quando |
+|----------|-----------|--------|
+| `reminder_24h` | Paciente | 24h antes |
+| `reminder_1h` | Paciente | 1h antes |
+| `provider_reminder_2h` | Medico | 2h antes |
+| `provider_reminder_15min` | Medico | 15min antes |
+| `reminder_daily_provider` | Medico | Resumo diario |
 
-### Formato
-```
-Desenvolvimento: http://localhost:3002/go/LE_HcQ
-Produção:        https://app.essencemedicalclinic.com/go/LE_HcQ
-```
+### Eventos
+| Template | Trigger |
+|----------|---------|
+| `appointment_confirmed` | Admin confirma consulta |
+| `appointment_rejected` | Admin rejeita consulta |
+| `appointment_cancelled` | Paciente cancela |
+| `appointment_cancelled_by_provider` | Medico/admin cancela (com link reagendamento) |
+| `appointment_auto_confirmed` | Auto-confirmacao |
+| `new_appointment_provider` | Nova consulta agendada |
+| `new_appointment_clinic` | Nova consulta (notif clinica) |
+| `no_show_patient` | Paciente faltou |
+| `no_show_provider` | Medico notificado de falta |
 
-### Importante
-- Links com domínio real ficam **clicáveis** no WhatsApp (azul + preview)
-- Links localhost ficam como texto puro (comportamento normal do WhatsApp)
-- Testado e comprovado em 06/02/2026
+**14 tipos x 2 idiomas = 28 templates.** Idioma baseado em `profiles.preferred_language`.
+
+### Regras Configuraveis
+- Tabela `notification_rules`: target_role, provider_id (NULL=global), minutes_before, template
+- Override: regra especifica do medico substitui global (mesmo minutes_before)
+- UI Admin: `/admin/settings?tab=notifications` — CRUD de regras
+- UI Medico: `/doctor/notifications` — auto-configuravel
 
 ---
 
-## Estrutura do Código
+## Human Handoff
+
+Paciente pede "ajuda" / "help" / "falar com a clinica" → bot pausa, atendente assume.
+
+### Fluxo
+1. Paciente solicita → bot verifica atendentes disponiveis (timezone-aware EST/EDT)
+2. Cria sessao em `handoff_sessions` + Set in-memory
+3. Notifica atendentes via WhatsApp pessoal
+4. Bot pausa para aquele paciente — mensagens repassadas direto
+5. Atendente responde via WhatsApp Web da clinica
+
+### Encerramento (4 formas)
+- Atendente envia `#fechar` via WhatsApp
+- Admin encerra pelo painel (`/admin/handoff`)
+- Auto-timeout: 30min sem atividade
+- Paciente envia "bot" ou "menu"
+
+### Tabelas
+- `attendants` — CRUD de atendentes
+- `attendant_schedules` — horarios de disponibilidade
+- `handoff_sessions` — sessoes ativas/encerradas
+
+---
+
+## Confiabilidade
+
+| Feature | Detalhes |
+|---------|----------|
+| Retry automatico | Ate 3 tentativas por mensagem (cron 5min) |
+| message_logs | Cada envio registrado com status (sent/failed) |
+| wasAlreadySent() | Deduplicacao — ignora `status='failed'` para permitir retry |
+| Msgs Falhas | `/admin/failed-messages` — lista com retry manual |
+| Admin alertas | Popup quando WhatsApp falha ao confirmar/rejeitar |
+
+---
+
+## Protecoes
+
+| Feature | Detalhes |
+|---------|----------|
+| Rate limiting | Max 3 msgs/10s por usuario |
+| Session timeout | 30min sem atividade → reset do estado |
+| Human escape | "ajuda"/"help" sempre disponivel |
+| Conversation logging | Tabela `conversation_logs` para historico |
+| Bilingue | TODA mensagem em PT e EN (via `lang: Language`) |
+
+---
+
+## Estrutura do Codigo
 
 ```
 webhook/src/
-├── index.ts              # Express server + rotas + handler principal
-├── config.ts             # Variáveis de ambiente
-├── types.ts              # Tipos TypeScript (payloads, commands, etc.)
-├── commandParser.ts      # Parse de mensagens → comandos estruturados
-├── scheduleManager.ts    # Queries no Supabase (agenda, bloqueios, magic links)
-├── whatsappResponder.ts  # Formatação de respostas + envio de mensagens
-├── urlShortener.ts       # Encurtador de URLs in-memory
-└── phoneUtils.ts         # Normalização/comparação de telefones
+├── index.ts                # Express server + rotas + Evolution proxy + handoff API
+├── config.ts               # URLs e variaveis de ambiente
+├── types.ts                # Tipos compartilhados
+├── router.ts               # Dual-role routing (paciente + provider)
+├── stateManager.ts         # Estado + menu management
+├── menuBuilder.ts          # Menu dinamico numerado
+├── patientMainMenu.ts      # Menu principal do paciente + handoff trigger
+├── patientServices.ts      # Sub-menu de servicos
+├── patientClinicInfo.ts    # Sub-menu info da clinica
+├── patientAppointments.ts  # Ver/confirmar/cancelar consultas
+├── patientBooking.ts       # Fluxo de agendamento
+├── patientResponder.ts     # Formatters de mensagem (bilingue)
+├── patientManager.ts       # Manager de pacientes
+├── providerMainMenu.ts     # Menu do medico
+├── providerResponder.ts    # Formatters do medico
+├── handoffManager.ts       # Sessoes handoff (Set + DB)
+├── attendantNotifier.ts    # Notifica atendentes (timezone-aware)
+├── commandParser.ts        # Parser de comandos WhatsApp
+├── scheduleManager.ts      # Supabase client (service_role_key)
+├── whatsappResponder.ts    # sendMessage() + formatadores
+├── reminderScheduler.ts    # Cron job 5min (node-cron)
+├── reminderSender.ts       # Templates + dedup + envio
+├── retrySender.ts          # Retry de mensagens falhas
+├── conversationState.ts    # Estado de conversacao (booking, cancel)
+├── rateLimiter.ts          # Rate limiting (3 msgs/10s)
+├── messageLogger.ts        # Logging de conversas
+├── treatmentCache.ts       # Cache de treatment_types
+├── phoneUtils.ts           # Utilitarios de telefone
+├── urlShortener.ts         # Encurtador de URLs (/go/:code)
+└── userIdentifier.ts       # Identificacao de usuario por telefone
 ```
 
-### Para Adicionar o Fluxo de Pacientes
-1. `identifyProvider()` → renomear para `identifyUser()` (busca em `profiles`)
-2. Criar `patientHandler.ts` (handler separado para comandos de paciente)
-3. Criar `patientResponder.ts` (formatação de respostas do paciente)
-4. Adicionar `patientCommands.ts` (parser de comandos do paciente)
-5. `index.ts` → router por role: `if provider → providerHandler, if patient → patientHandler`
+---
 
-### Estado Conversacional (para fluxo multi-step do paciente)
-O agendamento via WhatsApp requer estado (qual passo o paciente está):
-- Opção simples: Map in-memory `{ jid → { step, data } }` com TTL
-- Opção robusta: Tabela `whatsapp_sessions` no banco
+## Variaveis de Ambiente (webhook/.env)
+
+| Variavel | Valor |
+|----------|-------|
+| `SUPABASE_URL` | `http://supabase-kong:8000` (interno Docker) |
+| `SUPABASE_SERVICE_ROLE_KEY` | do supabase/.env |
+| `EVOLUTION_API_URL` | `http://evolution_api:8080` (interno Docker) |
+| `EVOLUTION_API_KEY` | do supabase/.env |
+| `PANEL_BASE_URL` | `https://portal.essencemedicalclinic.com` |
+| `SUPABASE_PUBLIC_URL` | `https://portal.essencemedicalclinic.com` |
+| `SHORTENER_BASE_URL` | `https://portal.essencemedicalclinic.com` |
+| `WEBHOOK_PORT` | `3002` |
 
 ---
 
-## Variáveis de Ambiente
-
-| Variável | Dev | Produção |
-|----------|-----|----------|
-| `SUPABASE_URL` | `http://supabase-kong:8000` | `http://supabase-kong:8000` (interno) |
-| `SUPABASE_SERVICE_ROLE_KEY` | do .env | do .env |
-| `EVOLUTION_API_URL` | `http://evolution_api:8080` | `http://evolution_api:8080` (interno) |
-| `EVOLUTION_API_KEY` | do .env | do .env |
-| `PANEL_BASE_URL` | `http://localhost:3000` | `https://app.essencemedicalclinic.com` |
-| `SUPABASE_PUBLIC_URL` | `http://localhost:8000` | `https://app.essencemedicalclinic.com` |
-| `SHORTENER_BASE_URL` | `http://localhost:3002` | `https://app.essencemedicalclinic.com` |
-
-> Subdomínio pendente confirmação do cliente. Ver `docs/DEPLOY.md`.
-
----
-
-*Atualizado: 06/02/2026*
+*Atualizado: 13/02/2026*

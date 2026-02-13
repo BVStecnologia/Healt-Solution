@@ -7,14 +7,14 @@
 
 ---
 
-## Status Atual (12/02/2026)
+## Status Atual (13/02/2026)
 
 | # | Modulo | Status |
 |---|--------|--------|
 | 1 | Infraestrutura Docker (19 servicos) | ✅ Completo |
-| 2 | Database Schema (31 migracoes, 000-030) | ✅ Completo |
+| 2 | Database Schema (34 migracoes, 000-033) | ✅ Completo |
 | 3 | Portal do Paciente (8 paginas) | ✅ Completo |
-| 4 | Painel Admin + Portal Medico (16 paginas) | ✅ Completo |
+| 4 | Painel Admin + Portal Medico (18 paginas) | ✅ Completo |
 | 5 | WhatsApp - Notificacoes Bilingues (28 templates) | ✅ Completo |
 | 6 | WhatsApp - Automation Medico + Paciente | ✅ Completo |
 | 7 | Lembretes automaticos (cron + notification_rules) | ✅ Completo |
@@ -33,25 +33,28 @@
 | 20 | Upload de documentos (Supabase Storage) | ✅ Completo |
 | 21 | Chatbot IA WhatsApp (5 fases) | ✅ Completo |
 | 22 | Human Handoff (atendentes + sessoes) | ✅ Completo |
+| 23 | Clinic Settings (min_booking_hours configuravel) | ✅ Completo |
+| 24 | Flag is_test para pacientes de teste | ✅ Completo |
+| 25 | Suporte Interno (tickets de bug report) | ✅ Completo |
 
 ### Gaps Pendentes (baseado na analise OptiMantra)
 
 | # | Feature | Prioridade | Status |
 |---|---------|------------|--------|
-| 23 | **Pagamento com cartao (Stripe POS)** | 🔴 Alta | Pendente |
-| 24 | **Superbill / Faturamento basico** | 🔴 Alta | Pendente |
-| 25 | Inventario/Estoque (73 itens) | 🟡 Media | Pendente |
-| 26 | Modulo de exames/labs (30+ Labcorp) | 🟡 Media | Pendente |
-| 27 | SMS 2-way (Twilio) | 🟡 Media | Pendente |
-| 28 | Email notifications (Resend) | 🟡 Media | Pendente |
-| 29 | Intake/Consent forms digitais | 🟡 Media | Pendente |
-| 30 | Waitlist (lista de espera) | 🟡 Media | Pendente |
-| 31 | Analytics / Relatorios financeiros | 🟡 Media | Pendente |
-| 32 | E-commerce (produtos/suplementos) | 🟢 Baixa | Pendente |
-| 33 | AI Scribe (Plaud → SOAP) | 🟢 Baixa | Pendente |
-| 34 | Charting/EMR (SOAP notes) | 🟢 Baixa | Pendente |
-| 35 | Memberships/assinaturas | 🟢 Baixa | Pendente |
-| 36 | Nurturing sequences (follow-up 7/30/90 dias) | 🟢 Baixa | Pendente |
+| 26 | **Pagamento com cartao (Stripe POS)** | 🔴 Alta | Pendente |
+| 27 | **Superbill / Faturamento basico** | 🔴 Alta | Pendente |
+| 28 | Inventario/Estoque (73 itens) | 🟡 Media | Pendente |
+| 29 | Modulo de exames/labs (30+ Labcorp) | 🟡 Media | Pendente |
+| 30 | SMS 2-way (Twilio) | 🟡 Media | Pendente |
+| 31 | Email notifications (Resend) | 🟡 Media | Pendente |
+| 32 | Intake/Consent forms digitais | 🟡 Media | Pendente |
+| 33 | Waitlist (lista de espera) | 🟡 Media | Pendente |
+| 34 | Analytics / Relatorios financeiros | 🟡 Media | Pendente |
+| 35 | E-commerce (produtos/suplementos) | 🟢 Baixa | Pendente |
+| 36 | AI Scribe (Plaud → SOAP) | 🟢 Baixa | Pendente |
+| 37 | Charting/EMR (SOAP notes) | 🟢 Baixa | Pendente |
+| 38 | Memberships/assinaturas | 🟢 Baixa | Pendente |
+| 39 | Nurturing sequences (follow-up 7/30/90 dias) | 🟢 Baixa | Pendente |
 
 ---
 
@@ -66,7 +69,7 @@
 - Scripts: migrate.sh, backup.sh, deploy assistido via skill
 - VPS Contabo (217.216.81.92, Ubuntu 24.04, 8 cores, 24GB RAM, 400GB SSD)
 
-### 2. Banco de Dados (31 migracoes)
+### 2. Banco de Dados (34 migracoes)
 | Migracao | Descricao |
 |----------|-----------|
 | 000 | Schema migrations (controle de versoes) |
@@ -100,8 +103,11 @@
 | 028 | Insurance (14 campos: 7 primary + 7 secondary) |
 | 029 | Conversation logs (chatbot WhatsApp) |
 | 030 | Handoff system (attendants, attendant_schedules, handoff_sessions) |
+| 031 | clinic_settings (key-value config, min_booking_hours configuravel) |
+| 032 | is_test flag em profiles (marcar pacientes de teste) |
+| 033 | support_tickets (tickets internos de bug report + RLS) |
 
-**Totais:** 15+ tabelas, 4 ENUMs, 10+ RPCs, RLS completo, triggers automaticos
+**Totais:** 18+ tabelas, 4 ENUMs, 12+ RPCs, RLS completo, triggers automaticos
 
 ### 3. Portal do Paciente (8 paginas)
 - **Login**: Email/senha + Google OAuth (auto-criacao de perfil com idioma do navegador)
@@ -114,7 +120,7 @@
 - **Documentos**: Upload/download de documentos + viewer modal (Supabase Storage)
 - **i18n**: PT/EN com deteccao automatica e persistencia no banco
 
-### 4. Painel Administrativo + Portal do Medico (16 paginas)
+### 4. Painel Administrativo + Portal do Medico (18 paginas)
 - **Dashboard**: 4 cards de stats + graficos (Recharts: area, pie, bar) + lista pendentes + status WhatsApp + setup checklist
 - **Calendario**: react-big-calendar (mes/semana/dia/agenda) + cores por status + URL params + modal de detalhes + icone camera para telehealth
 - **Consultas**: Kanban com colunas por status + confirmar/rejeitar/cancelar + notificacoes WhatsApp + filtro telehealth
@@ -129,7 +135,10 @@
 - **Msgs Falhas**: Lista de mensagens WhatsApp falhas com retry manual
 - **Atendentes**: CRUD de atendentes para handoff humano + horarios de disponibilidade
 - **Handoff**: Monitor de sessoes de handoff (ativas/encerradas) + encerramento pelo painel
-- **Portal do Medico**: Ambiente separado (/doctor) com dashboard, calendario, consultas, agenda, notificacoes
+- **Configuracoes**: Settings com 3 abas (General, Notifications, WhatsApp) + clinic_settings configuravel
+- **Msgs Falhas**: Item proprio no sidebar (separado de Settings) com filtros e retry manual
+- **Suporte**: Tickets internos de bug report (criar, listar, detalhar, admin notas, screenshots)
+- **Portal do Medico**: Ambiente separado (/doctor) com dashboard, calendario, consultas, agenda, notificacoes, suporte
 
 ### 5. WhatsApp - Notificacoes Bilingues (14 tipos x 2 idiomas = 28 templates)
 
@@ -300,13 +309,13 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 | Metrica | Valor |
 |---------|-------|
-| Paginas frontend | 24 (8 portal + 16 admin/medico) |
+| Paginas frontend | 26 (8 portal + 18 admin/medico) |
 | Componentes React | 22 |
 | Hooks customizados | 8 |
 | Contextos React | 3 (Auth, Language, Loading) |
-| Migracoes SQL | 31 (000-030) |
-| Tabelas no banco | 15+ |
-| RPCs PostgreSQL | 10+ |
+| Migracoes SQL | 34 (000-033) |
+| Tabelas no banco | 18+ |
+| RPCs PostgreSQL | 12+ |
 | Templates WhatsApp | 28 (14 tipos x 2 idiomas) |
 | Tipos de tratamento | 46 ativos + 6 legados |
 | Servicos Docker (VPS) | 19 |
@@ -331,7 +340,7 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 | Historico de consultas | ✅ | Completo com detalhes |
 | Brand identity | 🔄 | Satoshi, logos, linhas, login pages redesigned |
 | Deploy producao (dominio + SSL) | ✅ | portal.essencemedicalclinic.com + Let's Encrypt |
-| i18n (PT/EN) | 🔄 | Handoff/Attendants OK, muitas paginas admin ainda hardcoded PT |
+| i18n (PT/EN) | 🔄 | Quase completo (~1005 keys), auto-detect idioma do navegador para novos usuarios |
 | Upload de documentos | ✅ | Supabase Storage + viewer modal |
 | Perfil completo paciente | ✅ | 23 campos demograficos + emergency contact |
 | Insurance no perfil | ✅ | 14 campos (primary + secondary) |
@@ -370,4 +379,4 @@ ssh -i ~/.ssh/clinica_vps root@217.216.81.92
 
 ---
 
-*Atualizado: 12/02/2026 (v6 - Chatbot 5 fases, Handoff, Services & Pricing, Perfil completo, Insurance, Telehealth, Documentos)*
+*Atualizado: 13/02/2026 (v7 - Clinic Settings, is_test flag, Support Tickets, Failed Messages sidebar, auto-detect language)*
