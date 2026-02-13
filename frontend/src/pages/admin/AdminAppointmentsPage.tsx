@@ -14,6 +14,7 @@ import {
   Stethoscope,
   CalendarDays,
   AlertCircle,
+  AlertTriangle,
   CheckCheck,
   XOctagon,
   UserX,
@@ -31,6 +32,7 @@ import {
   DndContext,
   DragOverlay,
   closestCorners,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -215,6 +217,71 @@ const ControlsBar = styled.div`
   margin-bottom: 24px;
   flex-wrap: wrap;
   animation: ${fadeInUp} 0.5s ease-out 0.2s both;
+`;
+
+const DateFilterBar = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  animation: ${fadeInUp} 0.5s ease-out 0.15s both;
+`;
+
+const DateFilterPill = styled.button<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: ${props => props.$active ? luxuryColors.primary : luxuryColors.warmWhite};
+  color: ${props => props.$active ? 'white' : luxuryColors.textDark};
+  border: 1px solid ${props => props.$active ? luxuryColors.primary : 'rgba(146, 86, 62, 0.12)'};
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: ${luxuryColors.primary};
+    background: ${props => props.$active ? luxuryColors.primaryDark : luxuryColors.beigeLight};
+  }
+`;
+
+const PastPendingBanner = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+  background: ${luxuryColors.warningLight};
+  border: 1px solid ${luxuryColors.warning}30;
+  border-radius: 14px;
+  font-size: 13px;
+  color: ${luxuryColors.warning};
+  font-weight: 500;
+  animation: ${fadeIn} 0.3s ease-out;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: ${luxuryColors.primary};
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+    white-space: nowrap;
+
+    &:hover {
+      color: ${luxuryColors.primaryDark};
+    }
+  }
 `;
 
 const SearchBox = styled.div`
@@ -1031,6 +1098,7 @@ const EmptyColumn = styled.div`
   align-items: center;
   justify-content: center;
   padding: 32px 16px;
+  min-height: 200px;
   text-align: center;
   color: ${luxuryColors.textMuted};
   font-size: 13px;
@@ -1396,6 +1464,8 @@ const AdminAppointmentsPage: React.FC = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [modalityFilter, setModalityFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>('week');
+  const [pastPendingCount, setPastPendingCount] = useState<number>(0);
   const [providerOptions, setProviderOptions] = useState<ProviderOption[]>([]);
 
   // Navegação horizontal do Kanban
@@ -1566,10 +1636,63 @@ const AdminAppointmentsPage: React.FC = () => {
   // Determinar qual provider_id usar para filtrar
   const activeProviderId = isProvider ? providerId : (providerFilter !== 'all' ? providerFilter : null);
 
+  // Helper: calcular início/fim do período selecionado (UTC)
+  const getDateRange = useCallback((range: string): { start: string; end: string } | null => {
+    if (range === 'all') return null;
+    const now = new Date();
+    let start: Date;
+    let end: Date;
+
+    if (range === 'today') {
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59));
+    } else if (range === 'week') {
+      // Segunda a domingo da semana atual
+      const dayOfWeek = now.getUTCDay(); // 0=Dom
+      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday, 0, 0, 0));
+      end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + 6, 23, 59, 59));
+    } else {
+      // month
+      start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0));
+      end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59));
+    }
+
+    return { start: start.toISOString(), end: end.toISOString() };
+  }, []);
+
   useEffect(() => {
     loadAppointments();
     loadStatusCounts();
-  }, [activeProviderId]);
+  }, [activeProviderId, dateRange]);
+
+  // Verificar consultas pendentes antigas quando filtro não é 'all'
+  useEffect(() => {
+    if (dateRange === 'all') {
+      setPastPendingCount(0);
+      return;
+    }
+    const checkPastPending = async () => {
+      try {
+        const now = new Date().toISOString();
+        let query = supabase
+          .from('appointments')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
+          .lt('scheduled_at', now);
+
+        if (activeProviderId) {
+          query = query.eq('provider_id', activeProviderId);
+        }
+
+        const { count } = await query;
+        setPastPendingCount(count || 0);
+      } catch (err) {
+        console.error('Error checking past pending:', err);
+      }
+    };
+    checkPastPending();
+  }, [dateRange, activeProviderId, appointments]);
 
   const loadAppointments = async () => {
     try {
@@ -1594,6 +1717,12 @@ const AdminAppointmentsPage: React.FC = () => {
       // Filtrar por provider se necessário
       if (activeProviderId) {
         query = query.eq('provider_id', activeProviderId);
+      }
+
+      // Filtrar por período
+      const range = getDateRange(dateRange);
+      if (range) {
+        query = query.gte('scheduled_at', range.start).lte('scheduled_at', range.end);
       }
 
       const { data, error } = await query;
@@ -1629,6 +1758,12 @@ const AdminAppointmentsPage: React.FC = () => {
 
       if (activeProviderId) {
         query = query.eq('provider_id', activeProviderId);
+      }
+
+      // Filtrar por período
+      const range = getDateRange(dateRange);
+      if (range) {
+        query = query.gte('scheduled_at', range.start).lte('scheduled_at', range.end);
       }
 
       const { data, error } = await query;
@@ -1852,6 +1987,28 @@ const AdminAppointmentsPage: React.FC = () => {
           })}
         </StatsBar>
 
+        <DateFilterBar>
+          {(['today', 'week', 'month', 'all'] as const).map(range => (
+            <DateFilterPill
+              key={range}
+              $active={dateRange === range}
+              onClick={() => setDateRange(range)}
+            >
+              {t(`appointments.filter${range === 'today' ? 'Today' : range === 'week' ? 'ThisWeek' : range === 'month' ? 'ThisMonth' : 'AllTime'}`)}
+            </DateFilterPill>
+          ))}
+        </DateFilterBar>
+
+        {pastPendingCount > 0 && dateRange !== 'all' && (
+          <PastPendingBanner>
+            <AlertTriangle />
+            {t('appointments.pastPendingAlert', { count: pastPendingCount })}
+            <button onClick={() => setDateRange('all')}>
+              {t('appointments.viewAll')}
+            </button>
+          </PastPendingBanner>
+        )}
+
         <ControlsBar>
           <SearchBox>
             <input
@@ -1903,7 +2060,7 @@ const AdminAppointmentsPage: React.FC = () => {
              ============================================ */
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCorners}
+            collisionDetection={rectIntersection}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
