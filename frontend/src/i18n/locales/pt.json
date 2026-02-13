@@ -787,6 +787,32 @@
   "documents.viewer.downloadHint": "Use o botão \"Baixar\" para visualizar o documento.",
   "documents.viewer.download": "Baixar",
 
+  "documents.patientUpload.button": "Enviar Documento",
+  "documents.patientUpload.title": "Enviar Documento",
+  "documents.patientUpload.success": "Documento enviado com sucesso!",
+  "documents.patientUpload.send": "Enviar",
+  "documents.patientUpload.titlePlaceholder": "Ex: Resultado de exame - Fevereiro 2026",
+
+  "documents.signature.title": "Assinatura Digital",
+  "documents.signature.document": "Documento",
+  "documents.signature.drawLabel": "Assinatura",
+  "documents.signature.drawHint": "Desenhe sua assinatura aqui",
+  "documents.signature.clear": "Limpar",
+  "documents.signature.fullNameLabel": "Nome Completo",
+  "documents.signature.fullNamePlaceholder": "Digite seu nome completo",
+  "documents.signature.sign": "Assinar Documento",
+  "documents.signature.signing": "Assinando...",
+  "documents.signature.success": "Documento assinado com sucesso!",
+  "documents.signature.pendingTitle": "Pendente de Assinatura",
+  "documents.signature.pendingBadge": "Assinar",
+  "documents.signature.signedBadge": "Assinado",
+
+  "documents.pendingAlert.titleSingle": "Você tem 1 documento aguardando sua assinatura",
+  "documents.pendingAlert.titleMultiple": "Você tem {{count}} documentos aguardando sua assinatura",
+  "documents.pendingAlert.viewAll": "Ver todos",
+
+  "documents.action.viewShort": "Ver",
+
   "settings.title": "Configurações",
   "settings.language": "Idioma",
   "settings.interfaceLanguage": "Idioma da Interface",

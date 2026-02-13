@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { PatientDocument } from '../types/documents';
+import { PatientDocument, DocumentType } from '../types/documents';
 import { useAuth } from '../context/AuthContext';
+
+interface UploadParams {
+  file: File;
+  title: string;
+  type: DocumentType;
+  category?: string;
+}
 
 export function usePatientDocuments() {
   const { user } = useAuth();
@@ -48,5 +55,93 @@ export function usePatientDocuments() {
     }
   };
 
-  return { documents, loading, error, refetch: fetchDocuments, getSignedUrl };
+  const upload = async ({ file, title, type, category }: UploadParams): Promise<boolean> => {
+    if (!user) return false;
+    try {
+      setError(null);
+
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${user.id}/${timestamp}_${safeName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('patient-documents')
+        .upload(path, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: insertError } = await supabase
+        .from('patient_documents')
+        .insert({
+          patient_id: user.id,
+          title,
+          type,
+          category: category || null,
+          file_url: path,
+          uploaded_by: user.id,
+        });
+
+      if (insertError) {
+        await supabase.storage.from('patient-documents').remove([path]);
+        throw insertError;
+      }
+
+      await fetchDocuments();
+      return true;
+    } catch (err: any) {
+      console.error('[Documents] Erro no upload:', err);
+      setError(err.message);
+      return false;
+    }
+  };
+
+  const signDocument = async (
+    docId: string,
+    signatureDataUrl: string,
+    fullName: string
+  ): Promise<boolean> => {
+    if (!user) return false;
+    try {
+      setError(null);
+
+      // Convert base64 data URL to blob
+      const res = await fetch(signatureDataUrl);
+      const blob = await res.blob();
+
+      // Upload signature PNG to storage
+      const timestamp = Date.now();
+      const sigPath = `${user.id}/signatures/${timestamp}_signature.png`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('patient-documents')
+        .upload(sigPath, blob, { contentType: 'image/png' });
+
+      if (uploadError) throw uploadError;
+
+      // Update document record
+      const { error: updateError } = await supabase
+        .from('patient_documents')
+        .update({
+          signed_at: new Date().toISOString(),
+          signature_url: sigPath,
+          signed_by_name: fullName,
+        })
+        .eq('id', docId)
+        .eq('patient_id', user.id);
+
+      if (updateError) {
+        await supabase.storage.from('patient-documents').remove([sigPath]);
+        throw updateError;
+      }
+
+      await fetchDocuments();
+      return true;
+    } catch (err: any) {
+      console.error('[Documents] Erro ao assinar:', err);
+      setError(err.message);
+      return false;
+    }
+  };
+
+  return { documents, loading, error, refetch: fetchDocuments, getSignedUrl, upload, signDocument };
 }

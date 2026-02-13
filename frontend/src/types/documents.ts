@@ -15,6 +15,9 @@ export interface PatientDocument {
     category?: string;
     file_url: string;
     uploaded_by?: string;
+    signed_at?: string;
+    signature_url?: string;
+    signed_by_name?: string;
     created_at: string;
     updated_at: string;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { X, Download, ChevronLeft, ChevronRight, FileText, AlertCircle, Loader } from 'lucide-react';
+import { X, Download, ChevronLeft, ChevronRight, FileText, AlertCircle, Loader, CheckCircle } from 'lucide-react';
 import { theme } from '../../styles/GlobalStyle';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -19,6 +19,9 @@ interface DocumentViewerModalProps {
   fileUrl: string;
   fileName: string;
   title: string;
+  signatureUrl?: string;
+  signedByName?: string;
+  signedAt?: string;
 }
 
 type FileType = 'pdf' | 'image' | 'docx' | 'xlsx' | 'unsupported';
@@ -721,6 +724,49 @@ const FallbackViewer: React.FC<{ fileName: string }> = ({ fileName }) => {
   );
 };
 
+// Signature display
+const SignatureSection = styled.div`
+  width: 100%;
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid ${theme.colors.border};
+  box-shadow: ${theme.shadows.sm};
+`;
+
+const SignatureHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const SignatureImage = styled.img`
+  max-width: 280px;
+  max-height: 100px;
+  border-bottom: 2px solid ${theme.colors.border};
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+`;
+
+const SignatureName = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: ${theme.colors.text};
+`;
+
+const SignatureDate = styled.div`
+  font-size: 12px;
+  color: ${theme.colors.textMuted};
+  margin-top: 2px;
+`;
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -730,6 +776,9 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
   fileUrl,
   fileName,
   title,
+  signatureUrl,
+  signedByName,
+  signedAt,
 }) => {
   const { t } = useTranslation();
   const fileType = detectFileType(fileName);
@@ -780,7 +829,30 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
         </ModalHeader>
 
         <ModalBody>
-          {renderViewer()}
+          <div style={{ width: '100%' }}>
+            {renderViewer()}
+            {signatureUrl && (
+              <SignatureSection>
+                <SignatureHeader>
+                  <CheckCircle size={14} />
+                  {t('documents.signature.signedBadge')}
+                </SignatureHeader>
+                <SignatureImage src={signatureUrl} alt="Signature" />
+                {signedByName && <SignatureName>{signedByName}</SignatureName>}
+                {signedAt && (
+                  <SignatureDate>
+                    {new Date(signedAt).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </SignatureDate>
+                )}
+              </SignatureSection>
+            )}
+          </div>
         </ModalBody>
 
         <ModalFooter>

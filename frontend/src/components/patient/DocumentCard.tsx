@@ -1,7 +1,10 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { FileText, FileSpreadsheet, FileCheck, FileOutput, FileSearch, Download, Trash2, Eye } from 'lucide-react';
+import {
+  FileText, FileSpreadsheet, FileCheck, FileOutput, FileSearch,
+  Download, Trash2, Eye, PenTool, CheckCircle, Clock, Calendar,
+} from 'lucide-react';
 import { PatientDocument, DocumentType } from '../../types/documents';
 import { theme } from '../../styles/GlobalStyle';
 import { format } from 'date-fns';
@@ -12,98 +15,132 @@ interface DocumentCardProps {
   onDelete?: (id: string) => void;
   onDownload?: () => void;
   onView?: () => void;
+  onSign?: () => void;
+  variant?: 'default' | 'pending';
 }
 
-const Card = styled.div<{ $clickable?: boolean }>`
+const pulse = keyframes`
+  0%, 100% { box-shadow: 0 0 0 0 rgba(146, 86, 62, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(146, 86, 62, 0); }
+`;
+
+const Card = styled.div<{ $variant?: string }>`
   background: white;
-  border-radius: ${theme.borderRadius.lg};
-  padding: ${theme.spacing.md};
-  box-shadow: ${theme.shadows.sm};
-  display: flex;
-  align-items: center;
-  gap: ${theme.spacing.md};
-  transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid ${theme.colors.border};
-  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s;
+  border: 1px solid ${props => props.$variant === 'pending'
+    ? 'rgba(146, 86, 62, 0.2)' : theme.colors.borderLight};
+  position: relative;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${theme.shadows.md};
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
 `;
 
-const IconWrapper = styled.div<{ $type: DocumentType }>`
-  width: 48px;
-  height: 48px;
-  border-radius: ${theme.borderRadius.md};
+const CardTop = styled.div<{ $color: string }>`
+  height: 4px;
+  background: ${props => props.$color};
+`;
+
+const CardBody = styled.div`
+  padding: 20px;
+`;
+
+const CardRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+`;
+
+const IconCircle = styled.div<{ $bg: string; $color: string }>`
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
-  background-color: ${props => {
-    switch (props.$type) {
-      case 'lab_result': return 'rgba(146, 86, 62, 0.10)';
-      case 'prescription': return 'rgba(180, 143, 122, 0.12)';
-      case 'invoice': return 'rgba(212, 165, 116, 0.12)';
-      case 'treatment_plan': return 'rgba(196, 131, 106, 0.10)';
-      default: return 'rgba(140, 139, 139, 0.10)';
-    }
-  }};
-
-  color: ${props => {
-    switch (props.$type) {
-      case 'lab_result': return '#92563E';
-      case 'prescription': return '#7A6355';
-      case 'invoice': return '#A67B5B';
-      case 'treatment_plan': return '#B48F7A';
-      default: return '#8C8B8B';
-    }
-  }};
+  background: ${props => props.$bg};
+  color: ${props => props.$color};
 `;
 
-const Content = styled.div`
+const CardContent = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const Title = styled.h3`
   font-family: ${theme.typography.fontFamilyHeading};
-  font-size: 1rem;
+  font-size: 15px;
+  font-weight: 600;
   color: ${theme.colors.text};
-  margin-bottom: 4px;
-  font-weight: 500;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
-const Meta = styled.div`
-  font-size: 0.875rem;
-  color: ${theme.colors.textSecondary};
+const MetaRow = styled.div`
   display: flex;
-  gap: ${theme.spacing.sm};
   align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 `;
 
-const ActionBtn = styled.button`
-  padding: ${theme.spacing.sm};
-  color: ${theme.colors.textSecondary};
-  border-radius: ${theme.borderRadius.full};
-  transition: all 0.2s;
-  background: none;
-  border: none;
-  cursor: pointer;
+const TypeBadge = styled.span<{ $bg: string; $color: string }>`
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: ${props => props.$bg};
+  color: ${props => props.$color};
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+`;
+
+const DateText = styled.span`
+  font-size: 12px;
+  color: ${theme.colors.textMuted};
   display: flex;
   align-items: center;
+  gap: 4px;
 
-  &:hover {
-    background: ${theme.colors.background};
+  svg { width: 12px; height: 12px; }
+`;
+
+const StatusSection = styled.div`
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid ${theme.colors.borderLight};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+`;
+
+const StatusBadge = styled.div<{ $type: 'signed' | 'pending' }>`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 8px;
+
+  ${props => props.$type === 'signed' ? `
+    background: rgba(16, 185, 129, 0.08);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.15);
+  ` : `
+    background: rgba(146, 86, 62, 0.06);
     color: ${theme.colors.primary};
-  }
-`;
+    border: 1px solid rgba(146, 86, 62, 0.12);
+  `}
 
-const DeleteBtn = styled(ActionBtn)`
-  &:hover {
-    background: rgba(196, 131, 106, 0.12);
-    color: #C4836A;
-  }
+  svg { width: 14px; height: 14px; }
 `;
 
 const Actions = styled.div`
@@ -112,23 +149,69 @@ const Actions = styled.div`
   gap: 4px;
 `;
 
-const Badge = styled.span`
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: ${theme.colors.background};
-  border: 1px solid ${theme.colors.border};
+const ActionBtn = styled.button<{ $primary?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  svg { width: 14px; height: 14px; }
+
+  ${props => props.$primary ? css`
+    background: linear-gradient(135deg, #92563E, #7A4532);
+    color: white;
+    animation: ${pulse} 2.5s ease-in-out infinite;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(146, 86, 62, 0.35);
+      animation: none;
+    }
+  ` : css`
+    background: ${theme.colors.background};
+    color: ${theme.colors.textSecondary};
+
+    &:hover {
+      background: ${theme.colors.primarySoft};
+      color: ${theme.colors.primary};
+    }
+  `}
 `;
+
+const DeleteBtn = styled(ActionBtn)`
+  &:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: #DC2626;
+  }
+`;
+
+// Brand palette: terracota #92563E, marrom #B48F7A, dourado #ECCAA4, bege #F1E9D3, cinza #4C4F54
+const TYPE_STYLES: Record<string, { bg: string; color: string; accent: string }> = {
+  lab_result:      { bg: 'rgba(180, 143, 122, 0.10)', color: '#8B6F5C', accent: '#B48F7A' },
+  prescription:    { bg: 'rgba(146, 86, 62, 0.08)',   color: '#92563E', accent: '#92563E' },
+  invoice:         { bg: 'rgba(76, 79, 84, 0.07)',    color: '#4C4F54', accent: '#6B6E73' },
+  treatment_plan:  { bg: 'rgba(180, 143, 122, 0.10)', color: '#7A6355', accent: '#B48F7A' },
+  consent_form:    { bg: 'rgba(146, 86, 62, 0.08)',   color: '#92563E', accent: '#92563E' },
+  intake_form:     { bg: 'rgba(212, 165, 116, 0.12)', color: '#A07850', accent: '#D4A574' },
+  other:           { bg: 'rgba(140, 139, 139, 0.08)', color: '#6B6E73', accent: '#8C8B8B' },
+};
+
+const getTypeStyle = (type: DocumentType) => TYPE_STYLES[type] || TYPE_STYLES.other;
 
 const getIcon = (type: DocumentType) => {
   switch (type) {
-    case 'lab_result': return <FileSearch size={24} />;
-    case 'prescription': return <FileText size={24} />;
-    case 'invoice': return <FileSpreadsheet size={24} />;
-    case 'treatment_plan': return <FileCheck size={24} />;
-    case 'consent_form': return <FileCheck size={24} />; // Using FileCheck for consent too
-    case 'intake_form': return <FileOutput size={24} />;
-    default: return <FileText size={24} />;
+    case 'lab_result': return <FileSearch size={22} />;
+    case 'prescription': return <FileText size={22} />;
+    case 'invoice': return <FileSpreadsheet size={22} />;
+    case 'treatment_plan': return <FileCheck size={22} />;
+    case 'consent_form': return <FileCheck size={22} />;
+    case 'intake_form': return <FileOutput size={22} />;
+    default: return <FileText size={22} />;
   }
 };
 
@@ -141,51 +224,86 @@ const DOC_TYPE_KEY_MAP: Record<string, string> = {
   intake_form: 'documents.type.intakeForm',
 };
 
-export const DocumentCard: React.FC<DocumentCardProps> = ({ document, onDelete, onDownload, onView }) => {
+const SIGNABLE_TYPES = ['consent_form', 'intake_form'];
+
+export const DocumentCard: React.FC<DocumentCardProps> = ({
+  document, onDelete, onDownload, onView, onSign, variant = 'default',
+}) => {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'pt' ? ptBR : enUS;
   const getTypeLabel = (type: DocumentType) => t(DOC_TYPE_KEY_MAP[type] || 'documents.type.other');
 
+  const isSignable = SIGNABLE_TYPES.includes(document.type);
+  const isSigned = !!document.signed_at;
+  const style = getTypeStyle(document.type);
+
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onDownload) {
-      onDownload();
-    } else {
-      window.open(document.file_url, '_blank');
-    }
-  };
-
-  const handleCardClick = () => {
-    if (onView) onView();
+    if (onDownload) onDownload();
+    else window.open(document.file_url, '_blank');
   };
 
   return (
-    <Card $clickable={!!onView} onClick={handleCardClick}>
-      <IconWrapper $type={document.type}>
-        {getIcon(document.type)}
-      </IconWrapper>
-      <Content>
-        <Title>{document.title}</Title>
-        <Meta>
-          <span>{format(new Date(document.created_at), 'd MMMM, yyyy', { locale: dateLocale })}</span>
-          <Badge>{getTypeLabel(document.type)}</Badge>
-        </Meta>
-      </Content>
-      <Actions>
-        {onView && (
-          <ActionBtn onClick={(e) => { e.stopPropagation(); onView(); }} title={t('documents.action.view')}>
-            <Eye size={20} />
-          </ActionBtn>
-        )}
-        <ActionBtn onClick={handleDownload} title={t('documents.action.download')}>
-          <Download size={20} />
-        </ActionBtn>
-        {onDelete && (
-          <DeleteBtn onClick={(e) => { e.stopPropagation(); onDelete(document.id); }} title={t('documents.action.delete')}>
-            <Trash2 size={18} />
-          </DeleteBtn>
-        )}
-      </Actions>
+    <Card $variant={variant} onClick={onView} style={{ cursor: onView ? 'pointer' : 'default' }}>
+      <CardTop $color={style.accent} />
+      <CardBody>
+        <CardRow>
+          <IconCircle $bg={style.bg} $color={style.color}>
+            {getIcon(document.type)}
+          </IconCircle>
+          <CardContent>
+            <Title title={document.title}>{document.title}</Title>
+            <MetaRow>
+              <TypeBadge $bg={style.bg} $color={style.color}>
+                {getTypeLabel(document.type)}
+              </TypeBadge>
+              <DateText>
+                <Calendar />
+                {format(new Date(document.created_at), 'd MMM yyyy', { locale: dateLocale })}
+              </DateText>
+            </MetaRow>
+          </CardContent>
+        </CardRow>
+
+        <StatusSection>
+          {isSignable && !isSigned && (
+            <StatusBadge $type="pending">
+              <Clock />
+              {t('documents.signature.pendingBadge')}
+            </StatusBadge>
+          )}
+          {isSignable && isSigned && (
+            <StatusBadge $type="signed">
+              <CheckCircle />
+              {t('documents.signature.signedBadge')}
+            </StatusBadge>
+          )}
+          {!isSignable && <div />}
+
+          <Actions>
+            {onSign && (
+              <ActionBtn $primary onClick={(e) => { e.stopPropagation(); onSign(); }}>
+                <PenTool />
+                {t('documents.signature.sign')}
+              </ActionBtn>
+            )}
+            {onView && (
+              <ActionBtn onClick={(e) => { e.stopPropagation(); onView(); }}>
+                <Eye />
+                {t('documents.action.viewShort')}
+              </ActionBtn>
+            )}
+            <ActionBtn onClick={handleDownload}>
+              <Download />
+            </ActionBtn>
+            {onDelete && (
+              <DeleteBtn onClick={(e) => { e.stopPropagation(); onDelete(document.id); }}>
+                <Trash2 />
+              </DeleteBtn>
+            )}
+          </Actions>
+        </StatusSection>
+      </CardBody>
     </Card>
   );
 };

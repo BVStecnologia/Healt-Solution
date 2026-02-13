@@ -787,6 +787,32 @@
   "documents.viewer.downloadHint": "Use the \"Download\" button to view the document.",
   "documents.viewer.download": "Download",
 
+  "documents.patientUpload.button": "Upload Document",
+  "documents.patientUpload.title": "Upload Document",
+  "documents.patientUpload.success": "Document uploaded successfully!",
+  "documents.patientUpload.send": "Upload",
+  "documents.patientUpload.titlePlaceholder": "E.g.: Blood test results - February 2026",
+
+  "documents.signature.title": "Digital Signature",
+  "documents.signature.document": "Document",
+  "documents.signature.drawLabel": "Signature",
+  "documents.signature.drawHint": "Draw your signature here",
+  "documents.signature.clear": "Clear",
+  "documents.signature.fullNameLabel": "Full Name",
+  "documents.signature.fullNamePlaceholder": "Type your full name",
+  "documents.signature.sign": "Sign Document",
+  "documents.signature.signing": "Signing...",
+  "documents.signature.success": "Document signed successfully!",
+  "documents.signature.pendingTitle": "Pending Signature",
+  "documents.signature.pendingBadge": "Sign",
+  "documents.signature.signedBadge": "Signed",
+
+  "documents.pendingAlert.titleSingle": "You have 1 document awaiting your signature",
+  "documents.pendingAlert.titleMultiple": "You have {{count}} documents awaiting your signature",
+  "documents.pendingAlert.viewAll": "View all",
+
+  "documents.action.viewShort": "View",
+
   "settings.title": "Settings",
   "settings.language": "Language",
   "settings.interfaceLanguage": "Interface Language",
