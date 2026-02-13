@@ -156,21 +156,8 @@ async function getConnectedInstance(): Promise<WhatsAppInstance | null> {
         name: connected.name || connected.instanceName,
         instanceName: connected.instanceName,
         state: connected.state || connected.connectionStatus,
+        phoneNumber: connected.ownerJid?.replace('@s.whatsapp.net', '') || null,
       };
-
-      // Buscar número conectado
-      try {
-        const detailResponse = await fetchWithTimeout(
-          `${EVOLUTION_API_URL}/instance/connectionState/${instance.name}`,
-          { headers: await evolutionHeaders() }
-        );
-        if (detailResponse.ok) {
-          const detail = await detailResponse.json();
-          instance.phoneNumber = detail.instance?.user?.id?.replace('@s.whatsapp.net', '') || null;
-        }
-      } catch (e) {
-        log('Não foi possível obter número', e);
-      }
 
       log('Instância conectada:', instance);
       return instance;
